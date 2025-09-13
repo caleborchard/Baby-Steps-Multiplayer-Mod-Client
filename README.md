@@ -15,14 +15,17 @@ Cutscenes are triggered independently on each client and do not affect other pla
 
 ## 📸 Screenshots
 - Add later :)
+
 ---
 
 ## ✨ Features
-- Full body presence for multiple players  
+- Custom player colors
+- Player collisions (can bump into each other) 
 - Independent cutscene triggering per client  
-- Player collisions (can bump into each other)  
 - Hat replication  
 - Held item replication  
+- Mud and vegetation interaction
+- Position smoothing to compensate for lag
 
 ---
 
