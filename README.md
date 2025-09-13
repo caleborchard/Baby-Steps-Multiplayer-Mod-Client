@@ -40,5 +40,6 @@ Cutscenes are triggered independently on each client and do not affect other pla
 ---
 
 ## 🔗 Links
+- [Baby Steps](https://www.babystepsgame.com/)
 - [LiteNetLib](https://github.com/RevenantX/LiteNetLib)  
 - [MelonLoader](https://melonwiki.xyz/)  
