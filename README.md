@@ -9,7 +9,7 @@
 
 # Baby Steps: Multiplayer Mod - Client
 
-The **Baby Steps: Multiplayer Mod** is a [MelonLoader](https://melonwiki.xyz/) mod that adds **full body multiplayer presence** to the demo and full versions of *Baby Steps*.  
+The **Baby Steps: Multiplayer Mod** is an unofficial [MelonLoader](https://melonwiki.xyz/) mod that adds **full body multiplayer presence** to the demo and full versions of *Baby Steps*.  
 
 Cutscenes are triggered independently on each client and do not affect other players. Each player has full collisions and can bump into each other. Hats and held items are replicated.
 
