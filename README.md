@@ -2,7 +2,7 @@
   <img src="IMAGE_URL_1" alt="Logo 1" width="200"/>
 </p>
 <p align="center">
-  <img src="[IMAGE_URL_2](https://github.com/caleborchard/Baby-Steps-Multiplayer-Mod-Client/blob/main/bbs_mm_blank.png?raw=true)" alt="Logo 2" width="200"/>
+  <img src="https://github.com/caleborchard/Baby-Steps-Multiplayer-Mod-Client/blob/main/bbs_mm_blank.png?raw=true" alt="Logo 2" width="200"/>
 </p>
 
 # Baby Steps: Multiplayer Mod - Client
