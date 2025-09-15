@@ -16,7 +16,21 @@ Cutscenes are triggered independently on each client and do not affect other pla
 ---
 
 ## 📸 Screenshots
-- Add later :)
+<p align="center">
+  <img src="https://github.com/caleborchard/Baby-Steps-Multiplayer-Mod-Client/blob/main/screenshots/telescope_pose.png?raw=true" width="30%"/>
+  <img src="https://github.com/caleborchard/Baby-Steps-Multiplayer-Mod-Client/blob/main/screenshots/group_walking.png?raw=true" width="30%"/>
+  <img src="https://github.com/caleborchard/Baby-Steps-Multiplayer-Mod-Client/blob/main/screenshots/group_collisions.png?raw=true" width="30%"/>
+</p>
+<p align="center">
+  <img src="https://github.com/caleborchard/Baby-Steps-Multiplayer-Mod-Client/blob/main/screenshots/group_donkey.png?raw=true" width="30%"/>
+  <img src="https://github.com/caleborchard/Baby-Steps-Multiplayer-Mod-Client/blob/main/screenshots/telescope_hat.png?raw=true" width="30%"/>
+  <img src="https://via.placeholder.com/640x360.png?text=Coming+Soon" width="30%"/>
+</p>
+<p align="center">
+  <img src="https://via.placeholder.com/640x360.png?text=Coming+Soon" width="30%"/>
+  <img src="https://via.placeholder.com/640x360.png?text=Coming+Soon" width="30%"/>
+  <img src="https://via.placeholder.com/640x360.png?text=Coming+Soon" width="30%"/>
+</p>
 
 ---
 
