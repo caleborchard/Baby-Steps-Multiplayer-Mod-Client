@@ -58,7 +58,7 @@ Cutscenes are triggered independently on each client and do not affect other pla
 ---
 
 ## 🔗 Links
-- [Baby Steos: Multiplayer Mod Server](https://github.com/caleborchard/Baby-Steps-Multiplayer-Mod-Server)
+- [Baby Steps: Multiplayer Mod Server](https://github.com/caleborchard/Baby-Steps-Multiplayer-Mod-Server)
 - [Baby Steps](https://www.babystepsgame.com/)
 - [LiteNetLib](https://github.com/RevenantX/LiteNetLib)  
 - [MelonLoader](https://melonwiki.xyz/)  
