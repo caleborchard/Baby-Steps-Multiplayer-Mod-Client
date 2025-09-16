@@ -47,6 +47,7 @@ Cutscenes are triggered independently on each client and do not affect other pla
 ---
 
 ## 🛠️ Work in Progress / TODO
+- Server passwords
 - Togglable collisions  
 - Improved UI  
 - Water particles  
