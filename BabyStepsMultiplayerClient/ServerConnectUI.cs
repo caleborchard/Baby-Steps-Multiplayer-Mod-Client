@@ -27,8 +27,8 @@ namespace BabyStepsMultiplayerClient
         public ServerConnectUI(Core core)
         {
             uiNNTB = "Nate";
-            uiIP = "17.ip.gl.ply.gg";
-            uiPORT = "14461";
+            uiIP = "127.0.0.1";
+            uiPORT = "7777";
             uiColorR = 1f; uiColorG = 1f; uiColorB = 1f;
             _core = core;
         }
@@ -163,3 +163,4 @@ namespace BabyStepsMultiplayerClient
         }
     }
 }
+
