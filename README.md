@@ -28,11 +28,11 @@ Cutscenes are triggered independently on each client and do not affect other pla
 <p align="center">
   <img src="https://github.com/caleborchard/Baby-Steps-Multiplayer-Mod-Client/blob/main/screenshots/group_donkey.png?raw=true" width="30%"/>
   <img src="https://github.com/caleborchard/Baby-Steps-Multiplayer-Mod-Client/blob/main/screenshots/telescope_hat.png?raw=true" width="30%"/>
-  <img src="https://via.placeholder.com/640x360.png?text=Coming+Soon" width="30%"/>
+  <img src="https://github.com/caleborchard/Baby-Steps-Multiplayer-Mod-Client/blob/main/screenshots/group_horace.png?raw=true" width="30%"/>
 </p>
 <p align="center">
-  <img src="https://via.placeholder.com/640x360.png?text=Coming+Soon" width="30%"/>
-  <img src="https://via.placeholder.com/640x360.png?text=Coming+Soon" width="30%"/>
+  <img src="https://github.com/caleborchard/Baby-Steps-Multiplayer-Mod-Client/blob/main/screenshots/group_fall.png?raw=true" width="30%"/>
+  <img src="https://github.com/caleborchard/Baby-Steps-Multiplayer-Mod-Client/blob/main/screenshots/group_fall2.png?raw=true" width="30%"/>
   <img src="https://via.placeholder.com/640x360.png?text=Coming+Soon" width="30%"/>
 </p>
 
