@@ -268,9 +268,6 @@ namespace BabyStepsMultiplayerClient
 
         public void WearHat(string hatName, Vector3 localPosition, Quaternion localRotation)
         {
-            if (heldItems.Item1 != null && heldItems.Item1.name.Contains(hatName)) DropItem(0);
-            if (heldItems.Item2 != null && heldItems.Item2.name.Contains(hatName)) DropItem(1);
-
             if (hat != null) RemoveHat();
 
             GameObject head = textObj.transform.parent.gameObject;

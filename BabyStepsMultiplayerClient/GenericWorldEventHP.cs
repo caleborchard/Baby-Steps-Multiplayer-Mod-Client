@@ -5,6 +5,7 @@ using MelonLoader;
 using Microsoft.VisualBasic;
 using System.Text;
 using UnityEngine;
+using UnityEngine.XR;
 using static Il2CppTechnie.PhysicsCreator.SphereUtils;
 
 namespace BabyStepsMultiplayerClient
@@ -55,6 +56,15 @@ namespace BabyStepsMultiplayerClient
         static void Postfix(PlayerMovement __instance, Hat hat)
         {
             if (Core.thisInstance.client == null) return;
+
+            for (int i = 0; i < __instance.handItems.Length; i++)
+            {
+                Grabable item = __instance.handItems[i];
+                if (item != null && item.name.Contains(hat.name))
+                {
+                    Core.thisInstance.SendDropGrabable(i);
+                }
+            }
 
             Core.thisInstance.SendDonHat(hat);
         }
