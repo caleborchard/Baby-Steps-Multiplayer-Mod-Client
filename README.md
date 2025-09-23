@@ -46,12 +46,12 @@ Cutscenes are triggered independently on each client and do not affect other pla
 - Held item replication  
 - Mud and vegetation interaction
 - Position smoothing to compensate for lag
+- Server passwords
+- Togglable collisions  
 
 ---
 
 ## 🛠️ Work in Progress / TODO
-- Server passwords
-- Togglable collisions  
 - Improved UI  
 - Water particles  
 - Ground dust particles  
