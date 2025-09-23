@@ -4,12 +4,13 @@ using LiteNetLib;
 using LiteNetLib.Utils;
 using MelonLoader;
 using System.Collections.Concurrent;
+using System.IO.Compression;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using UnityEngine;
 
-[assembly: MelonInfo(typeof(BabyStepsMultiplayerClient.Core), "BabyStepsMultiplayerClient", "1.0.0", "Caleb Orchard", null)]
+[assembly: MelonInfo(typeof(BabyStepsMultiplayerClient.Core), "BabyStepsMultiplayerClient", "1.0.1", "Caleb Orchard", null)]
 [assembly: MelonGame("DefaultCompany", "BabySteps")]
 
 namespace BabyStepsMultiplayerClient
@@ -22,6 +23,8 @@ namespace BabyStepsMultiplayerClient
         private const byte OPCODE_GWE = 0x03; // Generic World Event
         private const byte OPCODE_AAE = 0x04; // Accessory Add(Don) Event
         private const byte OPCODE_ARE = 0x05; // Accessory Remove(Doff) Event
+        private const byte OPCODE_JRE = 0x06; // Jiminy Ribbon Event
+        private const byte OPCODE_CTE = 0x07; // Collision Toggle Event
 
         // --- Static Scene References ---
         public static Core thisInstance;
@@ -31,6 +34,10 @@ namespace BabyStepsMultiplayerClient
         public static Material baseMaterial;
         public static Color baseColor;
         private static Transform camera;
+
+        private static GameObject jiminyRibbon;
+        private static bool lastJiminyState;
+
         private static Transform particleHouse;
         private static ParticleParty particleParty;
 
@@ -58,19 +65,19 @@ namespace BabyStepsMultiplayerClient
         private Dictionary<byte, ushort> lastSeenSequences = new();
         private ushort localSequenceNumber = 0;
         private object boneSendCoroutineHandle;
-        private const float smoothingFactor = 0.1f;
         public static bool isRunningNetParticle = false;
         private static string cloneText = "(Clone)";
 
         // --- Player Tracking ---
         public Dictionary<byte, NateMP> players = new();
-        private Dictionary<byte, byte[]> pendingAppearanceUpdates = new();
-        private Dictionary<byte, byte[]> pendingAccessoryDons = new();
+        private Dictionary<byte, List<byte[]>> pendingPlayerUpdatePackets = new();
         private int numClones = 1;
 
         // --- UI State ---
-        private bool showUI = false;
-        ServerConnectUI serverConnectUI;
+        private bool showServerPanel = false;
+        private bool showPlayersTab = false;
+        public ServerConnectUI serverConnectUI;
+        PlayersTabUI playersTabUI;
         public IngameMessagesUI ingameMessagesUI;
 
         // --- Mainline (Unity Callbacks) ---
@@ -82,35 +89,51 @@ namespace BabyStepsMultiplayerClient
             serverConnectUI = new ServerConnectUI(this); 
             serverConnectUI.LoadConfig();
             ingameMessagesUI = new IngameMessagesUI();
+            playersTabUI = new PlayersTabUI(this);
         }
-        public override void OnGUI() { ingameMessagesUI.DrawUI(); if (showUI) serverConnectUI.DrawUI(); }
+        public override void OnGUI() 
+        { 
+            ingameMessagesUI.DrawUI(); 
+            if (showServerPanel) serverConnectUI.DrawUI(); 
+            if (showPlayersTab) playersTabUI.DrawUI();
+        }
         public override void OnUpdate() { UpdateLoop(); }
-        public override void OnFixedUpdate() { UpdatePlayersFixed(); }
-        public override void OnLateUpdate() { HandleBoneSending(); }
+        public override void OnLateUpdate() { HandleBoneSending(); UpdatePlayersLate(); }
         public override void OnApplicationQuit() { Disconnect(); }
 
         // --- Helpers ---
         private void UpdateLoop() 
         {
-            awakeRunTimer += Time.deltaTime;
+            if (Input.GetKeyDown(KeyCode.F2)) showServerPanel = !showServerPanel;
 
-            client?.PollEvents();
-
-            while (mainThreadActions.TryDequeue(out var action)) action.Invoke();
-
-            if (Input.GetKeyDown(KeyCode.F2)) showUI = !showUI;
-
-            if (awakeRunTimer >= 0.1f && !AwakeRuns.IsEmpty)
+            if (client != null)
             {
-                if (AwakeRuns.TryDequeue(out var action)) action.Invoke();
-                awakeRunTimer = 0f;
+                client.PollEvents();
+
+                awakeRunTimer += Time.deltaTime;
+                if (!AwakeRuns.IsEmpty && awakeRunTimer >= 0.1f)
+                {
+                    if (AwakeRuns.TryDequeue(out var action)) action.Invoke();
+                    awakeRunTimer = 0f;
+                }
+
+                while (mainThreadActions.TryDequeue(out var action)) action.Invoke();
+
+                if (Input.GetKeyDown(KeyCode.Tab)) showPlayersTab = true;
+
+                if (lastJiminyState != jiminyRibbon.active)
+                {
+                    lastJiminyState = jiminyRibbon.active;
+                    SendJiminyRibbonState();
+                }
             }
+            if (Input.GetKeyUp(KeyCode.Tab)) showPlayersTab = false; // Outside of isClientConnected check so that it won't get stuck on disconnect
         }
-        private void UpdatePlayersFixed() 
+        private void UpdatePlayersLate()
         {
             foreach (var player in players.Values)
             {
-                player.InterpolateBoneTransforms(Time.deltaTime);
+                player.InterpolateBoneTransforms();
                 player.RotateNametagTowardsCamera(camera);
                 player.HideNicknameOutsideDistance(camera.position, 100f);
                 player.FadeByDistance(camera);
@@ -197,9 +220,31 @@ namespace BabyStepsMultiplayerClient
                     }
             }
         }
+        private void ApplyJiminyRibbonStateChange(NateMP player, bool jiminyState)
+        {
+            player.jiminyRibbon.active = jiminyState;
+        }
+        private void ApplyCollisionToggle(NateMP player, bool collisionsEnabled)
+        {
+            if (collisionsEnabled)
+            {
+                player.netCollisionsEnabled = true;
+                ingameMessagesUI.AddMessage($"{player.displayName} has enabled collisions");
+
+                if (serverConnectUI.uiCollisionsEnabled) player.EnableCollision();
+                else player.DisableCollision();
+            }
+            else
+            {
+                player.netCollisionsEnabled = false;
+                ingameMessagesUI.AddMessage($"{player.displayName} has disabled collisions");
+
+                player.DisableCollision();
+            }
+        }
 
         // --- Network ---
-        public void connectToServer(string serverIP, int serverPort)
+        public void connectToServer(string serverIP, int serverPort, string password)
         {
             if (basePlayer == null) basePlayer = GameObject.Find("Dudest");
             if (basePlayerMovement == null) basePlayerMovement = basePlayer.GetComponent<PlayerMovement>();
@@ -207,6 +252,7 @@ namespace BabyStepsMultiplayerClient
             if (camera == null) camera = basePlayer.transform.Find("GameCam");
             if (baseMaterial == null)
                 baseMaterial = baseMesh.Find("Nathan.001").GetComponent<SkinnedMeshRenderer>().sharedMaterials.FirstOrDefault(m => m.name.Contains("NewSuit_Oct22"));
+            if (jiminyRibbon == null) jiminyRibbon = basePlayerMovement.jiminyRibbon;
             if (particleHouse == null) particleHouse = basePlayer.transform.Find("ParticleHouse");
             if (particleParty == null) particleParty = particleHouse.GetComponent<ParticleParty>();
 
@@ -248,7 +294,7 @@ namespace BabyStepsMultiplayerClient
             client = new NetManager(listener) { AutoRecycle = true, DisconnectTimeout = 15000 };
 
             client.Start();
-            client.Connect(serverIP, serverPort, "cuzzillobochfoddy");
+            client.Connect(serverIP, serverPort, (password == "" ? "cuzzillobochfoddy" : password));
 
             sendBoneUpdates = true;
 
@@ -258,26 +304,48 @@ namespace BabyStepsMultiplayerClient
         }
         public void Disconnect()
         {
-            client?.Stop();
-            client = null;
-            server = null;
-
-            if (boneSendCoroutineHandle != null)
+            if (client != null)
             {
-                MelonCoroutines.Stop(boneSendCoroutineHandle);
-                boneSendCoroutineHandle = null;
+                MelonLogger.Msg("Disconnected from server");
+                ingameMessagesUI.AddMessage("Disconnected from server");
+
+                client?.Stop();
+                client = null;
+                server = null;
+
+                if (boneSendCoroutineHandle != null)
+                {
+                    MelonCoroutines.Stop(boneSendCoroutineHandle);
+                    boneSendCoroutineHandle = null;
+                }
+
+                foreach (var player in players)
+                {
+                    player.Value.Destroy();
+                    players.Remove(player.Key);
+                }
+
+                baseColor = Color.white;
+                baseMaterial.color = baseColor;
+
+                sendBoneUpdates = false;
             }
+        }
+        public void SendCollisionToggle(bool state)
+        {
+            reusablePacketBuffer.Clear();
+            reusablePacketBuffer.Add(OPCODE_CTE);
+            reusablePacketBuffer.Add(Convert.ToByte(state));
 
-            foreach (var player in players)
-            {
-                player.Value.Destroy();
-                players.Remove(player.Key);
-            }
+            Send(reusablePacketBuffer.ToArray(), DeliveryMethod.ReliableOrdered);
+        }
+        public void SendJiminyRibbonState()
+        {
+            reusablePacketBuffer.Clear();
+            reusablePacketBuffer.Add(OPCODE_JRE);
+            reusablePacketBuffer.Add(Convert.ToByte(lastJiminyState));
 
-            baseColor = Color.white;
-            baseMaterial.color = baseColor;
-
-            sendBoneUpdates = false;
+            Send(reusablePacketBuffer.ToArray(), DeliveryMethod.ReliableOrdered);
         }
         public void SendHoldGrabable(Grabable grabable, int handIndex)
         {
@@ -444,20 +512,18 @@ namespace BabyStepsMultiplayerClient
                             {
                                 NateMP nate = NateMP.nateRecycler.Dequeue();
                                 nate.baseObj.active = true;
+                                nate.displayName = null;
                                 nate.RemoveHat(); // Redundancy, already called when player is first added to recycler
+                                nate.ResetBonesToBind();
                                 players[newUUID] = nate;
                             }
 
-                            if (pendingAppearanceUpdates.TryGetValue(newUUID, out byte[] pendingAppData))
+                            if (pendingPlayerUpdatePackets.TryGetValue(newUUID, out List<byte[]> pendingPackets))
                             {
-                                ApplyAppearanceUpdate(players[newUUID], pendingAppData);
-                                pendingAppearanceUpdates.Remove(newUUID);
-                            }
-
-                            if (pendingAccessoryDons.TryGetValue(newUUID, out byte[] pendingAccData))
-                            {
-                                ApplyAccessoryDon(players[newUUID], pendingAccData);
-                                pendingAccessoryDons.Remove(newUUID);
+                                foreach (byte[] packet in pendingPackets)
+                                {
+                                    HandleServerMessage(packet);
+                                }
                             }
                         });
                         break;
@@ -483,9 +549,14 @@ namespace BabyStepsMultiplayerClient
 
                 case 4: // Appearance update
                     {
-                        byte updateUUID = data[1];
-                        if (players.TryGetValue(updateUUID, out var targetPlayer)) ApplyAppearanceUpdate(targetPlayer, data);
-                        else pendingAppearanceUpdates[updateUUID] = data;
+                        byte playerUUID = data[1];
+                        if (players.TryGetValue(playerUUID, out var targetPlayer)) ApplyAppearanceUpdate(targetPlayer, data);
+                        else
+                        {
+                            if (!pendingPlayerUpdatePackets.TryGetValue(playerUUID, out var list)) pendingPlayerUpdatePackets[playerUUID] = list = new List<byte[]>();
+                            list.Add(data);
+                        }
+
                         break;
                     }
 
@@ -496,17 +567,11 @@ namespace BabyStepsMultiplayerClient
 
                         byte kickoffPoint = data[2];
                         ushort seq = BitConverter.ToUInt16(data, 3);
-                        //MelonLogger.Msg(seq);
                         byte[] rawBoneData = data.Skip(5).ToArray();
 
                         if (!lastSeenSequences.TryGetValue(boneUUID, out ushort lastSeq) || IsNewer(seq, lastSeq))
                         {
                             lastSeenSequences[boneUUID] = seq;
-
-                            float currentTime = Time.realtimeSinceStartup;
-                            if (bonePlayer.lastBonePacketTime > 0f)
-                                bonePlayer.boneLerpDuration = Mathf.Lerp(bonePlayer.boneLerpDuration, (currentTime - bonePlayer.lastBonePacketTime), smoothingFactor);
-                            bonePlayer.lastBonePacketTime = currentTime;
 
                             var bones = TransformNet.Deserialize(rawBoneData);
                             bonePlayer.UpdateBones(bones, kickoffPoint);
@@ -567,7 +632,11 @@ namespace BabyStepsMultiplayerClient
                     {
                         byte playerUUID = data[1];
                         if (players.TryGetValue(playerUUID, out var player)) ApplyAccessoryDon(player, data);
-                        else pendingAccessoryDons[playerUUID] = data;
+                        else
+                        {
+                            if (!pendingPlayerUpdatePackets.TryGetValue(playerUUID, out var list)) pendingPlayerUpdatePackets[playerUUID] = list = new List<byte[]>();
+                            list.Add(data);
+                        }
 
                         break;
                     }
@@ -599,6 +668,33 @@ namespace BabyStepsMultiplayerClient
                         break;
                     }
 
+                case 9: // Jiminy Ribbon State
+                    {
+                        byte playerUUID = data[1];
+                        bool jiminyState = Convert.ToBoolean(data[2]);
+                        if (players.TryGetValue(playerUUID, out var player)) ApplyJiminyRibbonStateChange(player, jiminyState);
+                        else
+                        {
+                            if (!pendingPlayerUpdatePackets.TryGetValue(playerUUID, out var list)) pendingPlayerUpdatePackets[playerUUID] = list = new List<byte[]>();
+                            list.Add(data);
+                        }
+
+                        break;
+                    }
+                case 10: // Collision Toggle Event
+                    {
+                        byte playerUUID = data[1];
+                        bool collisionsEnabled = Convert.ToBoolean(data[2]);
+                        if (players.TryGetValue(playerUUID, out var player)) ApplyCollisionToggle(player, collisionsEnabled);
+                        else
+                        {
+                            if (!pendingPlayerUpdatePackets.TryGetValue(playerUUID, out var list)) pendingPlayerUpdatePackets[playerUUID] = list = new List<byte[]>();
+                            list.Add(data);
+                        }
+
+                        break;
+                    }
+
                 default:
                     {
                         MelonLogger.Msg($"Unknown opcode from server: {opcode}");
@@ -627,6 +723,10 @@ namespace BabyStepsMultiplayerClient
                 if (rightItem != null) _core.SendHoldGrabable(rightItem, 0);
                 if (leftItem != null) _core.SendHoldGrabable(leftItem, 1);
 
+                _core.SendJiminyRibbonState();
+
+                _core.SendCollisionToggle(_core.serverConnectUI.uiCollisionsEnabled);
+
                 _core.ingameMessagesUI.AddMessage("Connected to server");
             }
 
@@ -634,8 +734,6 @@ namespace BabyStepsMultiplayerClient
             { 
                 _core.Disconnect(); 
                 Resources.UnloadUnusedAssets();
-                MelonLogger.Msg("Disconnected from server");
-                _core.ingameMessagesUI.AddMessage("Disconnected from server");
             }
 
             public void OnNetworkError(IPEndPoint ep, SocketError error) => MelonLogger.Error($"Network error: {error}");

@@ -8,7 +8,7 @@ namespace BabyStepsMultiplayerClient
     {
         // --- Draw Parameters ---
         public static readonly string configPath = Path.Combine(MelonLoader.Utils.MelonEnvironment.UserDataDirectory, "BabyStepsClientConfig.cfg");
-        public static Rect windowDimensions = new(100, 100, 250, 450);
+        public static Rect windowDimensions = new(100, 100, 250, 550); //25 is one label //530
         public static bool dragging = false;
         public static Vector2 dragOffset;
         public static GUIStyle centeredLabel;
@@ -19,7 +19,9 @@ namespace BabyStepsMultiplayerClient
         public string uiNNTB;
         public string uiIP;
         public string uiPORT;
+        public string uiPassword;
         public float uiColorR, uiColorG, uiColorB;
+        public bool uiCollisionsEnabled = true;
 
         private Core _core;
 
@@ -29,6 +31,7 @@ namespace BabyStepsMultiplayerClient
             uiNNTB = "Nate";
             uiIP = "127.0.0.1";
             uiPORT = "7777";
+            uiPassword = "";
             uiColorR = 1f; uiColorG = 1f; uiColorB = 1f;
             _core = core;
         }
@@ -50,10 +53,26 @@ namespace BabyStepsMultiplayerClient
             uiIP = GUILayout.TextField(uiIP, 32);
             GUILayout.Label("Server Port:");
             uiPORT = GUILayout.TextField(uiPORT, 5);
+            GUILayout.Label("Password:");
+            uiPassword = GUILayout.TextField(uiPassword, 5);
 
             GUILayout.Space(10);
             GUILayout.Label("Nickname:");
             uiNNTB = FilterKeyboardCharacters(GUILayout.TextField(uiNNTB, 20));
+
+            GUI.enabled = !(_core.client == null);
+            if (GUILayout.Button((uiCollisionsEnabled ? "Disable" : "Enable") + " Collisions"))
+            {
+                uiCollisionsEnabled = !uiCollisionsEnabled;
+                _core.SendCollisionToggle(uiCollisionsEnabled);
+
+                foreach (var player in _core.players)
+                {
+                    if (uiCollisionsEnabled && player.Value.netCollisionsEnabled) player.Value.EnableCollision();
+                    else player.Value.DisableCollision();
+                }
+            }
+            GUI.enabled = true;
 
             GUILayout.Label("Suit Tint:");
             GUILayout.Label($"Red: {(int)(uiColorR * 255)}");
@@ -76,7 +95,7 @@ namespace BabyStepsMultiplayerClient
                     MelonLogger.Msg($"{uiNNTB}, {uiIP}:{uiPORT}");
                     Core.baseColor = new Color(uiColorR, uiColorG, uiColorB);
                     SaveConfig();
-                    _core.connectToServer(uiIP, int.Parse(uiPORT));
+                    _core.connectToServer(uiIP, int.Parse(uiPORT), uiPassword);
                 }
             }
 
@@ -86,8 +105,15 @@ namespace BabyStepsMultiplayerClient
                 SaveConfig();
                 Core.mainThreadActions.Enqueue(_core.UpdateNicknameAndColor);
             }
-
             GUI.enabled = true;
+
+            GUI.enabled = !(_core.client == null);
+            if (GUILayout.Button("Disconnect") && _core.client != null)
+            {
+                _core.Disconnect();
+            }
+            GUI.enabled = true;
+
             GUILayout.EndArea();
             HandleDrag();
         }
@@ -159,8 +185,7 @@ namespace BabyStepsMultiplayerClient
         }
         private string FilterKeyboardCharacters(string input)
         {
-            return Regex.Replace(input, @"[^a-zA-Z0-9!@#\$%\^&\*\(\)_\+\-=\[\]{};:'"",<.>/?\\|`~ ]", "");
+            return Regex.Replace(input, @"[^\p{L}\p{N}!@#\$%\^&\*\(\)_\+\-=\[\]{};:'"",<.>/?\\|`~ ]", "");
         }
     }
 }
-

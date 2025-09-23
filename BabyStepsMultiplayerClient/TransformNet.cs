@@ -2,6 +2,14 @@
 
 namespace BabyStepsMultiplayerClient
 {
+    public class BoneSnapshot
+    {
+        public double time;
+        public TransformNet[] transformNets;
+
+        public BoneSnapshot(int boneCount) { transformNets = new TransformNet[boneCount]; }
+    }
+
     public class TransformNet
     {
         public int heirarchyIndex;

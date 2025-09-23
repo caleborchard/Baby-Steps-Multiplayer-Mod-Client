@@ -12,17 +12,6 @@ using UnityEngine.AddressableAssets;
 
 namespace BabyStepsMultiplayerClient
 {
-    public class RbMap
-    {
-        public Rigidbody mainRb;
-        public WaterObject waterObject;
-        public Vector3 previousPosition;
-        public Quaternion previousRotation;
-
-        public RbMap(Rigidbody _mainRb, WaterObject _waterObject)
-        { mainRb = _mainRb; waterObject = _waterObject; }
-    }
-
     public class NateMP
     {
         // --- Mainline ---
@@ -34,21 +23,14 @@ namespace BabyStepsMultiplayerClient
         public Color color;
 
         private Transform[] bones;
-        private Dictionary<Transform, RbMap> boneToRbMap;
-        private bool[] bonesUpdated;
         public FootData[] feet;
         private (Transform, Transform) hands;
         private List<CapsuleCollider> capsuleColliders;
         private List<(Transform, Transform)> boneToCrusherList;
         private bool collidersHaveBeenEnabled = false;
 
-        private Vector3[] previousBonePositions;
-        private Quaternion[] previousBoneRotations;
-        private Vector3[] targetBonePositions;
-        private Quaternion[] targetBoneRotations;
-        private float boneLerpTimer = 0f;
-        public float boneLerpDuration = 0.033f;
-        public float lastBonePacketTime = 0f;
+        private readonly Queue<BoneSnapshot> snapshotBuffer = new();
+        private const double INTERPDELAY = 0.1; // 100ms
 
         public string displayName;
         public GameObject textObj;
@@ -63,8 +45,12 @@ namespace BabyStepsMultiplayerClient
         private SkinnedMeshRenderer rEyeball;
         private MeshRenderer glasses;
 
+        public GameObject jiminyRibbon;
+
         public Hat hat;
         public (Grabable, Grabable) heldItems;
+
+        public bool netCollisionsEnabled = true;
 
         private static Dictionary<string, GameObject> savablePrefabs = new Dictionary<string, GameObject>();
 
@@ -86,88 +72,87 @@ namespace BabyStepsMultiplayerClient
         }
 
         // --- Runtime Update (Mainline) ---
+        private BoneSnapshot currentBoneGroup;
         public void UpdateBones(TransformNet[] bonesToUpdate, int kickoffPoint)
         {
+            BoneSnapshot snapshot;
+            if (kickoffPoint != 0) snapshot = currentBoneGroup;
+            else
+            {
+                if (currentBoneGroup != null)
+                {
+                    snapshotBuffer.Enqueue(currentBoneGroup);
+                    while (snapshotBuffer.Count > 10) snapshotBuffer.Dequeue(); // Prevent infinite growth
+                }
+
+                snapshot = new BoneSnapshot(bones.Length);
+                snapshot.time = Time.timeAsDouble;
+            }
+
             for (int i = kickoffPoint; i < bonesToUpdate.Length; i++)
             {
                 var bone = bonesToUpdate[i];
-                var currentCBone = bones[i];
-                if (currentCBone == null) break;
+                if (bones[bone.heirarchyIndex] == null) continue;
 
-                previousBonePositions[i] = currentCBone.position;
-                previousBoneRotations[i] = currentCBone.rotation;
-
-                Vector3 targetPos = new Vector3(bone.position.X, bone.position.Y, bone.position.Z);
-                Quaternion targetRot = new Quaternion(bone.rotation.X, bone.rotation.Y, bone.rotation.Z, bone.rotation.W);
-                targetBonePositions[i] = targetPos;
-                targetBoneRotations[i] = targetRot;
-
-                bonesUpdated[i] = true;
+                snapshot.transformNets[bone.heirarchyIndex] = bone;
             }
 
-            boneLerpTimer = 0f;
-
-            if (!collidersHaveBeenEnabled) 
-            { 
-                foreach (CapsuleCollider cc in capsuleColliders) { cc.enabled = true; } collidersHaveBeenEnabled = true; 
-
-            }
+            currentBoneGroup = snapshot;
         }
 
-        public void InterpolateBoneTransforms(float deltaTime)
+        public void InterpolateBoneTransforms()
         {
-            if (bones == null) return;
+            if (snapshotBuffer.Count < 2) { skinnedMeshRenderer.gameObject.active = false; textObj.active = false; return; }
 
-            boneLerpTimer += deltaTime;
-            float t = Mathf.Clamp01(boneLerpTimer / boneLerpDuration);
+            if (!skinnedMeshRenderer.gameObject.active) { skinnedMeshRenderer.gameObject.active = true; textObj.active = true; }
 
-            t = t * t * (3f - 2f * t); // Cubic Hermite Smoothstep easing
+            double renderTime = Time.timeAsDouble - INTERPDELAY;
 
-            for (int i = 0; i < bones.Length; i++)
+            BoneSnapshot prev = null, next = null;
+            foreach (var snap in snapshotBuffer)
             {
-                if (bones[i] == null) continue;
-                if (!bonesUpdated[i]) continue;
-
-                Vector3 interpolatedPos = Vector3.Lerp(previousBonePositions[i], targetBonePositions[i], t);
-                Quaternion interpolatedRot = Quaternion.Slerp(previousBoneRotations[i], targetBoneRotations[i], t);
-
-                bones[i].position = interpolatedPos;
-                bones[i].rotation = interpolatedRot;
-
-                if (boneToRbMap.TryGetValue(bones[i], out var rbMap))
-                {
-                    Rigidbody rb = rbMap.mainRb;
-                    Transform tr = rb.transform;
-
-                    rb.isKinematic = false;
-
-                    Vector3 delta = rbMap.mainRb.transform.position - rbMap.previousPosition;
-                    if (delta.sqrMagnitude > Mathf.Epsilon)
-                    {
-                        Vector3 velocity = (delta / deltaTime);
-                        rb.velocity = velocity;
-                    }
-                    rbMap.previousPosition = tr.position;
-
-                    Quaternion deltaRotation = tr.rotation * Quaternion.Inverse(rbMap.previousRotation);
-                    deltaRotation.ToAngleAxis(out float angleInDegrees, out Vector3 axis);
-                    if (angleInDegrees > 180f) angleInDegrees -= 360f;
-                    if (Mathf.Abs(angleInDegrees) > Mathf.Epsilon)
-                    {
-                        Vector3 angularVelocity = axis * angleInDegrees * Mathf.Deg2Rad / deltaTime;
-                        rb.angularVelocity = angularVelocity * 0.2f;
-                    }
-                    rbMap.previousRotation = tr.rotation;
-
-                    rbMap.waterObject.FixedUpdate();
-
-                    rb.isKinematic = true;
-                }
+                if (snap.time <= renderTime) prev = snap;
+                if (snap.time > renderTime) { next = snap; break; }
             }
 
-            foreach ((Transform, Transform) b2c in boneToCrusherList)
+            if (prev == null || next == null) return; // Not enough data to interpolate
+
+            double t = (renderTime - prev.time) / (next.time - prev.time);
+            float tf = Mathf.Clamp01((float)t);
+
+            for (int i = 0; i < prev.transformNets.Length; i++)
             {
-                b2c.Item2.position = b2c.Item1.position;
+                var prevNet = prev.transformNets[i];
+                var nextNet = next.transformNets[i];
+
+                if (prevNet == null || nextNet == null) continue; // BUG: Regularly happens, right hand bone not updated
+
+                int hIdx = prevNet.heirarchyIndex;
+                if (hIdx < 0 || hIdx >= bones.Length) continue;
+
+                var bone = bones[hIdx];
+                if (bone == null) continue;
+
+                var ppos = prev.transformNets[i].position;
+                Vector3 prevPos = new Vector3(ppos.X, ppos.Y, ppos.Z);
+                var npos = next.transformNets[i].position;
+                Vector3 nextPos = new Vector3(npos.X, npos.Y, npos.Z);
+
+                var prot = prev.transformNets[i].rotation;
+                Quaternion prevRot = new Quaternion(prot.X, prot.Y, prot.Z, prot.W);
+                var nrot = next.transformNets[i].rotation;
+                Quaternion nextRot = new Quaternion(nrot.X, nrot.Y, nrot.Z, nrot.W);
+
+                bone.position = Vector3.Lerp(prevPos, nextPos, tf);
+                bone.rotation = Quaternion.Slerp(prevRot, nextRot, tf);
+            }
+
+            foreach ((Transform, Transform) b2c in boneToCrusherList) b2c.Item2.position = b2c.Item1.position;
+
+            if (!collidersHaveBeenEnabled)
+            {
+                if (Core.thisInstance.serverConnectUI.uiCollisionsEnabled && netCollisionsEnabled) foreach (CapsuleCollider cc in capsuleColliders) { cc.enabled = true; }
+                collidersHaveBeenEnabled = true;
             }
         }
 
@@ -215,6 +200,22 @@ namespace BabyStepsMultiplayerClient
         }
 
         // --- Network ---
+        public void EnableCollision()
+        {
+            foreach (CapsuleCollider cc in capsuleColliders)
+            {
+                cc.enabled = true;
+            }
+        }
+
+        public void DisableCollision()
+        {
+            foreach (CapsuleCollider cc in capsuleColliders)
+            {
+                cc.enabled = false;
+            }
+        }
+
         public void HoldItem(string grabableName, int handIndex, Vector3 localPosition, Quaternion localRotation)
         {
             Grabable item;
@@ -337,18 +338,21 @@ namespace BabyStepsMultiplayerClient
             Color rC = rEyeball.material.GetColor("_Color");
             rC.a = opacity;
             rEyeball.material.SetColor("_Color", rC);
+
+            Color tmpColor = textMesh.color;
+            tmpColor.a = opacity;
+            textMesh.color = tmpColor;
         }
 
         private void StdMatSetup(Material mat)
         {
-            //mat.SetFloat("_Mode", 3);
             mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
             mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
             mat.SetInt("_ZWrite", 1);
             mat.DisableKeyword("_ALPHATEST_ON");
             mat.DisableKeyword("_ALPHABLEND_ON");
             mat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
-            mat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent; // Makes the eyes look creepy!
+            mat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
         }
 
         private void MaterialKeywordHelper(Material mat)
@@ -484,6 +488,9 @@ namespace BabyStepsMultiplayerClient
         // --- Constructor Helpers ---
         private void SetupMaterials()
         {
+            jiminyRibbon = FindChildByKeyword(mesh, "JiminysCricketsRibbon").gameObject;
+            jiminyRibbon.active = false;
+
             skinnedMeshRenderer = mesh.FindChild("Nathan.001").GetComponent<SkinnedMeshRenderer>();
             var materialsArray = skinnedMeshRenderer.materials;
 
@@ -539,48 +546,9 @@ namespace BabyStepsMultiplayerClient
             feet = new FootData[2];
             bones = ExtractValidBones(meshBones, mesh);
             int boneCount = bones.Length;
-            previousBonePositions = new Vector3[boneCount];
-            previousBoneRotations = new Quaternion[boneCount];
-            targetBonePositions = new Vector3[boneCount];
-            targetBoneRotations = new Quaternion[boneCount];
-            bonesUpdated = new bool[bones.Length];
 
             // Set all clone bone local positions to model bind poses to reset facial expression and finger poses
-            Matrix4x4[] bindPoses = skinnedMeshRenderer.sharedMesh.bindposes;
-            Transform rootBone = skinnedMeshRenderer.rootBone;
-
-            for (int i = 0; i < meshBones.Length; i++)
-            {
-                Transform bone = meshBones[i];
-                Matrix4x4 bindPoseInverse = bindPoses[i].inverse;
-
-                Vector3 position;
-                Quaternion rotation;
-
-                if (bone.parent == null)
-                {
-                    // Root bone: bind pose is already in mesh space
-                    position = bindPoseInverse.GetColumn(3);
-                    rotation = Quaternion.LookRotation(
-                        bindPoseInverse.GetColumn(2),
-                        bindPoseInverse.GetColumn(1)
-                    );
-                }
-                else
-                {
-                    // Convert bind pose from mesh space to parent local space
-                    Matrix4x4 localBindPose = (bone.parent.worldToLocalMatrix * rootBone.localToWorldMatrix) * bindPoseInverse;
-
-                    position = localBindPose.GetColumn(3);
-                    rotation = Quaternion.LookRotation(
-                        localBindPose.GetColumn(2),
-                        localBindPose.GetColumn(1)
-                    );
-                }
-
-                bone.localPosition = position;
-                bone.localRotation = rotation;
-            }
+            ResetBonesToBind();
 
             var basePlayerBones = FindMatchingChildren(basePlayer.transform.FindChild("PuppetMaster"), bones.ToList());
 
@@ -608,7 +576,6 @@ namespace BabyStepsMultiplayerClient
             colliderData.Add("foot.r", (new Vector3(0, 0.1f, -0.02f), 0.06f, 0.3f, 1));
 
             boneToCrusherList = new();
-            boneToRbMap = new();
 
             foreach (var bone in bones)
             {
@@ -742,6 +709,46 @@ namespace BabyStepsMultiplayerClient
                         }
                     }
                 }
+            }
+        }
+
+        public void ResetBonesToBind()
+        {
+            Transform[] meshBones = skinnedMeshRenderer.bones;
+            Matrix4x4[] bindPoses = skinnedMeshRenderer.sharedMesh.bindposes;
+            Transform rootBone = skinnedMeshRenderer.rootBone;
+
+            for (int i = 0; i < meshBones.Length; i++)
+            {
+                Transform bone = meshBones[i];
+                Matrix4x4 bindPoseInverse = bindPoses[i].inverse;
+
+                Vector3 position;
+                Quaternion rotation;
+
+                if (bone.parent == null)
+                {
+                    // Root bone: bind pose is already in mesh space
+                    position = bindPoseInverse.GetColumn(3);
+                    rotation = Quaternion.LookRotation(
+                        bindPoseInverse.GetColumn(2),
+                        bindPoseInverse.GetColumn(1)
+                    );
+                }
+                else
+                {
+                    // Convert bind pose from mesh space to parent local space
+                    Matrix4x4 localBindPose = (bone.parent.worldToLocalMatrix * rootBone.localToWorldMatrix) * bindPoseInverse;
+
+                    position = localBindPose.GetColumn(3);
+                    rotation = Quaternion.LookRotation(
+                        localBindPose.GetColumn(2),
+                        localBindPose.GetColumn(1)
+                    );
+                }
+
+                bone.localPosition = position;
+                bone.localRotation = rotation;
             }
         }
     }

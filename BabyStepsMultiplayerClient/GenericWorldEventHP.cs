@@ -57,6 +57,8 @@ namespace BabyStepsMultiplayerClient
         {
             if (Core.thisInstance.client == null) return;
 
+            Core.thisInstance.SendDonHat(hat);
+
             for (int i = 0; i < __instance.handItems.Length; i++)
             {
                 Grabable item = __instance.handItems[i];
@@ -65,8 +67,6 @@ namespace BabyStepsMultiplayerClient
                     Core.thisInstance.SendDropGrabable(i);
                 }
             }
-
-            Core.thisInstance.SendDonHat(hat);
         }
     }
 
