@@ -421,6 +421,7 @@ namespace BabyStepsMultiplayerClient
 
             Send(reusablePacketBuffer.ToArray(), DeliveryMethod.ReliableOrdered);
         }
+        /*
         public void SendParticle(byte[] raw)
         {
             reusablePacketBuffer.Clear();
@@ -433,6 +434,7 @@ namespace BabyStepsMultiplayerClient
 
             localSequenceNumber++;
         }
+        */
         private void HandleBoneSending()
         {
             if (!sendBoneUpdates) return;

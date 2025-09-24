@@ -527,6 +527,7 @@
 		<Compile Include="GenericWorldEventHP.cs" />
 		<Compile Include="IngameMessagesUI.cs" />
 		<Compile Include="NateMP.cs" />
+		<Compile Include="PlayersTabUI.cs" />
 		<Compile Include="ServerConnectUI.cs" />
 		<Compile Include="TransformNet.cs" />
 	</ItemGroup>

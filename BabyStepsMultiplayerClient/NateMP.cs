@@ -27,7 +27,8 @@ namespace BabyStepsMultiplayerClient
         private (Transform, Transform) hands;
         private List<CapsuleCollider> capsuleColliders;
         private List<(Transform, Transform)> boneToCrusherList;
-        private bool collidersHaveBeenEnabled = false;
+        private bool collidersHaveBeenInitialized = false;
+        private bool collidersCurrentlyEnabled = false;
 
         private readonly Queue<BoneSnapshot> snapshotBuffer = new();
         private const double INTERPDELAY = 0.1; // 100ms
@@ -149,10 +150,12 @@ namespace BabyStepsMultiplayerClient
 
             foreach ((Transform, Transform) b2c in boneToCrusherList) b2c.Item2.position = b2c.Item1.position;
 
-            if (!collidersHaveBeenEnabled)
+            if (!collidersHaveBeenInitialized) { foreach (CapsuleCollider cc in capsuleColliders) cc.enabled = false; collidersHaveBeenInitialized = true; }
+            bool shouldEnable = Core.thisInstance.serverConnectUI.uiCollisionsEnabled && netCollisionsEnabled;
+            if (collidersCurrentlyEnabled != shouldEnable)
             {
-                if (Core.thisInstance.serverConnectUI.uiCollisionsEnabled && netCollisionsEnabled) foreach (CapsuleCollider cc in capsuleColliders) { cc.enabled = true; }
-                collidersHaveBeenEnabled = true;
+                foreach (CapsuleCollider cc in capsuleColliders) cc.enabled = shouldEnable;
+                collidersCurrentlyEnabled = shouldEnable;
             }
         }
 

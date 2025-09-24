@@ -10,6 +10,7 @@ using static Il2CppTechnie.PhysicsCreator.SphereUtils;
 
 namespace BabyStepsMultiplayerClient
 {
+    /*
     [HarmonyPatch(typeof(ParticleParty), "OnPlant")]
     public static class PP_OnPlant_Patch
     {
@@ -50,6 +51,7 @@ namespace BabyStepsMultiplayerClient
             Core.thisInstance.SendParticle(packet.ToArray());
         }
     }
+    */
     [HarmonyPatch(typeof(PlayerMovement), "WearHat")]
     public static class PM_WearHat_Patch
     {
