@@ -1,4 +1,5 @@
 ﻿using Il2Cpp;
+using Il2CppFluffyUnderware.DevTools;
 using Il2CppFluffyUnderware.DevTools.Extensions;
 using Il2CppInterop.Runtime;
 using Il2CppNWH.DWP2.WaterData;
@@ -27,8 +28,8 @@ namespace BabyStepsMultiplayerClient
         private (Transform, Transform) hands;
         private List<CapsuleCollider> capsuleColliders;
         private List<(Transform, Transform)> boneToCrusherList;
-        private bool collidersHaveBeenInitialized = false;
-        private bool collidersCurrentlyEnabled = false;
+
+        bool collidersInitialized = false;
 
         private readonly Queue<BoneSnapshot> snapshotBuffer = new();
         private const double INTERPDELAY = 0.1; // 100ms
@@ -103,6 +104,40 @@ namespace BabyStepsMultiplayerClient
 
         public void InterpolateBoneTransforms()
         {
+            if (!collidersInitialized && snapshotBuffer.Count > 0)
+            {
+                // Get latest bone snapshot and set position and rotation to that immediately instead of lerping
+                BoneSnapshot latest = null;
+                while (snapshotBuffer.Count > 0) latest = snapshotBuffer.Dequeue();
+
+                for (int i = 0; i < latest.transformNets.Length; i++)
+                {
+                    var net = latest.transformNets[i];
+                    if (net == null) continue;
+
+                    int hIdx = net.heirarchyIndex;
+                    if (hIdx < 0 || hIdx >= bones.Length) continue;
+
+                    var bone = bones[hIdx];
+                    if (bone == null) continue;
+
+                    var npos = net.position;
+                    Vector3 pos = new Vector3(npos.X, npos.Y, npos.Z);
+
+                    var nrot = net.rotation;
+                    Quaternion rot = new Quaternion(nrot.X, nrot.Y, nrot.Z, nrot.W);
+
+                    bone.position = pos;
+                    bone.rotation = rot;
+                }
+
+                bool shouldEnableColliders = Core.thisInstance.serverConnectUI.uiCollisionsEnabled && netCollisionsEnabled;
+                foreach (CapsuleCollider cc in capsuleColliders) cc.enabled = shouldEnableColliders;
+
+                collidersInitialized = true;
+                return;
+            }
+
             if (snapshotBuffer.Count < 2) { skinnedMeshRenderer.gameObject.active = false; textObj.active = false; return; }
 
             if (!skinnedMeshRenderer.gameObject.active) { skinnedMeshRenderer.gameObject.active = true; textObj.active = true; }
@@ -126,7 +161,7 @@ namespace BabyStepsMultiplayerClient
                 var prevNet = prev.transformNets[i];
                 var nextNet = next.transformNets[i];
 
-                if (prevNet == null || nextNet == null) continue; // BUG: Regularly happens, right hand bone not updated
+                if (prevNet == null || nextNet == null) continue;
 
                 int hIdx = prevNet.heirarchyIndex;
                 if (hIdx < 0 || hIdx >= bones.Length) continue;
@@ -149,14 +184,6 @@ namespace BabyStepsMultiplayerClient
             }
 
             foreach ((Transform, Transform) b2c in boneToCrusherList) b2c.Item2.position = b2c.Item1.position;
-
-            if (!collidersHaveBeenInitialized) { foreach (CapsuleCollider cc in capsuleColliders) cc.enabled = false; collidersHaveBeenInitialized = true; }
-            bool shouldEnable = Core.thisInstance.serverConnectUI.uiCollisionsEnabled && netCollisionsEnabled;
-            if (collidersCurrentlyEnabled != shouldEnable)
-            {
-                foreach (CapsuleCollider cc in capsuleColliders) cc.enabled = shouldEnable;
-                collidersCurrentlyEnabled = shouldEnable;
-            }
         }
 
         public void RefreshNameAndColor()

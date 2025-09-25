@@ -54,7 +54,8 @@ namespace BabyStepsMultiplayerClient
             GUILayout.Label("Server Port:");
             uiPORT = GUILayout.TextField(uiPORT, 5);
             GUILayout.Label("Password:");
-            uiPassword = GUILayout.TextField(uiPassword, 5);
+            //uiPassword = GUILayout.TextField(uiPassword, 32);
+            uiPassword = GUILayout.PasswordField(uiPassword, '*', 32);
 
             GUILayout.Space(10);
             GUILayout.Label("Nickname:");

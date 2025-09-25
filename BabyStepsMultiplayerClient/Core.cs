@@ -10,7 +10,7 @@ using System.Net.Sockets;
 using System.Text;
 using UnityEngine;
 
-[assembly: MelonInfo(typeof(BabyStepsMultiplayerClient.Core), "BabyStepsMultiplayerClient", "1.0.1", "Caleb Orchard", null)]
+[assembly: MelonInfo(typeof(BabyStepsMultiplayerClient.Core), "BabyStepsMultiplayerClient", "1.0.2", "Caleb Orchard", null)]
 [assembly: MelonGame("DefaultCompany", "BabySteps")]
 
 namespace BabyStepsMultiplayerClient
