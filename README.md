@@ -16,7 +16,7 @@ Cutscenes are triggered independently on each client and do not affect other pla
 [Join the Discord!](https://discord.gg/fpBQW5cKdE)
 ---
 
-[Tutorial Video for Setup](https://youtu.be/9lGTPcUEkjc)
+[Tutorial Video for Setup](https://youtu.be/QvQRWCoEZUk)
 ---
 
 ## 📸 Screenshots
