@@ -9,9 +9,6 @@ using MelonLoader;
     "https://github.com/caleborchard/Baby-Steps-Multiplayer-Mod-Client")]
 [assembly: MelonGame("DefaultCompany", "BabySteps")]
 
-// This will prevent the Mod from attempting to run on anything below MelonLoader v0.7.2
-[assembly: VerifyLoaderVersion("0.7.2", true)]
-
 namespace BabyStepsMultiplayerClient
 {
     public class Core : MelonMod
