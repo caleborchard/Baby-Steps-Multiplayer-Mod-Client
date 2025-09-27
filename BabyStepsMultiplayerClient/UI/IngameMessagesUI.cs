@@ -13,6 +13,8 @@ namespace BabyStepsMultiplayerClient.UI
         }
 
         private readonly List<Message> messages = new List<Message>();
+        private readonly List<Message> messagesToRemove = new List<Message>();
+
         private readonly float fadeDuration = 3f;
 
         public IngameMessagesUI() { }
@@ -40,7 +42,7 @@ namespace BabyStepsMultiplayerClient.UI
 
                 if (alpha <= 0f)
                 {
-                    messages.RemoveAt(i);
+                    messagesToRemove.Add(msg);
                     continue;
                 }
 
@@ -51,8 +53,13 @@ namespace BabyStepsMultiplayerClient.UI
 
                 yOffset += 20;
             }
-
             GUI.color = Color.white;
+
+            if (messagesToRemove.Count > 0)
+            {
+                messages.RemoveAll(messagesToRemove.Contains);
+                messagesToRemove.Clear();
+            }
         }
     }
 }
