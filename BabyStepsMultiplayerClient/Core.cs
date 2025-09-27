@@ -10,8 +10,15 @@ using System.Net.Sockets;
 using System.Text;
 using UnityEngine;
 
-[assembly: MelonInfo(typeof(BabyStepsMultiplayerClient.Core), "BabyStepsMultiplayerClient", "1.0.2", "Caleb Orchard", null)]
+[assembly: MelonInfo(typeof(BabyStepsMultiplayerClient.Core),
+    "BabyStepsMultiplayerClient",
+    "1.1.0",
+    "Caleb Orchard", 
+    "https://github.com/caleborchard/Baby-Steps-Multiplayer-Mod-Client")]
 [assembly: MelonGame("DefaultCompany", "BabySteps")]
+
+// This will prevent the Mod from attempting to run on anything below MelonLoader v0.7.2
+[assembly: VerifyLoaderVersion("0.7.2", true)]
 
 namespace BabyStepsMultiplayerClient
 {
