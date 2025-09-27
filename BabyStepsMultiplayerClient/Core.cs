@@ -472,7 +472,7 @@ namespace BabyStepsMultiplayerClient
         public void UpdateNicknameAndColor()
         {
             reusablePacketBuffer.Clear();
-            reusablePacketBuffer.Add((byte)eOpCode.UpdateInformation);
+            reusablePacketBuffer.Add((byte)eOpCode.UpdatePlayerInformation);
             reusablePacketBuffer.Add((byte)(serverConnectUI.uiColorR * 255));
             reusablePacketBuffer.Add((byte)(serverConnectUI.uiColorG * 255));
             reusablePacketBuffer.Add((byte)(serverConnectUI.uiColorB * 255));
