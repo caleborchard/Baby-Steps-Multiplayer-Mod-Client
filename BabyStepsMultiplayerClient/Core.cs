@@ -22,15 +22,6 @@ namespace BabyStepsMultiplayerClient
 {
     public class Core : MelonMod
     {
-        // --- Constants ---
-        private const byte OPCODE_BPU = 0x01; // Bone position update
-        private const byte OPCODE_UCI = 0x02; // Update color information (used for nickname too now)
-        private const byte OPCODE_GWE = 0x03; // Generic World Event
-        private const byte OPCODE_AAE = 0x04; // Accessory Add(Don) Event
-        private const byte OPCODE_ARE = 0x05; // Accessory Remove(Doff) Event
-        private const byte OPCODE_JRE = 0x06; // Jiminy Ribbon Event
-        private const byte OPCODE_CTE = 0x07; // Collision Toggle Event
-
         // --- Static Scene References ---
         public static Core thisInstance;
         private static GameObject basePlayer;
@@ -339,7 +330,7 @@ namespace BabyStepsMultiplayerClient
         public void SendCollisionToggle(bool state)
         {
             reusablePacketBuffer.Clear();
-            reusablePacketBuffer.Add(OPCODE_CTE);
+            reusablePacketBuffer.Add((byte)eOpCode.ToggleCollisions);
             reusablePacketBuffer.Add(Convert.ToByte(state));
 
             Send(reusablePacketBuffer.ToArray(), DeliveryMethod.ReliableOrdered);
@@ -347,7 +338,7 @@ namespace BabyStepsMultiplayerClient
         public void SendJiminyRibbonState()
         {
             reusablePacketBuffer.Clear();
-            reusablePacketBuffer.Add(OPCODE_JRE);
+            reusablePacketBuffer.Add((byte)eOpCode.JiminyRibbon);
             reusablePacketBuffer.Add(Convert.ToByte(lastJiminyState));
 
             Send(reusablePacketBuffer.ToArray(), DeliveryMethod.ReliableOrdered);
@@ -365,7 +356,7 @@ namespace BabyStepsMultiplayerClient
             if (grabName.EndsWith(cloneText)) grabName = grabName.Substring(0, grabName.Length - (cloneText).Length);
 
             reusablePacketBuffer.Clear();
-            reusablePacketBuffer.Add(OPCODE_AAE);
+            reusablePacketBuffer.Add((byte)eOpCode.AddAccessory);
             reusablePacketBuffer.Add(0x01); // Held item
 
             reusablePacketBuffer.Add((byte)handIndex);
@@ -386,7 +377,7 @@ namespace BabyStepsMultiplayerClient
         public void SendDropGrabable(int handIndex)
         {
             reusablePacketBuffer.Clear();
-            reusablePacketBuffer.Add(OPCODE_ARE);
+            reusablePacketBuffer.Add((byte)eOpCode.RemoveAccessory);
             reusablePacketBuffer.Add(0x01); // Held item
 
             reusablePacketBuffer.Add((byte)handIndex);
@@ -402,7 +393,7 @@ namespace BabyStepsMultiplayerClient
             if (hatName.EndsWith(cloneText)) hatName = hatName.Substring(0, hatName.Length - cloneText.Length);
 
             reusablePacketBuffer.Clear();
-            reusablePacketBuffer.Add(OPCODE_AAE);
+            reusablePacketBuffer.Add((byte)eOpCode.AddAccessory);
             reusablePacketBuffer.Add(0x00); // Hat
 
             reusablePacketBuffer.AddRange(BitConverter.GetBytes(localPosition.x));
@@ -421,7 +412,7 @@ namespace BabyStepsMultiplayerClient
         public void SendDoffHat()
         {
             reusablePacketBuffer.Clear();
-            reusablePacketBuffer.Add(OPCODE_ARE);
+            reusablePacketBuffer.Add((byte)eOpCode.RemoveAccessory);
             reusablePacketBuffer.Add(0x00); // Hat
 
             Send(reusablePacketBuffer.ToArray(), DeliveryMethod.ReliableOrdered);
@@ -461,7 +452,7 @@ namespace BabyStepsMultiplayerClient
         private void SendBones(TransformNet[] bones, int kickoffPoint)
         {
             reusablePacketBuffer.Clear();
-            reusablePacketBuffer.Add(OPCODE_BPU);
+            reusablePacketBuffer.Add((byte)eOpCode.BonePositionUpdate);
             reusablePacketBuffer.Add((byte)kickoffPoint);
             reusablePacketBuffer.AddRange(BitConverter.GetBytes(localSequenceNumber));
             reusablePacketBuffer.AddRange(TransformNet.Serialize(bones));
@@ -481,7 +472,7 @@ namespace BabyStepsMultiplayerClient
         public void UpdateNicknameAndColor()
         {
             reusablePacketBuffer.Clear();
-            reusablePacketBuffer.Add(OPCODE_UCI);
+            reusablePacketBuffer.Add((byte)eOpCode.UpdateInformation);
             reusablePacketBuffer.Add((byte)(serverConnectUI.uiColorR * 255));
             reusablePacketBuffer.Add((byte)(serverConnectUI.uiColorG * 255));
             reusablePacketBuffer.Add((byte)(serverConnectUI.uiColorB * 255));
