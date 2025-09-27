@@ -26,6 +26,12 @@ namespace BabyStepsMultiplayerClient.Networking
 
         public void Update()
         {
+            if (jiminyRibbon == null)
+            {
+                lastJiminyState = false;
+                return;
+            }
+
             if (lastJiminyState == jiminyRibbon.active)
                 return;
 
