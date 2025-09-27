@@ -13,10 +13,10 @@ using UnityEngine.AddressableAssets;
 
 namespace BabyStepsMultiplayerClient.Networking
 {
-    public class NateMP
+    public class RemotePlayer
     {
         // --- Mainline ---
-        public static Queue<NateMP> nateRecycler = new();
+        public static Queue<RemotePlayer> nateRecycler = new();
 
         public GameObject baseObj;
         public Transform mesh;
@@ -56,21 +56,21 @@ namespace BabyStepsMultiplayerClient.Networking
 
         private static Dictionary<string, GameObject> savablePrefabs = new Dictionary<string, GameObject>();
 
-        public NateMP(GameObject basePlayer, Transform baseMesh, int numClones, ConcurrentQueue<Action> mainThreadActions)
+        public RemotePlayer(int numClones, ConcurrentQueue<Action> mainThreadActions)
         {
-            PlayerMovement basePlayerMovement = basePlayer.GetComponent<PlayerMovement>();
+            PlayerMovement basePlayerMovement = Core.localPlayer.basePlayer.GetComponent<PlayerMovement>();
 
             baseObj = new GameObject($"NateClone{numClones}");
 
-            mesh = UnityEngine.Object.Instantiate(baseMesh);
+            mesh = UnityEngine.Object.Instantiate(Core.localPlayer.baseMesh);
             mesh.name = "NateMesh";
             mesh.parent = baseObj.transform;
             MelonCoroutines.Start(DelayedComponentStrip(mesh));
 
             SetupMaterials();
             SetupEyes();
-            SetupCrushers(basePlayer);
-            SetupBonesAndColliders(basePlayer, baseMesh);
+            SetupCrushers();
+            SetupBonesAndColliders();
         }
 
         // --- Runtime Update (Mainline) ---
@@ -131,7 +131,7 @@ namespace BabyStepsMultiplayerClient.Networking
                     bone.rotation = rot;
                 }
 
-                bool shouldEnableColliders = Core.thisInstance.serverConnectUI.uiCollisionsEnabled && netCollisionsEnabled;
+                bool shouldEnableColliders = Core.uiManager.serverConnectUI.uiCollisionsEnabled && netCollisionsEnabled;
                 foreach (CapsuleCollider cc in capsuleColliders) cc.enabled = shouldEnableColliders;
 
                 collidersInitialized = true;
@@ -564,13 +564,13 @@ namespace BabyStepsMultiplayerClient.Networking
             StdMatSetup(rEyeball.material);
         }
 
-        private void SetupCrushers(GameObject basePlayer)
+        private void SetupCrushers()
         {
-            crushers = UnityEngine.Object.Instantiate(basePlayer.transform.Find("ParticleHouse/Crushers"));
+            crushers = UnityEngine.Object.Instantiate(Core.localPlayer.basePlayer.transform.Find("ParticleHouse/Crushers"));
             crushers.parent = baseObj.transform;
         }
 
-        private void SetupBonesAndColliders(GameObject basePlayer, Transform baseMesh)
+        private void SetupBonesAndColliders()
         {
             Transform[] meshBones = skinnedMeshRenderer.bones;
             feet = new FootData[2];
@@ -580,7 +580,7 @@ namespace BabyStepsMultiplayerClient.Networking
             // Set all clone bone local positions to model bind poses to reset facial expression and finger poses
             ResetBonesToBind();
 
-            var basePlayerBones = FindMatchingChildren(basePlayer.transform.FindChild("PuppetMaster"), bones.ToList());
+            var basePlayerBones = FindMatchingChildren(Core.localPlayer.basePlayer.transform.FindChild("PuppetMaster"), bones.ToList());
 
             // Custom bone sizes because it gets weird if you copy them from PuppetMaster
             capsuleColliders = new List<CapsuleCollider>();

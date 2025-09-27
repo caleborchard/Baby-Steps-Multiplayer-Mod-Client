@@ -10,9 +10,7 @@ namespace BabyStepsMultiplayerClient.Patches
         [HarmonyPatch(typeof(SaveGod), nameof(SaveGod.LoadSave))]
         private static bool LoadSave_Prefix(SaveGod __instance)
         {
-            Core _core = Core.thisInstance;
-            if (_core.client != null)
-                _core.Disconnect();
+            Core.networkManager.Disconnect();
 
             // Run Original
             return true;

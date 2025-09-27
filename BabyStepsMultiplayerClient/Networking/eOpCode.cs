@@ -4,7 +4,7 @@
     {
         // Player
         BonePositionUpdate = 0x01, // Bone position update
-        UpdatePlayerInformation = 0x02, // Update color information (used for nickname too now)
+        PlayerInformation = 0x02, // Update color information (used for nickname too now)
 
         // World
         GenericWorldEvent = 0x03, // Generic World Event

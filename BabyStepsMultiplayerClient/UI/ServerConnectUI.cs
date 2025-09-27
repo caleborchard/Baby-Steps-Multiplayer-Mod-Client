@@ -23,17 +23,14 @@ namespace BabyStepsMultiplayerClient.UI
         public float uiColorR, uiColorG, uiColorB;
         public bool uiCollisionsEnabled = true;
 
-        private Core _core;
-
         // --- Mainline ---
-        public ServerConnectUI(Core core)
+        public ServerConnectUI()
         {
             uiNNTB = "Nate";
             uiIP = "127.0.0.1";
             uiPORT = "7777";
             uiPassword = "";
             uiColorR = 1f; uiColorG = 1f; uiColorB = 1f;
-            _core = core;
         }
         public void DrawUI()
         {
@@ -61,13 +58,13 @@ namespace BabyStepsMultiplayerClient.UI
             GUILayout.Label("Nickname:");
             uiNNTB = FilterKeyboardCharacters(GUILayout.TextField(uiNNTB, 20));
 
-            GUI.enabled = !(_core.client == null);
+            GUI.enabled = !(Core.networkManager.client == null);
             if (GUILayout.Button((uiCollisionsEnabled ? "Disable" : "Enable") + " Collisions"))
             {
                 uiCollisionsEnabled = !uiCollisionsEnabled;
-                _core.SendCollisionToggle(uiCollisionsEnabled);
+                Core.networkManager.SendCollisionToggle(uiCollisionsEnabled);
 
-                foreach (var player in _core.players)
+                foreach (var player in Core.networkManager.players)
                 {
                     if (uiCollisionsEnabled && player.Value.netCollisionsEnabled) player.Value.EnableCollision();
                     else player.Value.DisableCollision();
@@ -88,30 +85,30 @@ namespace BabyStepsMultiplayerClient.UI
             GUI.color = Color.white;
 
             GUILayout.Space(10);
-            GUI.enabled = _core.client == null;
+            GUI.enabled = Core.networkManager.client == null;
             if (GUILayout.Button("Connect"))
             {
-                if (_core.client == null)
+                if (Core.networkManager.client == null)
                 {
                     MelonLogger.Msg($"{uiNNTB}, {uiIP}:{uiPORT}");
-                    Core.baseColor = new Color(uiColorR, uiColorG, uiColorB);
+                    Core.localPlayer.baseColor = new Color(uiColorR, uiColorG, uiColorB);
                     SaveConfig();
-                    _core.connectToServer(uiIP, int.Parse(uiPORT), uiPassword);
+                    Core.networkManager.Connect(uiIP, int.Parse(uiPORT), uiPassword);
                 }
             }
 
-            GUI.enabled = !(_core.client == null);
-            if (GUILayout.Button("Update Appearance and Nickname") && _core.client != null)
+            GUI.enabled = !(Core.networkManager.client == null);
+            if (GUILayout.Button("Update Appearance and Nickname") && Core.networkManager.client != null)
             {
                 SaveConfig();
-                Core.mainThreadActions.Enqueue(_core.UpdateNicknameAndColor);
+                Core.networkManager.mainThreadActions.Enqueue(Core.networkManager.SendPlayerInformation);
             }
             GUI.enabled = true;
 
-            GUI.enabled = !(_core.client == null);
-            if (GUILayout.Button("Disconnect") && _core.client != null)
+            GUI.enabled = !(Core.networkManager.client == null);
+            if (GUILayout.Button("Disconnect") && Core.networkManager.client != null)
             {
-                _core.Disconnect();
+                Core.networkManager.Disconnect();
             }
             GUI.enabled = true;
 

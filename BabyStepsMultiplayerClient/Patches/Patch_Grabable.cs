@@ -13,10 +13,10 @@ namespace BabyStepsMultiplayerClient.Patches
             //Transform __0, // hand
             int __1) // handIndex
         {
-            if (Core.thisInstance.client == null) 
+            if (Core.networkManager.client == null) 
                 return;
 
-            Core.thisInstance.SendHoldGrabable(__instance, __1);
+            Core.networkManager.SendHoldGrabable(__instance, __1);
         }
     }
 }

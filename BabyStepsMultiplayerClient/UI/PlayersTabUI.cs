@@ -10,12 +10,6 @@ namespace BabyStepsMultiplayerClient.UI
 {
     public class PlayersTabUI
     {
-        private Core _core;
-
-        public PlayersTabUI(Core core)
-        {
-            _core = core;
-        }
         public void DrawUI()
         {
             float panelWidth = 300f;
@@ -23,7 +17,7 @@ namespace BabyStepsMultiplayerClient.UI
             float headerHeight = 30f;
             float margin = 10f;
 
-            int rowCount = Math.Max(1, _core.players.Count);
+            int rowCount = Math.Max(1, Core.networkManager.players.Count);
             float panelHeight = headerHeight + rowCount * rowHeight + margin;
 
             float x = (Screen.width - panelWidth) / 2f;
@@ -39,15 +33,15 @@ namespace BabyStepsMultiplayerClient.UI
                 alignment = TextAnchor.MiddleCenter
             };
 
-            if (_core.players.Count == 0)
+            if (Core.networkManager.players.Count == 0)
             {
                 GUILayout.Label("No players connected.", centeredLabel);
             }
             else
             {
-                foreach (var kvp in _core.players)
+                foreach (var kvp in Core.networkManager.players)
                 {
-                    NateMP player = kvp.Value;
+                    RemotePlayer player = kvp.Value;
                     GUILayout.Label(player.displayName, centeredLabel);
                 }
             }

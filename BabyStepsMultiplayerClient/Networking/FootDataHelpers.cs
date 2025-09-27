@@ -11,7 +11,7 @@ namespace BabyStepsMultiplayerClient.Networking
 {
     public class FootDataHelpers
     {
-        public static FootData DeserializeFootData(byte[] data, NateMP player)
+        public static FootData DeserializeFootData(byte[] data, RemotePlayer player)
         {
             int offset = 0;
 

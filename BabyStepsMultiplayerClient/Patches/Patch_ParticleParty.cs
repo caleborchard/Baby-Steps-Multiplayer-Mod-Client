@@ -12,12 +12,12 @@ namespace BabyStepsMultiplayerClient.Patches
         private static bool OnPlant_Prefix(ParticleParty __instance,
             FootData __0) // foot
         {
-            if (Core.thisInstance.client == null) 
+            if (Core.networkManager.client == null) 
                 return true;
 
-            if (Core.isRunningNetParticle) 
+            if (Core.networkManager.isRunningNetParticle) 
             {
-                Core.isRunningNetParticle = false; 
+                Core.networkManager.isRunningNetParticle = false; 
                 return true; 
             }
 
@@ -39,12 +39,12 @@ namespace BabyStepsMultiplayerClient.Patches
         private static bool OnSlip_Prefix(ParticleParty __instance,
             FootData __0) // foot
         {
-            if(Core.thisInstance.client == null) 
+            if(Core.networkManager.client == null) 
                 return true;
 
-            if (Core.isRunningNetParticle)
+            if (Core.networkManager.isRunningNetParticle)
             {
-                Core.isRunningNetParticle = false;
+                Core.networkManager.isRunningNetParticle = false;
                 return true;
             }
 

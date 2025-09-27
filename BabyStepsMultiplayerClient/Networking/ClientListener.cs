@@ -9,38 +9,33 @@ namespace BabyStepsMultiplayerClient.Networking
 {
     internal class ClientListener : INetEventListener
     {
-        private readonly Core _core;
-
-        public ClientListener(Core core) 
-            => _core = core;
-
         public void OnPeerConnected(NetPeer peer)
         {
-            _core.server = peer;
-            _core.UpdateNicknameAndColor();
+            Core.networkManager.server = peer;
+            Core.networkManager.SendPlayerInformation();
 
-            Hat hat = Core.basePlayerMovement.currentHat;
-            if (hat != null) 
-                _core.SendDonHat(hat);
+            Hat hat = Core.localPlayer.basePlayerMovement.currentHat;
+            if (hat != null)
+                Core.networkManager.SendDonHat(hat);
 
-            Grabable rightItem = Core.basePlayerMovement.handItems[0];
-            Grabable leftItem = Core.basePlayerMovement.handItems[1];
+            Grabable rightItem = Core.localPlayer.basePlayerMovement.handItems[0];
+            Grabable leftItem = Core.localPlayer.basePlayerMovement.handItems[1];
 
-            if (rightItem != null) 
-                _core.SendHoldGrabable(rightItem, 0);
-            if (leftItem != null) 
-                _core.SendHoldGrabable(leftItem, 1);
+            if (rightItem != null)
+                Core.networkManager.SendHoldGrabable(rightItem, 0);
+            if (leftItem != null)
+                Core.networkManager.SendHoldGrabable(leftItem, 1);
 
-            _core.SendJiminyRibbonState();
+            Core.networkManager.SendJiminyRibbonState(Core.localPlayer.lastJiminyState);
 
-            _core.SendCollisionToggle(_core.serverConnectUI.uiCollisionsEnabled);
+            Core.networkManager.SendCollisionToggle(Core.uiManager.serverConnectUI.uiCollisionsEnabled);
 
-            _core.ingameMessagesUI.AddMessage("Connected to server");
+            Core.uiManager.ingameMessagesUI.AddMessage("Connected to server");
         }
 
         public void OnPeerDisconnected(NetPeer peer, DisconnectInfo info)
         {
-            _core.Disconnect();
+            Core.networkManager.Disconnect();
             Resources.UnloadUnusedAssets();
         }
 
@@ -72,7 +67,7 @@ namespace BabyStepsMultiplayerClient.Networking
             byte[] data = new byte[fullData.Length - 2];
             Buffer.BlockCopy(fullData, 2, data, 0, data.Length);
 
-            _core.HandleServerMessage(data);
+            Core.networkManager.HandleServerMessage(data);
         }
 
         public void OnNetworkReceiveUnconnected(IPEndPoint ep, NetPacketReader reader, UnconnectedMessageType type) { }
