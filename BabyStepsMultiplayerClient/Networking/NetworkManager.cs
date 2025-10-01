@@ -1,4 +1,5 @@
-﻿using BabyStepsMultiplayerClient.Networking;
+﻿using BabyStepsMultiplayerClient.Debug;
+using BabyStepsMultiplayerClient.Networking;
 using Il2Cpp;
 using LiteNetLib;
 using LiteNetLib.Utils;
@@ -229,7 +230,7 @@ namespace BabyStepsMultiplayerClient.UI
             foreach (var player in players.Values)
             {
                 player.InterpolateBoneTransforms();
-                player.RotateNametagTowardsCamera(Core.localPlayer.camera);
+                player.RotateNametagTowardsCamera(Core.localPlayer.cinemachineBrain.ActiveVirtualCamera.VirtualCameraGameObject.transform.position);
                 player.HideNicknameOutsideDistance(Core.localPlayer.camera.position, 100f);
                 player.FadeByDistance(Core.localPlayer.camera);
             }
@@ -407,6 +408,8 @@ namespace BabyStepsMultiplayerClient.UI
             {
                 case 1: // UUID
                     {
+                        BBSMMdBug.Log("Personal UUID packet received");
+
                         uuid = data[1];
                         MelonLogger.Msg($"Received UUID: {uuid}");
                         break;
@@ -414,6 +417,8 @@ namespace BabyStepsMultiplayerClient.UI
 
                 case 2: // Player joined
                     {
+                        BBSMMdBug.Log("Player join packet received");
+
                         byte newUUID = data[1];
                         MelonLogger.Msg($"Player {newUUID} has connected.");
                         mainThreadActions.Enqueue(() =>
@@ -445,6 +450,8 @@ namespace BabyStepsMultiplayerClient.UI
 
                 case 3: // Player disconnected
                     {
+                        BBSMMdBug.Log("Player disconnect packet received");
+
                         byte disconnectedUUID = data[1];
                         if (players.TryGetValue(disconnectedUUID, out var player))
                         {
@@ -463,6 +470,8 @@ namespace BabyStepsMultiplayerClient.UI
 
                 case 4: // Appearance update
                     {
+                        BBSMMdBug.Log("Player appearance packet received");
+
                         byte playerUUID = data[1];
                         if (players.TryGetValue(playerUUID, out var targetPlayer)) ApplyAppearanceUpdate(targetPlayer, data);
                         else
@@ -496,6 +505,8 @@ namespace BabyStepsMultiplayerClient.UI
 
                 case 6: // Generic World Event
                     {
+                        BBSMMdBug.Log("GWE packet received");
+
                         byte eventUUID = data[1];
                         ushort seq = BitConverter.ToUInt16(data, 2);
                         byte[] rawEventData = data.Skip(4).ToArray();
@@ -544,6 +555,8 @@ namespace BabyStepsMultiplayerClient.UI
 
                 case 7: // Don Accessory
                     {
+                        BBSMMdBug.Log("Accessory don packet received");
+
                         byte playerUUID = data[1];
                         if (players.TryGetValue(playerUUID, out var player)) ApplyAccessoryDon(player, data);
                         else
@@ -557,6 +570,8 @@ namespace BabyStepsMultiplayerClient.UI
 
                 case 8: // Doff Accessory
                     {
+                        BBSMMdBug.Log("Accessory doff packet received");
+
                         byte playerUUID = data[1];
                         if (!players.TryGetValue(playerUUID, out var player)) break;
                         var accessoryType = data[2];
@@ -584,6 +599,8 @@ namespace BabyStepsMultiplayerClient.UI
 
                 case 9: // Jiminy Ribbon State
                     {
+                        BBSMMdBug.Log("Jiminy Ribbon packet received");
+
                         byte playerUUID = data[1];
                         bool jiminyState = Convert.ToBoolean(data[2]);
                         if (players.TryGetValue(playerUUID, out var player)) ApplyJiminyRibbonStateChange(player, jiminyState);
@@ -597,6 +614,8 @@ namespace BabyStepsMultiplayerClient.UI
                     }
                 case 10: // Collision Toggle Event
                     {
+                        BBSMMdBug.Log("Collision toggle packet received");
+
                         byte playerUUID = data[1];
                         bool collisionsEnabled = Convert.ToBoolean(data[2]);
                         if (players.TryGetValue(playerUUID, out var player)) ApplyCollisionToggle(player, collisionsEnabled);

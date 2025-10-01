@@ -7,6 +7,7 @@ namespace BabyStepsMultiplayerClient.Patches
     //[HarmonyPatch]
     internal class Patch_ParticleParty
     {
+        /*
         //[HarmonyPrefix]
         //[HarmonyPatch(typeof(ParticleParty), nameof(ParticleParty.OnPlant))]
         private static bool OnPlant_Prefix(ParticleParty __instance,
@@ -59,5 +60,6 @@ namespace BabyStepsMultiplayerClient.Patches
             // Run Original
             return true;
         }
+        */
     }
 }

@@ -1,4 +1,6 @@
-﻿using Il2Cpp;
+﻿using BabyStepsMultiplayerClient.Debug;
+using Il2Cpp;
+using Il2CppCinemachine;
 using UnityEngine;
 
 namespace BabyStepsMultiplayerClient.Networking
@@ -20,6 +22,7 @@ namespace BabyStepsMultiplayerClient.Networking
         public Material baseMaterial;
         public Color baseColor;
         public Transform camera;
+        public CinemachineBrain cinemachineBrain;
 
         public Transform particleHouse;
         public ParticleParty particleParty;
@@ -32,8 +35,7 @@ namespace BabyStepsMultiplayerClient.Networking
                 return;
             }
 
-            if (lastJiminyState == jiminyRibbon.active)
-                return;
+            if (lastJiminyState == jiminyRibbon.active) return;
 
             lastJiminyState = jiminyRibbon.active;
             Core.networkManager.SendJiminyRibbonState(lastJiminyState);
@@ -53,15 +55,21 @@ namespace BabyStepsMultiplayerClient.Networking
 
         public void OnConnect()
         {
+
+            BBSMMdBug.Log("Starting LocalPlayer OnConnect function");
+
             if (basePlayer == null) basePlayer = GameObject.Find("Dudest");
             if (basePlayerMovement == null) basePlayerMovement = basePlayer.GetComponent<PlayerMovement>();
             if (baseMesh == null) baseMesh = basePlayer.transform.Find("IKTargets/HipTarget/NathanAnimIK_October2022");
             if (camera == null) camera = basePlayer.transform.Find("GameCam");
+            if (cinemachineBrain == null) cinemachineBrain = GameObject.Find("BigManagerPrefab/Camera").GetComponent<CinemachineBrain>();
             if (baseMaterial == null)
                 baseMaterial = baseMesh.Find("Nathan.001").GetComponent<SkinnedMeshRenderer>().sharedMaterials.FirstOrDefault(m => m.name.Contains("NewSuit_Oct22"));
             if (jiminyRibbon == null) jiminyRibbon = basePlayerMovement.jiminyRibbon;
             if (particleHouse == null) particleHouse = basePlayer.transform.Find("ParticleHouse");
             if (particleParty == null) particleParty = particleHouse.GetComponent<ParticleParty>();
+
+            BBSMMdBug.Log("Variable sets finished");
 
             if (RemotePlayer.suitTexture == null)
             {

@@ -10,6 +10,7 @@ using MelonLoader;
 using System.Collections.Concurrent;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using System;
 
 namespace BabyStepsMultiplayerClient.Networking
 {
@@ -30,6 +31,8 @@ namespace BabyStepsMultiplayerClient.Networking
         private List<(Transform, Transform)> boneToCrusherList;
 
         bool collidersInitialized = false;
+        bool firstBoneInterpRan = false;
+        float playerCreationTime = float.MaxValue;
 
         private readonly Queue<BoneSnapshot> snapshotBuffer = new();
         private const double INTERPDELAY = 0.1; // 100ms
@@ -52,12 +55,14 @@ namespace BabyStepsMultiplayerClient.Networking
         public Hat hat;
         public (Grabable, Grabable) heldItems;
 
-        public bool netCollisionsEnabled = true;
+        public bool netCollisionsEnabled = false;
 
         private static Dictionary<string, GameObject> savablePrefabs = new Dictionary<string, GameObject>();
 
         public RemotePlayer(int numClones, ConcurrentQueue<Action> mainThreadActions)
         {
+            playerCreationTime = Time.time;
+
             PlayerMovement basePlayerMovement = Core.localPlayer.basePlayer.GetComponent<PlayerMovement>();
 
             baseObj = new GameObject($"NateClone{numClones}");
@@ -104,7 +109,7 @@ namespace BabyStepsMultiplayerClient.Networking
 
         public void InterpolateBoneTransforms()
         {
-            if (!collidersInitialized && snapshotBuffer.Count > 0)
+            if (!firstBoneInterpRan && snapshotBuffer.Count > 0)
             {
                 // Get latest bone snapshot and set position and rotation to that immediately instead of lerping
                 BoneSnapshot latest = null;
@@ -131,10 +136,7 @@ namespace BabyStepsMultiplayerClient.Networking
                     bone.rotation = rot;
                 }
 
-                bool shouldEnableColliders = Core.uiManager.serverConnectUI.uiCollisionsEnabled && netCollisionsEnabled;
-                foreach (CapsuleCollider cc in capsuleColliders) cc.enabled = shouldEnableColliders;
-
-                collidersInitialized = true;
+                firstBoneInterpRan = true;
                 return;
             }
 
@@ -192,9 +194,9 @@ namespace BabyStepsMultiplayerClient.Networking
             textMesh.text = displayName;
         }
 
-        public void RotateNametagTowardsCamera(Transform camera)
+        public void RotateNametagTowardsCamera(Vector3 cameraPosition)
         {
-            textObj.transform.LookAt(camera);
+            textObj.transform.LookAt(cameraPosition);
             textObj.transform.Rotate(0, 180, 0);
         }
 
@@ -232,10 +234,20 @@ namespace BabyStepsMultiplayerClient.Networking
         // --- Network ---
         public void EnableCollision()
         {
+            if (!collidersInitialized) { MelonCoroutines.Start(WaitForColliderSetupAndEnable()); return; }
+
             foreach (CapsuleCollider cc in capsuleColliders)
             {
                 cc.enabled = true;
             }
+        }
+
+        private System.Collections.IEnumerator WaitForColliderSetupAndEnable()
+        {
+            while ((Time.time - playerCreationTime) < 2) yield return null;
+
+            foreach (CapsuleCollider cc in capsuleColliders) cc.enabled = true;
+            collidersInitialized = true;
         }
 
         public void DisableCollision()
@@ -315,6 +327,10 @@ namespace BabyStepsMultiplayerClient.Networking
             }
 
             GameObject hatGO = UnityEngine.Object.Instantiate(prefab, head.transform);
+
+            Transform fruitShine = FindChildByKeyword(hatGO.transform, "FruitShine");
+            if (fruitShine != null) GameObject.Destroy(fruitShine.gameObject);
+
             Hat hHat = hatGO.transform.GetComponentInChildren<Hat>();
 
             hHat.grabable = false;

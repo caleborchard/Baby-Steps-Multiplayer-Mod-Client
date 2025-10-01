@@ -25,21 +25,16 @@ namespace BabyStepsMultiplayerClient.UI
         public void Draw()
         {
             ingameMessagesUI.DrawUI();
-            if (showServerPanel)
-                serverConnectUI.DrawUI();
-            if (showPlayersTab)
-                playersTabUI.DrawUI();
+            if (showServerPanel) serverConnectUI.DrawUI();
+            if (showPlayersTab) playersTabUI.DrawUI();
         }
 
         public void Update()
         {
-            if (Input.GetKeyDown(KeyCode.F2))
-                showServerPanel = !showServerPanel;
+            if (Input.GetKeyDown(KeyCode.F2)) showServerPanel = !showServerPanel;
 
-            if (Core.networkManager.client == null)
-                showPlayersTab = false;
-            else if (Input.GetKeyDown(KeyCode.Tab))
-                showPlayersTab = true;
+            if (Core.networkManager.client == null) showPlayersTab = false;
+            else showPlayersTab = Input.GetKey(KeyCode.Tab);
         }
 
         public void ApplyCollisionToggle(RemotePlayer player, bool collisionsEnabled)

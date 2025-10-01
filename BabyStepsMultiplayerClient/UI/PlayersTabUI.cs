@@ -42,7 +42,7 @@ namespace BabyStepsMultiplayerClient.UI
                 foreach (var kvp in Core.networkManager.players)
                 {
                     RemotePlayer player = kvp.Value;
-                    GUILayout.Label(player.displayName, centeredLabel);
+                    GUILayout.Label($"{player.displayName} | Y:{((int)player.textObj.transform.position.y)-120}", centeredLabel);
                 }
             }
 

@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using BabyStepsMultiplayerClient.Debug;
+using HarmonyLib;
 using Il2Cpp;
 
 namespace BabyStepsMultiplayerClient.Patches
@@ -11,6 +12,9 @@ namespace BabyStepsMultiplayerClient.Patches
         private static bool DropHandItem_Prefix(PlayerMovement __instance,
             int __0) // hat
         {
+
+            BBSMMdBug.Log("PlayerMovement DropHandItem HarmonyPatch");
+
             if (Core.networkManager.client == null)
                 return true;
 
@@ -26,6 +30,9 @@ namespace BabyStepsMultiplayerClient.Patches
         [HarmonyPatch(typeof(PlayerMovement), nameof(PlayerMovement.KnockOffHat))]
         private static bool KnockOffHat_Prefix(PlayerMovement __instance)
         {
+
+            BBSMMdBug.Log("PlayerMovement KnockOffHat HarmonyPatch");
+
             if (Core.networkManager.client == null)
                 return true;
 
@@ -40,6 +47,9 @@ namespace BabyStepsMultiplayerClient.Patches
         private static void WearHat_Postfix(PlayerMovement __instance, 
             Hat __0) // hat
         {
+
+            BBSMMdBug.Log("PlayerMovement WearHat HarmonyPatch");
+
             if (Core.networkManager.client == null)
                 return;
 

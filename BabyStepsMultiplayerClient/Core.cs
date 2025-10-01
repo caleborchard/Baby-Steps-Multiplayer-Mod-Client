@@ -1,10 +1,11 @@
-﻿using BabyStepsMultiplayerClient.Networking;
+﻿using BabyStepsMultiplayerClient.Debug;
+using BabyStepsMultiplayerClient.Networking;
 using BabyStepsMultiplayerClient.UI;
 using MelonLoader;
 
 [assembly: MelonInfo(typeof(BabyStepsMultiplayerClient.Core),
     "BabyStepsMultiplayerClient",
-    "1.1.0",
+    "1.1.1",
     "Caleb Orchard",
     "https://github.com/caleborchard/Baby-Steps-Multiplayer-Mod-Client")]
 [assembly: MelonGame("DefaultCompany", "BabySteps")]
@@ -23,6 +24,8 @@ namespace BabyStepsMultiplayerClient
         [Obsolete]
         public override void OnApplicationStart() 
         {
+            BBSMMdBug.ClearFile();
+
             uiManager = new();
             networkManager = new();
             localPlayer = new();
