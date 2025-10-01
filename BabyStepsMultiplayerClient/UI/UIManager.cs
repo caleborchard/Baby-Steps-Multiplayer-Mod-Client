@@ -33,6 +33,11 @@ namespace BabyStepsMultiplayerClient.UI
         {
             if (Input.GetKeyDown(KeyCode.F2)) showServerPanel = !showServerPanel;
 
+            if (MelonDebug.IsEnabled() && Input.GetKeyDown(KeyCode.F3))
+            {
+                Core.networkManager.Connect(serverConnectUI.uiIP, int.Parse(serverConnectUI.uiPORT), serverConnectUI.uiPassword);
+            }
+
             if (Core.networkManager.client == null) showPlayersTab = false;
             else showPlayersTab = Input.GetKey(KeyCode.Tab);
         }
