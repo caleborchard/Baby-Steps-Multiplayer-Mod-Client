@@ -1,0 +1,697 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<ProjectName>BabyStepsMultiplayerClient</ProjectName>
+		<Version>1.1.1</Version>
+		
+		<Authors>Caleb Orchard</Authors>
+		<Description>A MelonLoader mod for Baby Steps that adds multiplayer to the game.</Description>
+
+		<RepositoryUrl>https://github.com/caleborchard/Baby-Steps-Multiplayer-Mod-Client</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		
+		<GameDir>C:\Program Files (x86)\Steam\steamapps\common\Baby Steps</GameDir>
+		
+		<ModsDir>$(GameDir)\Mods</ModsDir>
+		<MelonLoaderDir>$(GameDir)\MelonLoader</MelonLoaderDir>
+		<Il2CppAssembliesDir>$(MelonLoaderDir)\Il2CppAssemblies</Il2CppAssembliesDir>
+		
+		<TargetFramework>net6</TargetFramework>
+		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+		<OutputType>Library</OutputType>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>disable</Nullable>
+		<RootNamespace>$(ProjectName)</RootNamespace>
+		<LangVersion>default</LangVersion>
+		<IsPackable>false</IsPackable>
+		<AssemblyVersion>$(Version)</AssemblyVersion>
+		<FileVersion>$(Version)</FileVersion>
+		<NeutralLanguage>en-US</NeutralLanguage>
+		<AssemblyName>$(ProjectName)</AssemblyName>
+		<LangVersion>latest</LangVersion>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+		<Product>$(ProjectName)</Product>
+		<Title>$(ProjectName)</Title>
+		<PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
+		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+		
+		<!-- This outputs the Mod to the Game upon compilation -->
+		<OutputPath>$(ModsDir)</OutputPath>
+		
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="LavaGang.MelonLoader" Version="0.7.1" ExcludeAssets="Runtime" />
+		<PackageReference Include="HarmonyX" Version="2.10.2" ExcludeAssets="Runtime" />
+		<PackageReference Include="Il2CppInterop.Common" Version="1.5.1" ExcludeAssets="Runtime" />
+		<PackageReference Include="Il2CppInterop.Runtime" Version="1.5.1" ExcludeAssets="Runtime" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" ExcludeAssets="Runtime" />
+	  
+		<PackageReference Include="LiteNetLib" Version="1.3.1" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Reference Include="Assembly-CSharp-firstpass">
+			<HintPath>$(Il2CppAssembliesDir)\Assembly-CSharp-firstpass.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Assembly-CSharp">
+			<HintPath>$(Il2CppAssembliesDir)\Assembly-CSharp.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppAmplifyImpostors">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppAmplifyImpostors.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppBakeryRuntimeAssembly">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppBakeryRuntimeAssembly.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppBBSServices">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppBBSServices.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppBBSTools">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppBBSTools.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppBlobShadow">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppBlobShadow.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppBoingKit">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppBoingKit.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppBoxophobic.TheVegetationEngine.Runtime">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppBoxophobic.TheVegetationEngine.Runtime.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppBoxophobic.Utils.Scripts">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppBoxophobic.Utils.Scripts.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppChartEditor">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppChartEditor.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppCinemachine">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppCinemachine.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2Cppclipper_library">
+			<HintPath>$(Il2CppAssembliesDir)\Il2Cppclipper_library.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppCoreGameLogic">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppCoreGameLogic.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppCrest">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppCrest.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppExernalPlugins">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppExernalPlugins.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppFacepunch.Steamworks.Win64">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppFacepunch.Steamworks.Win64.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppFidelityFX.FSR">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppFidelityFX.FSR.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppFMODUnity">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppFMODUnity.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppGeneratedConstants">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppGeneratedConstants.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppGlobal">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppGlobal.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppGPUInstancer">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppGPUInstancer.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppHBAO.Runtime">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppHBAO.Runtime.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppJBooth.BetterLitShader.Scripts">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppJBooth.BetterLitShader.Scripts.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppJBooth.BetterShaders.Samples">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppJBooth.BetterShaders.Samples.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppJBooth.MicroSplat.Core">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppJBooth.MicroSplat.Core.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppKlak.Timeline.Midi">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppKlak.Timeline.Midi.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppLaundryBear.Math">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppLaundryBear.Math.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppLaundryBear.Platform">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppLaundryBear.Platform.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppLaundryBear.ServiceLocator">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppLaundryBear.ServiceLocator.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppLaundryBear.Steamworks">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppLaundryBear.Steamworks.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppLaundryBear.Utilities">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppLaundryBear.Utilities.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppMaxi.Audio">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppMaxi.Audio.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppMaxi.Audio.Utilities">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppMaxi.Audio.Utilities.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppMessagePack.Annotations">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppMessagePack.Annotations.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppMessagePack">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppMessagePack.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppMessagePipe">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppMessagePipe.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppMessagePipe.VContainer">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppMessagePipe.VContainer.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppMLGroove">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppMLGroove.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppMLGrooveEditor">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppMLGrooveEditor.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppMono.Security">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppMono.Security.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2Cppmscorlib">
+			<HintPath>$(Il2CppAssembliesDir)\Il2Cppmscorlib.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppMusicPackages">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppMusicPackages.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppMystery Node Set">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppMystery Node Set.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppMystery Squiggle">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppMystery Squiggle.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppNewtonsoft.Json">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppNewtonsoft.Json.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppOscJack.Runtime">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppOscJack.Runtime.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppPaintIn3D">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppPaintIn3D.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppRewiredCSharpSide">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppRewiredCSharpSide.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppRewired_Core">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppRewired_Core.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppRewired_Windows">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppRewired_Windows.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppRewired_Windows_Functions">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppRewired_Windows_Functions.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppRuntimeTools">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppRuntimeTools.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppRuntimeTypes">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppRuntimeTypes.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppShapesRuntime">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppShapesRuntime.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppSirenix.OdinInspector.Attributes">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppSirenix.OdinInspector.Attributes.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppSirenix.OdinInspector.Modules.Unity.Addressables">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppSirenix.OdinInspector.Modules.Unity.Addressables.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2Cppsoupday.cc3_unity_tools.runtime">
+			<HintPath>$(Il2CppAssembliesDir)\Il2Cppsoupday.cc3_unity_tools.runtime.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppSteamAudioUnity">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppSteamAudioUnity.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppSystem.Configuration">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppSystem.Configuration.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppSystem.Core">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppSystem.Core.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppSystem.Data">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppSystem.Data.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppSystem">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppSystem.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppSystem.Drawing">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppSystem.Drawing.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppSystem.Numerics">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppSystem.Numerics.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppSystem.Runtime.CompilerServices.Unsafe">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppSystem.Runtime.CompilerServices.Unsafe.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppSystem.Runtime.Serialization">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppSystem.Runtime.Serialization.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppSystem.ServiceModel.Internals">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppSystem.ServiceModel.Internals.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppSystem.Xml">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppSystem.Xml.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppSystem.Xml.Linq">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppSystem.Xml.Linq.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppTayx.Graphy">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppTayx.Graphy.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppTechniePhysicsCreator">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppTechniePhysicsCreator.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppToolTypesConsts">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppToolTypesConsts.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppUniTask">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppUniTask.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppUniTask.Linq">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppUniTask.Linq.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppVContainer">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppVContainer.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppZeroFormatter">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppZeroFormatter.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2CppZeroFormatter.Interfaces">
+			<HintPath>$(Il2CppAssembliesDir)\Il2CppZeroFormatter.Interfaces.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Il2Cpp__Generated">
+			<HintPath>$(Il2CppAssembliesDir)\Il2Cpp__Generated.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Unity.Addressables">
+			<HintPath>$(Il2CppAssembliesDir)\Unity.Addressables.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Unity.Burst">
+			<HintPath>$(Il2CppAssembliesDir)\Unity.Burst.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Unity.Burst.Unsafe">
+			<HintPath>$(Il2CppAssembliesDir)\Unity.Burst.Unsafe.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Unity.Collections">
+			<HintPath>$(Il2CppAssembliesDir)\Unity.Collections.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Unity.InternalAPIEngineBridge.011">
+			<HintPath>$(Il2CppAssembliesDir)\Unity.InternalAPIEngineBridge.011.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Unity.LiveCapture.ARKitFaceCapture">
+			<HintPath>$(Il2CppAssembliesDir)\Unity.LiveCapture.ARKitFaceCapture.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Unity.LiveCapture.CompanionApp">
+			<HintPath>$(Il2CppAssembliesDir)\Unity.LiveCapture.CompanionApp.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Unity.LiveCapture">
+			<HintPath>$(Il2CppAssembliesDir)\Unity.LiveCapture.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Unity.LiveCapture.Networking">
+			<HintPath>$(Il2CppAssembliesDir)\Unity.LiveCapture.Networking.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Unity.Mathematics">
+			<HintPath>$(Il2CppAssembliesDir)\Unity.Mathematics.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Unity.MemoryProfiler">
+			<HintPath>$(Il2CppAssembliesDir)\Unity.MemoryProfiler.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Unity.Profiling.Core">
+			<HintPath>$(Il2CppAssembliesDir)\Unity.Profiling.Core.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Unity.ResourceManager">
+			<HintPath>$(Il2CppAssembliesDir)\Unity.ResourceManager.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Unity.Sentis">
+			<HintPath>$(Il2CppAssembliesDir)\Unity.Sentis.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Unity.TextMeshPro">
+			<HintPath>$(Il2CppAssembliesDir)\Unity.TextMeshPro.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Unity.Timeline">
+			<HintPath>$(Il2CppAssembliesDir)\Unity.Timeline.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.AccessibilityModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.AccessibilityModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.AIModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.AIModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.AndroidJNIModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.AndroidJNIModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.AnimationModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.AnimationModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.ARModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.ARModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.AssetBundleModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.AssetBundleModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.AudioModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.AudioModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.ClothModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.ClothModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.ContentLoadModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.ContentLoadModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.CoreModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.CoreModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.CrashReportingModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.CrashReportingModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.DirectorModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.DirectorModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.DSPGraphModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.DSPGraphModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.GameCenterModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.GameCenterModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.GIModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.GIModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.GridModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.GridModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.HotReloadModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.HotReloadModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.ImageConversionModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.ImageConversionModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.IMGUIModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.IMGUIModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.InputLegacyModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.InputLegacyModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.InputModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.InputModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.JSONSerializeModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.JSONSerializeModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.LocalizationModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.LocalizationModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.ParticleSystemModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.ParticleSystemModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.PerformanceReportingModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.PerformanceReportingModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.Physics2DModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.Physics2DModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.PhysicsModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.PhysicsModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.ProfilerModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.ProfilerModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.PropertiesModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.PropertiesModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.RuntimeInitializeOnLoadManagerInitializerModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.RuntimeInitializeOnLoadManagerInitializerModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.ScreenCaptureModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.ScreenCaptureModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.SharedInternalsModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.SharedInternalsModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.SpriteMaskModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.SpriteMaskModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.SpriteShapeModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.SpriteShapeModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.StreamingModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.StreamingModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.SubstanceModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.SubstanceModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.SubsystemsModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.SubsystemsModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.TerrainModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.TerrainModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.TerrainPhysicsModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.TerrainPhysicsModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.TextCoreFontEngineModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.TextCoreFontEngineModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.TextCoreTextEngineModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.TextCoreTextEngineModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.TextRenderingModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.TextRenderingModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.TilemapModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.TilemapModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.TLSModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.TLSModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.UI">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.UI.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.UIElementsModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.UIElementsModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.UIModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.UIModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.UmbraModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.UmbraModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.UnityAnalyticsCommonModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.UnityAnalyticsCommonModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.UnityAnalyticsModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.UnityAnalyticsModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.UnityConnectModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.UnityConnectModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.UnityCurlModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.UnityCurlModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.UnityTestProtocolModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.UnityTestProtocolModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.UnityWebRequestAssetBundleModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.UnityWebRequestAssetBundleModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.UnityWebRequestAudioModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.UnityWebRequestAudioModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.UnityWebRequestModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.UnityWebRequestModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.UnityWebRequestTextureModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.UnityWebRequestTextureModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.UnityWebRequestWWWModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.UnityWebRequestWWWModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.VehiclesModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.VehiclesModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.VFXModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.VFXModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.VideoModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.VideoModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.VRModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.VRModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.WindModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.WindModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.XRModule">
+			<HintPath>$(Il2CppAssembliesDir)\UnityEngine.XRModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+	</ItemGroup>
+</Project>
