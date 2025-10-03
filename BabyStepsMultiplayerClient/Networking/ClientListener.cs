@@ -15,16 +15,13 @@ namespace BabyStepsMultiplayerClient.Networking
             Core.networkManager.SendPlayerInformation();
 
             Hat hat = Core.localPlayer.basePlayerMovement.currentHat;
-            if (hat != null)
-                Core.networkManager.SendDonHat(hat);
+            if (hat != null) Core.networkManager.SendDonHat(hat);
 
             Grabable rightItem = Core.localPlayer.basePlayerMovement.handItems[0];
             Grabable leftItem = Core.localPlayer.basePlayerMovement.handItems[1];
 
-            if (rightItem != null)
-                Core.networkManager.SendHoldGrabable(rightItem, 0);
-            if (leftItem != null)
-                Core.networkManager.SendHoldGrabable(leftItem, 1);
+            if (rightItem != null) Core.networkManager.SendHoldGrabable(rightItem, 0);
+            if (leftItem != null) Core.networkManager.SendHoldGrabable(leftItem, 1);
 
             Core.networkManager.SendJiminyRibbonState(Core.localPlayer.lastJiminyState);
 

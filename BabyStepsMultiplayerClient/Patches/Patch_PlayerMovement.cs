@@ -1,6 +1,7 @@
 ﻿using BabyStepsMultiplayerClient.Debug;
 using HarmonyLib;
 using Il2Cpp;
+using MelonLoader;
 
 namespace BabyStepsMultiplayerClient.Patches
 {
@@ -15,12 +16,10 @@ namespace BabyStepsMultiplayerClient.Patches
 
             BBSMMdBug.Log("PlayerMovement DropHandItem HarmonyPatch");
 
-            if (Core.networkManager.client == null)
-                return true;
+            if (Core.networkManager.client == null) return true;
 
             Grabable heldItem = Core.localPlayer.basePlayerMovement.handItems[__0];
-            if (heldItem != null)
-                Core.networkManager.SendDropGrabable(__0);
+            if (heldItem != null) Core.networkManager.SendDropGrabable(__0);
 
             // Run Original
             return true;
@@ -33,8 +32,7 @@ namespace BabyStepsMultiplayerClient.Patches
 
             BBSMMdBug.Log("PlayerMovement KnockOffHat HarmonyPatch");
 
-            if (Core.networkManager.client == null)
-                return true;
+            if (Core.networkManager.client == null) return true;
 
             Core.networkManager.SendDoffHat();
 
@@ -50,10 +48,10 @@ namespace BabyStepsMultiplayerClient.Patches
 
             BBSMMdBug.Log("PlayerMovement WearHat HarmonyPatch");
 
-            if (Core.networkManager.client == null)
-                return;
+            if (Core.networkManager.client == null) return;
 
-            Core.networkManager.SendDonHat(__0);
+            //Core.networkManager.SendDonHat(__0);
+            MelonCoroutines.Start(DelayedSendHat(__0)); // Switch to HerpDerp StartCoroutine Extension on merge
 
             for (int i = 0; i < __instance.handItems.Length; i++)
             {
@@ -62,6 +60,14 @@ namespace BabyStepsMultiplayerClient.Patches
                     && item.name.Contains(__0.name))
                     Core.networkManager.SendDropGrabable(i);
             }
+        }
+
+        private static System.Collections.IEnumerator DelayedSendHat(Hat hat)
+        {
+            // Wait arbitrary amount of time to mitigate hat not being properly positioned on head yet
+            for (int i = 0; i < 30; i++) yield return null;
+
+            Core.networkManager.SendDonHat(hat);
         }
     }
 }

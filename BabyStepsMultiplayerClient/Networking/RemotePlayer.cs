@@ -39,7 +39,7 @@ namespace BabyStepsMultiplayerClient.Networking
 
         public string displayName;
         public GameObject textObj;
-        private TextMeshPro textMesh;
+        public TextMeshPro textMesh;
         private Material suitMaterial;
         private Material hairMaterial;
         private SkinnedMeshRenderer skinnedMeshRenderer;
@@ -196,10 +196,14 @@ namespace BabyStepsMultiplayerClient.Networking
 
         public void RotateNametagTowardsCamera(Vector3 cameraPosition)
         {
-            textObj.transform.LookAt(cameraPosition);
-            textObj.transform.Rotate(0, 180, 0);
+            if(textObj.gameObject.active) // This is probably broken too, ref ln 206
+            {
+                textObj.transform.LookAt(cameraPosition);
+                textObj.transform.Rotate(0, 180, 0);
+            }
         }
 
+        // This function is broken, this method of disabling the textObj does not work, find an alternative in the future
         public void HideNicknameOutsideDistance(Vector3 basePos, float distance)
         {
             float calcDist = Vector3.Distance(basePos, textObj.transform.position);
@@ -221,6 +225,8 @@ namespace BabyStepsMultiplayerClient.Networking
         {
             RemoveHat();
             DropItem(0); DropItem(1);
+
+            displayName = null;
 
             baseObj.active = false;
             foreach (var b in bones)
