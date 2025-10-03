@@ -23,10 +23,11 @@ namespace BabyStepsMultiplayerClient.Networking
             rotation = Rotation;
         }
 
-        public static TransformNet[] ToNet(Transform[] bones)
+        public static TransformNet[] ToNet(List<Transform> bones)
         {
-            TransformNet[] final = new TransformNet[bones.Length];
-            for (int i = 0; i < bones.Length; i++)
+            int boneCount = bones.Count;
+            TransformNet[] final = new TransformNet[boneCount];
+            for (int i = 0; i < boneCount; i++)
             {
                 Transform b = bones[i];
                 if (b == null) continue;

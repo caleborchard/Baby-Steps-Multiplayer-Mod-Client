@@ -1,20 +1,26 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36203.30 d17.14
+VisualStudioVersion = 17.14.36203.30
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BabyStepsMultiplayerClient", "BabyStepsMultiplayerClient\BabyStepsMultiplayerClient.csproj", "{E89268A0-D78B-4AD6-A651-3B92EA74BFF6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Any CPU = Debug|Any CPU
-		Release|Any CPU = Release|Any CPU
+		Demo - Debug|Any CPU = Demo - Debug|Any CPU
+		Demo - Release|Any CPU = Demo - Release|Any CPU
+		Retail - Debug|Any CPU = Retail - Debug|Any CPU
+		Retail - Release|Any CPU = Retail - Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{E89268A0-D78B-4AD6-A651-3B92EA74BFF6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E89268A0-D78B-4AD6-A651-3B92EA74BFF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E89268A0-D78B-4AD6-A651-3B92EA74BFF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E89268A0-D78B-4AD6-A651-3B92EA74BFF6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E89268A0-D78B-4AD6-A651-3B92EA74BFF6}.Demo - Debug|Any CPU.ActiveCfg = Demo - Debug|Any CPU
+		{E89268A0-D78B-4AD6-A651-3B92EA74BFF6}.Demo - Debug|Any CPU.Build.0 = Demo - Debug|Any CPU
+		{E89268A0-D78B-4AD6-A651-3B92EA74BFF6}.Demo - Release|Any CPU.ActiveCfg = Demo - Release|Any CPU
+		{E89268A0-D78B-4AD6-A651-3B92EA74BFF6}.Demo - Release|Any CPU.Build.0 = Demo - Release|Any CPU
+		{E89268A0-D78B-4AD6-A651-3B92EA74BFF6}.Retail - Debug|Any CPU.ActiveCfg = Retail - Debug|Any CPU
+		{E89268A0-D78B-4AD6-A651-3B92EA74BFF6}.Retail - Debug|Any CPU.Build.0 = Retail - Debug|Any CPU
+		{E89268A0-D78B-4AD6-A651-3B92EA74BFF6}.Retail - Release|Any CPU.ActiveCfg = Retail - Release|Any CPU
+		{E89268A0-D78B-4AD6-A651-3B92EA74BFF6}.Retail - Release|Any CPU.Build.0 = Retail - Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

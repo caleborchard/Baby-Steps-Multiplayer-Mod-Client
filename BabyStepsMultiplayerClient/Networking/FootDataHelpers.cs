@@ -1,10 +1,5 @@
-﻿using Il2Cpp;
-using MelonLoader;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using BabyStepsMultiplayerClient.Player;
+using Il2Cpp;
 using UnityEngine;
 
 namespace BabyStepsMultiplayerClient.Networking
@@ -18,9 +13,9 @@ namespace BabyStepsMultiplayerClient.Networking
             bool isFootRight = BitConverter.ToBoolean(data, offset);
             offset += sizeof(bool);
 
-            FootData fd = player.feet[0];
+            FootData fd = player.feetData.Item1;
             if (fd == null) return null;
-            if (isFootRight) fd = player.feet[1];
+            if (isFootRight) fd = player.feetData.Item2;
 
             fd.achillesIsConstraining = BitConverter.ToBoolean(data, offset);
             offset += sizeof(bool);

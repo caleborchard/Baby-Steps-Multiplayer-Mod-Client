@@ -1,11 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace BabyStepsMultiplayerClient.UI
 {
-    public class IngameMessagesUI
+    public class NotificationUI
     {
+        private const float fadeDuration = 1f; // Seconds to fade out
+        private const float holdDuration = 3f; // Seconds to stay visible before fade out
+
         private class Message
         {
             public string Text;
@@ -15,32 +16,34 @@ namespace BabyStepsMultiplayerClient.UI
         private readonly List<Message> messages = new List<Message>();
         private readonly List<Message> messagesToRemove = new List<Message>();
 
-        private readonly float fadeDuration = 3f;
+        public NotificationUI() { }
 
-        public IngameMessagesUI() { }
+        private static float GetTime()
+            => Time.unscaledTime;
 
         public void AddMessage(string message)
         {
+            Core.logger.Msg(message);
             messages.Add(new Message
             {
                 Text = message,
-                TimeAdded = Time.time
             });
         }
 
         public void DrawUI()
         {
-            float now = Time.time;
-            int yOffset = 10;
+            float now = GetTime();
 
+            int yOffset = 10;
             for (int i = messages.Count - 1; i >= 0; i--)
             {
                 var msg = messages[i];
+
+                if (msg.TimeAdded <= 0f)
+                    msg.TimeAdded = now;
+
                 float age = now - msg.TimeAdded;
-
-                float alpha = Mathf.Clamp01(1f - age / fadeDuration);
-
-                if (alpha <= 0f)
+                if (FadeMessage(age, out float alpha))
                 {
                     messagesToRemove.Add(msg);
                     continue;
@@ -49,7 +52,7 @@ namespace BabyStepsMultiplayerClient.UI
                 Color oldColor = GUI.color;
                 GUI.color = new Color(oldColor.r, oldColor.g, oldColor.b, alpha);
 
-                GUI.Label(new Rect(10, yOffset, Screen.width, 25), msg.Text);
+                GUI.Label(new Rect(10, yOffset, Screen.width, 25), msg.Text, Core.uiManager.labelStyle);
 
                 yOffset += 20;
             }
@@ -60,6 +63,20 @@ namespace BabyStepsMultiplayerClient.UI
                 messages.RemoveAll(messagesToRemove.Contains);
                 messagesToRemove.Clear();
             }
+        }
+
+        private static bool FadeMessage(float age, out float alpha)
+        {
+            if (age < holdDuration)
+                alpha = 1f;
+            else
+            {
+                float fadeOutAge = (age - fadeDuration) - holdDuration;
+                alpha = Mathf.Clamp01(1f - (fadeOutAge / fadeDuration));
+                if (alpha <= 0f)
+                    return true;
+            }
+            return false;
         }
     }
 }

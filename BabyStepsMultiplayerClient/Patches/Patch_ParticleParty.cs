@@ -4,12 +4,12 @@ using Il2Cpp;
 
 namespace BabyStepsMultiplayerClient.Patches
 {
-    //[HarmonyPatch]
+    /*
+    [HarmonyPatch]
     internal class Patch_ParticleParty
     {
-        /*
-        //[HarmonyPrefix]
-        //[HarmonyPatch(typeof(ParticleParty), nameof(ParticleParty.OnPlant))]
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(ParticleParty), nameof(ParticleParty.OnPlant))]
         private static bool OnPlant_Prefix(ParticleParty __instance,
             FootData __0) // foot
         {
@@ -35,8 +35,8 @@ namespace BabyStepsMultiplayerClient.Patches
             return true;
         }
         
-        //[HarmonyPrefix]
-        //[HarmonyPatch(typeof(ParticleParty), nameof(ParticleParty.OnSlip))]
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(ParticleParty), nameof(ParticleParty.OnSlip))]
         private static bool OnSlip_Prefix(ParticleParty __instance,
             FootData __0) // foot
         {
@@ -60,6 +60,6 @@ namespace BabyStepsMultiplayerClient.Patches
             // Run Original
             return true;
         }
-        */
     }
+    */
 }

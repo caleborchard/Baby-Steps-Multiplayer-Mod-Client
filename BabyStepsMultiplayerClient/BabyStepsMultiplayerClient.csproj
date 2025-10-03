@@ -1,19 +1,13 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<ProjectName>BabyStepsMultiplayerClient</ProjectName>
-		<Version>1.1.2</Version>
+		<Version>1.1.0</Version>
 		
 		<Authors>Caleb Orchard</Authors>
 		<Description>A MelonLoader mod for Baby Steps that adds multiplayer to the game.</Description>
 
 		<RepositoryUrl>https://github.com/caleborchard/Baby-Steps-Multiplayer-Mod-Client</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
-		
-		<GameDir>C:\Program Files (x86)\Steam\steamapps\common\Baby Steps</GameDir>
-		
-		<ModsDir>$(GameDir)\Mods</ModsDir>
-		<MelonLoaderDir>$(GameDir)\MelonLoader</MelonLoaderDir>
-		<Il2CppAssembliesDir>$(MelonLoaderDir)\Il2CppAssemblies</Il2CppAssembliesDir>
 		
 		<TargetFramework>net6</TargetFramework>
 		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
@@ -23,6 +17,7 @@
 		<RootNamespace>$(ProjectName)</RootNamespace>
 		<LangVersion>default</LangVersion>
 		<IsPackable>false</IsPackable>
+		<AssemblyName>$(ProjectName)</AssemblyName>
 		<AssemblyVersion>$(Version)</AssemblyVersion>
 		<FileVersion>$(Version)</FileVersion>
 		<NeutralLanguage>en-US</NeutralLanguage>
@@ -37,9 +32,29 @@
 		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		
+		<Configurations>Retail - Debug;Retail - Release;Demo - Debug;Demo - Release</Configurations>
+		
+		<RetailGameDir>C:\Program Files (x86)\Steam\steamapps\common\Baby Steps</RetailGameDir>
+		
+	</PropertyGroup>
+	
+	<PropertyGroup Condition="'$(Configuration)' == 'Retail - Debug' Or '$(Configuration)' == 'Retail - Release'">
+		<GameDir>$(RetailGameDir)</GameDir>
+		<AssemblyName>$(ProjectName)</AssemblyName>
+	</PropertyGroup>
+	
+	<PropertyGroup Condition="'$(Configuration)' == 'Demo - Debug' Or '$(Configuration)' == 'Demo - Release'">
+		<GameDir>$(RetailGameDir) Demo</GameDir>
+		<AssemblyName>$(ProjectName)_Demo</AssemblyName>
+	</PropertyGroup>
+	
+	<PropertyGroup>
+		<ModsDir>$(GameDir)\Mods</ModsDir>
+		<MelonLoaderDir>$(GameDir)\MelonLoader</MelonLoaderDir>
+		<Il2CppAssembliesDir>$(MelonLoaderDir)\Il2CppAssemblies</Il2CppAssembliesDir>
+		
 		<!-- This outputs the Mod to the Game upon compilation -->
 		<OutputPath>$(ModsDir)</OutputPath>
-		
 	</PropertyGroup>
 
 	<ItemGroup>

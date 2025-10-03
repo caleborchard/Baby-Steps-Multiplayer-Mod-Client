@@ -1,5 +1,4 @@
-﻿using BabyStepsMultiplayerClient.Networking;
-using MelonLoader;
+﻿using BabyStepsMultiplayerClient.Player;
 using UnityEngine;
 
 namespace BabyStepsMultiplayerClient.UI
@@ -11,35 +10,89 @@ namespace BabyStepsMultiplayerClient.UI
 
         public PlayersTabUI playersTabUI { get; private set; }
         public ServerConnectUI serverConnectUI { get; private set; }
-        public IngameMessagesUI ingameMessagesUI { get; private set; }
+        public NotificationUI notificationsUI { get; private set; }
+
+        public Font arialFont;
+        public GUIStyle labelStyle;
+        public GUIStyle centeredLabelStyle;
+
+        public GUIStyle boxStyle;
+        public GUIStyle buttonStyle;
 
         public UIManager()
         {
+            arialFont = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            CreateLabelStyles();
+
             serverConnectUI = new ServerConnectUI();
             serverConnectUI.LoadConfig();
 
-            ingameMessagesUI = new IngameMessagesUI();
+            notificationsUI = new NotificationUI();
             playersTabUI = new PlayersTabUI();
+        }
+
+        private void CreateLabelStyles()
+        {
+            labelStyle = new GUIStyle()
+            {
+                font = arialFont,
+                normal = new()
+                {
+                    textColor = Color.white,
+                },
+            };
+
+            centeredLabelStyle = new GUIStyle(labelStyle)
+            {
+                alignment = TextAnchor.MiddleCenter
+            };
+        }
+
+        private void CloneDefaultStyles()
+        {
+            if (buttonStyle == null)
+            {
+                buttonStyle = new GUIStyle(GUI.skin.button);
+                buttonStyle.font = arialFont;
+
+                if (buttonStyle.normal == null)
+                    buttonStyle.normal = new();
+                buttonStyle.normal.textColor = Color.white;
+            }
+
+            if (boxStyle == null)
+            {
+                boxStyle = new GUIStyle(GUI.skin.box);
+                boxStyle.font = arialFont;
+
+                if (boxStyle.normal == null)
+                    boxStyle.normal = new();
+                boxStyle.normal.textColor = Color.white;
+            }
         }
 
         public void Draw()
         {
-            ingameMessagesUI.DrawUI();
-            if (showServerPanel) serverConnectUI.DrawUI();
-            if (showPlayersTab) playersTabUI.DrawUI();
+            CloneDefaultStyles();
+
+            notificationsUI.DrawUI();
+
+            if (showServerPanel)
+                serverConnectUI.DrawUI();
+
+            if (showPlayersTab)
+                playersTabUI.DrawUI();
         }
 
         public void Update()
         {
-            if (Input.GetKeyDown(KeyCode.F2)) showServerPanel = !showServerPanel;
+            if (Input.GetKeyDown(KeyCode.F2))
+                showServerPanel = !showServerPanel;
 
-            if (MelonDebug.IsEnabled() && Input.GetKeyDown(KeyCode.F3))
-            {
-                Core.networkManager.Connect(serverConnectUI.uiIP, int.Parse(serverConnectUI.uiPORT), serverConnectUI.uiPassword);
-            }
-
-            if (Core.networkManager.client == null) showPlayersTab = false;
-            else showPlayersTab = Input.GetKey(KeyCode.Tab);
+            if (Core.networkManager.client == null)
+                showPlayersTab = false;
+            else
+                showPlayersTab = !showServerPanel && Input.GetKey(KeyCode.Tab);
         }
 
         public void ApplyCollisionToggle(RemotePlayer player, bool collisionsEnabled)
@@ -47,15 +100,15 @@ namespace BabyStepsMultiplayerClient.UI
             if (collisionsEnabled)
             {
                 player.netCollisionsEnabled = true;
-                ingameMessagesUI.AddMessage($"{player.displayName} has enabled collisions");
+                notificationsUI.AddMessage($"{player.displayName} has enabled collisions");
 
-                if (serverConnectUI.uiCollisionsEnabled) player.EnableCollision();
+                if (ModSettings.player.Collisions.Value) player.EnableCollision();
                 else player.DisableCollision();
             }
             else
             {
                 player.netCollisionsEnabled = false;
-                ingameMessagesUI.AddMessage($"{player.displayName} has disabled collisions");
+                notificationsUI.AddMessage($"{player.displayName} has disabled collisions");
 
                 player.DisableCollision();
             }
