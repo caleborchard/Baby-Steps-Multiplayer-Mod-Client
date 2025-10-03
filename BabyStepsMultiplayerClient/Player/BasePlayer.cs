@@ -53,11 +53,11 @@ namespace BabyStepsMultiplayerClient.Player
                     skinnedMeshRenderer = baseMesh.Find("Nathan.001").GetComponent<SkinnedMeshRenderer>();
                 if (skinnedMeshRenderer != null)
                 {
-                    var materialsArray = skinnedMeshRenderer.materials;
-
+                    var materialsArray = skinnedMeshRenderer.sharedMaterials;
                     if (hairMaterial == null)
                         hairMaterial = materialsArray.FirstOrDefault(m => m.name.Contains("Hair2_lux"));
 
+                    materialsArray = skinnedMeshRenderer.materials;
                     if (suitMaterial == null)
                         suitMaterial = materialsArray.FirstOrDefault(m => m.name.Contains("NewSuit_Oct22"));
                     if (suitMaterial != null)
