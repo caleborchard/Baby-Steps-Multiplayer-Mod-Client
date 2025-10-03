@@ -95,8 +95,8 @@ namespace BabyStepsMultiplayerClient.Player
                 baseMesh = UnityEngine.Object.Instantiate(LocalPlayer.Instance.baseMesh);
                 baseMesh.name = "NateMesh";
                 baseMesh.parent = baseObject.transform;
+                baseMesh.transform.position = Vector3.zero;
                 MelonCoroutines.Start(DelayedComponentStrip(baseMesh));
-                ResetPosition();
             }
 
             if (LocalPlayer.Instance.particleCrushers != null)
@@ -176,6 +176,7 @@ namespace BabyStepsMultiplayerClient.Player
             if (nateGlasses != null)
                 MaterialKeywordHelper(nateGlasses.material);
 
+            ResetPosition();
             ResetBonesToBind();
 
             SetupBones();
@@ -192,9 +193,6 @@ namespace BabyStepsMultiplayerClient.Player
                 nameTag.Destroy();
                 nameTag = null;
             }
-
-            if (baseObject != null)
-                GameObject.Destroy(baseObject);
         }
 
         public override void Dispose()
@@ -228,10 +226,10 @@ namespace BabyStepsMultiplayerClient.Player
 
         public void ResetPosition()
         {
-            if (baseMesh == null)
+            if (rootBone == null)
                 return;
 
-            baseMesh.transform.position = Vector3.zero;
+            rootBone.transform.position = Vector3.zero;
         }
 
         public override void LateUpdate()
