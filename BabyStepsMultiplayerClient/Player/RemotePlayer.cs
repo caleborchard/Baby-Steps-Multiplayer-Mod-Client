@@ -111,15 +111,24 @@ namespace BabyStepsMultiplayerClient.Player
             if (skinnedMeshRenderer != null)
             {
                 Material[] materialsArray = skinnedMeshRenderer.materials;
-                foreach (Material mat in materialsArray)
+                for (int i = 0; i < materialsArray.Length; i++)
                 {
-                    if (mat == null
-                        || !mat.HasProperty("_DitherAlpha")
+                    Material mat = materialsArray[i];
+                    if (mat == null)
+                        continue;
+                    if (mat == hairMaterial)
+                    {
+                        mat = new Material(hairMaterial);
+                        materialsArray[i] = mat;
+                        hairMaterial = mat;
+                    }
+
+                    if (!mat.HasProperty("_DitherAlpha")
                         || mat.shader.name == "Better Lit/DuderSuit")
                         continue;
-
                     MaterialKeywordHelper(mat);
                 }
+                skinnedMeshRenderer.materials = materialsArray;
             }
 
             if (suitMaterial != null
