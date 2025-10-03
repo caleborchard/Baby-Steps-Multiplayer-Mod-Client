@@ -23,7 +23,10 @@ namespace BabyStepsMultiplayerClient.Player
         public Dictionary<Transform, Transform> boneCrushers;
 
         public Hat hat;
+        public Collider[] hatColliders;
+
         public (Grabable, Grabable) heldItems;
+        public (Collider[], Collider[]) heldItemColliders;
 
         public (FootData, FootData) feetData;
 
@@ -291,11 +294,9 @@ namespace BabyStepsMultiplayerClient.Player
 
         public void EnableCollision()
         {
-            if (boneColliders == null)
-                return;
-
-            if (collisionCoroutineToken == null)
-                collisionCoroutineToken = MelonCoroutines.Start(EnableCollisionCoroutine());
+            if (collisionCoroutineToken != null)
+                MelonCoroutines.Stop(collisionCoroutineToken);
+            collisionCoroutineToken = MelonCoroutines.Start(EnableCollisionCoroutine());
         }
 
         private System.Collections.IEnumerator EnableCollisionCoroutine()
@@ -311,13 +312,35 @@ namespace BabyStepsMultiplayerClient.Player
                     val.Item2.enabled = true;
                 }
 
+            if (hatColliders != null)
+                foreach (Collider val in hatColliders)
+                {
+                    if (val == null)
+                        continue;
+                    val.enabled = true;
+                }
+
+             if (heldItemColliders.Item1 != null)
+                foreach (Collider val in heldItemColliders.Item1)
+                {
+                    if (val == null)
+                        continue;
+                    val.enabled = true;
+                }
+
+            if (heldItemColliders.Item2 != null)
+                foreach (Collider val in heldItemColliders.Item2)
+                {
+                    if (val == null)
+                        continue;
+                    val.enabled = true;
+                }
+
             collisionCoroutineToken = null;
         }
 
         public void DisableCollision()
         {
-            if (boneColliders == null)
-                return;
 
             if (collisionCoroutineToken != null)
             {
@@ -325,12 +348,40 @@ namespace BabyStepsMultiplayerClient.Player
                 collisionCoroutineToken = null;
             }
 
-            foreach ((Rigidbody, CapsuleCollider) val in boneColliders.Values)
+            if (boneColliders != null)
+                foreach ((Rigidbody, CapsuleCollider) val in boneColliders.Values)
+                {
+                    if (val.Item2 == null)
+                        continue;
+                    val.Item2.enabled = false;
+                }
+
+            if (hat != null)
             {
-                if (val.Item2 == null)
-                    continue;
-                val.Item2.enabled = false;
+                var allHatColliders = hat.GetComponentsInChildren<Collider>();
+                foreach (Collider val in allHatColliders)
+                {
+                    if (val == null)
+                        continue;
+                    val.enabled = false;
+                }
             }
+
+            if (heldItemColliders.Item1 != null)
+                foreach (Collider val in heldItemColliders.Item1)
+                {
+                    if (val == null)
+                        continue;
+                    val.enabled = false;
+                }
+
+            if (heldItemColliders.Item2 != null)
+                foreach (Collider val in heldItemColliders.Item2)
+                {
+                    if (val == null)
+                        continue;
+                    val.enabled = false;
+                }
         }
 
         private void StdMatSetup(Material mat)
@@ -549,6 +600,13 @@ namespace BabyStepsMultiplayerClient.Player
             SetHairHat(hHat.hairAmt, hHat.hairlineUpVec);
 
             hat = hHat;
+            hatColliders = hat.GetComponentsInChildren<Collider>();
+            foreach (Collider val in hatColliders)
+            {
+                if (val == null)
+                    continue;
+                val.enabled = false;
+            }
         }
         public void RemoveHat()
         {
@@ -557,6 +615,8 @@ namespace BabyStepsMultiplayerClient.Player
                 UnityEngine.Object.Destroy(hat.gameObject);
                 hat = null;
             }
+
+            hatColliders = null;
 
             SetHairHat(1, new Vector4(0, 1, 1, 0));
         }
@@ -605,10 +665,26 @@ namespace BabyStepsMultiplayerClient.Player
             grabable.transform.localPosition = localPosition;
             grabable.transform.localRotation = localRotation;
 
+            Collider[] colliderArr = null;
             if (handIndex == 0)
+            {
                 heldItems.Item1 = grabable;
+                heldItemColliders.Item1 = grabable.GetComponentsInChildren<Collider>();
+                colliderArr = heldItemColliders.Item1;
+            }
             else
+            {
                 heldItems.Item2 = grabable;
+                heldItemColliders.Item2 = grabable.GetComponentsInChildren<Collider>();
+                colliderArr = heldItemColliders.Item2;
+            }
+
+            foreach (Collider val in colliderArr)
+            {
+                if (val == null)
+                    continue;
+                val.enabled = false;
+            }
 
             Transform fruitShine = itemGO.transform.FindChildByKeyword("FruitShine");
             if (fruitShine != null)

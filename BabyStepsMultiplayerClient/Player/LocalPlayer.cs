@@ -1,9 +1,7 @@
 ﻿using BabyStepsMultiplayerClient.Extensions;
 using BabyStepsMultiplayerClient.Networking;
-using BabyStepsMultiplayerClient.UI;
 using Il2Cpp;
 using Il2CppCinemachine;
-using Il2CppFluffyUnderware.DevTools.Extensions;
 using UnityEngine;
 
 namespace BabyStepsMultiplayerClient.Player

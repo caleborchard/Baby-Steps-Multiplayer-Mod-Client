@@ -591,7 +591,11 @@ namespace BabyStepsMultiplayerClient.Networking
                             Core.DebugMsg("Accessory don packet received");
 
                             byte playerUUID = data[1];
-                            if (players.TryGetValue(playerUUID, out var player)) ApplyAccessoryDon(player, data);
+                            if (players.TryGetValue(playerUUID, out var player))
+                            {
+                                ApplyAccessoryDon(player, data);
+                                ApplyCollisionToggle(player, player.netCollisionsEnabled);
+                            }
                             else
                             {
                                 if (!pendingPlayerUpdatePackets.TryGetValue(playerUUID, out var list)) pendingPlayerUpdatePackets[playerUUID] = list = new List<byte[]>();
