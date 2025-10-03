@@ -700,11 +700,13 @@ namespace BabyStepsMultiplayerClient.Player
             {
                 UnityEngine.Object.Destroy(heldItems.Item1.gameObject);
                 heldItems.Item1 = null;
+                heldItemColliders.Item1 = null;
             }
             else if (handIndex == 1 && heldItems.Item2 != null)
             {
                 UnityEngine.Object.Destroy(heldItems.Item2.gameObject);
                 heldItems.Item2 = null;
+                heldItemColliders.Item2 = null;
             }
         }
 
