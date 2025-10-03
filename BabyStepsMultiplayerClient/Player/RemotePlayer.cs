@@ -116,11 +116,21 @@ namespace BabyStepsMultiplayerClient.Player
                     Material mat = materialsArray[i];
                     if (mat == null)
                         continue;
+
+                    // Clone Hair Material and Replace It
                     if (mat == hairMaterial)
                     {
                         mat = new Material(hairMaterial);
                         materialsArray[i] = mat;
                         hairMaterial = mat;
+                    }
+
+                    // Clone Suit Material and Replace It
+                    if (mat == suitMaterial)
+                    {
+                        mat = new Material(suitMaterial);
+                        materialsArray[i] = mat;
+                        suitMaterial = mat;
                     }
 
                     if (!mat.HasProperty("_DitherAlpha")
@@ -131,10 +141,10 @@ namespace BabyStepsMultiplayerClient.Player
                 skinnedMeshRenderer.materials = materialsArray;
             }
 
-            if (suitMaterial != null
-                && suitTexture != null)
+            if (suitMaterial != null)
             {
-                suitMaterial.SetTexture("_AlbedoMap", suitTexture);
+                if (suitTexture != null)
+                    suitMaterial.SetTexture("_AlbedoMap", suitTexture);
                 suitMaterial.SetTexture("_WetnessTexture", null);
                 suitMaterial.SetTexture("_RainDropTexture", null);
             }
