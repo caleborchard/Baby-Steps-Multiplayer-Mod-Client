@@ -39,10 +39,15 @@ namespace BabyStepsMultiplayerClient.Player
 
         public Dictionary<string, Transform> boneMudMeshes;
 
+        public Material[] meshMaterials;
+
         public virtual void Initialize()
         {
             if (baseObject == null)
                 return;
+
+            if (puppetMaster == null)
+                puppetMaster = baseObject.transform.FindChild("PuppetMaster");
 
             if (baseMesh == null)
                 baseMesh = baseObject.transform.Find("IKTargets/HipTarget/NathanAnimIK_October2022");
@@ -51,21 +56,6 @@ namespace BabyStepsMultiplayerClient.Player
             {
                 if (skinnedMeshRenderer == null)
                     skinnedMeshRenderer = baseMesh.Find("Nathan.001").GetComponent<SkinnedMeshRenderer>();
-                if (skinnedMeshRenderer != null)
-                {
-                    var materialsArray = skinnedMeshRenderer.sharedMaterials;
-                    if (hairMaterial == null)
-                        hairMaterial = materialsArray.FirstOrDefault(m => m.name.Contains("Hair2_lux"));
-
-                    materialsArray = skinnedMeshRenderer.materials;
-                    if (suitMaterial == null)
-                        suitMaterial = materialsArray.FirstOrDefault(m => m.name.Contains("NewSuit_Oct22"));
-                    if (suitMaterial != null)
-                    {
-                        baseColor = suitMaterial.color;
-                        playerColor = baseColor;
-                    }
-                }
 
                 if (particleHouse == null)
                     particleHouse = baseObject.transform.Find("ParticleHouse");
@@ -98,95 +88,6 @@ namespace BabyStepsMultiplayerClient.Player
                     if (ribbonTransform != null)
                         jiminyRibbon = ribbonTransform.gameObject;
                 }
-            }
-
-            if (puppetMaster == null)
-                puppetMaster = baseObject.transform.FindChild("PuppetMaster");
-
-            if (skinnedMeshRenderer != null)
-            {
-                if (boneMudMeshes == null)
-                    boneMudMeshes = new();
-
-                boneChildren = ExtractValidBones(skinnedMeshRenderer.bones, baseMesh).ToList();
-                if (boneChildren != null)
-                {
-                    if (puppetMaster != null)
-                    {
-                        if (puppetBones == null)
-                            puppetBones = puppetMaster.FindMatchingChildren(boneChildren);
-                        if (puppetBones != null)
-                            foreach (var bone in puppetBones)
-                            {
-                                if (bone == null)
-                                    continue;
-
-                                string boneName = bone.name;
-                                if (!boneMudMeshes.ContainsKey(boneName))
-                                {
-                                    var mudMesh = bone.FindChildByKeyword("mudMesh");
-                                    if (mudMesh != null)
-                                        boneMudMeshes[boneName] = mudMesh;
-                                }
-                            }
-                    }
-
-                    foreach (var bone in boneChildren)
-                    {
-                        if (bone == null)
-                            continue;
-
-                        string boneName = bone.name;
-                        switch (boneName)
-                        {
-                            case "head.x":
-                                if (headBone == null)
-                                    headBone = bone;
-                                goto default;
-
-                            case "root.x":
-                                if (rootBone == null)
-                                    rootBone = bone;
-                                goto default;
-
-                            case "spine_02.x":
-                                if (spineBone == null)
-                                    spineBone = bone;
-                                goto default;
-
-                            case "hand.r":
-                                if (handBones.Item1 == null)
-                                    handBones.Item1 = bone;
-                                goto default;
-
-                            case "hand.l":
-                                if (handBones.Item2 == null)
-                                    handBones.Item2 = bone;
-                                goto default;
-
-                            case "foot.l":
-                                if (footBones.Item1 == null)
-                                    footBones.Item1 = bone;
-                                goto default;
-
-                            case "foot.r":
-                                if (footBones.Item2 == null)
-                                    footBones.Item2 = bone;
-                                goto default;
-
-                            default:
-                                break;
-                        }
-                    }
-                }
-            }
-
-            if (headBone != null
-                && nateGlasses == null)
-            {
-                var gBone = headBone.FindChild("Nathan_Glasses");
-                if (gBone != null)
-                    nateGlasses = gBone.GetComponent<MeshRenderer>();
             }
         }
 
@@ -379,6 +280,117 @@ namespace BabyStepsMultiplayerClient.Player
 
                 bone.localPosition = position;
                 bone.localRotation = rotation;
+            }
+        }
+
+        public void SetupBonesAndMaterials()
+        {
+            if (skinnedMeshRenderer != null)
+            {
+                // Herp:
+                // If you touch .materials when it isn't setup it copies the .sharedMaterials array to it reusing Material references
+                // On LocalPlayer .materials isn't setup for some unknown reason
+                // On RemotePlayer .materials is setup due to manual mesh instantiation
+                // We fallback to getting meshMaterials from .sharedMaterials to avoid this behavior
+                if (meshMaterials == null)
+                    meshMaterials = skinnedMeshRenderer.sharedMaterials;
+
+                if (boneMudMeshes == null)
+                    boneMudMeshes = new();
+
+                boneChildren = ExtractValidBones(skinnedMeshRenderer.bones, baseMesh).ToList();
+                if (boneChildren != null)
+                {
+                    if (puppetMaster != null)
+                    {
+                        if (puppetBones == null)
+                            puppetBones = puppetMaster.FindMatchingChildren(boneChildren);
+                        if (puppetBones != null)
+                            foreach (var bone in puppetBones)
+                            {
+                                if (bone == null)
+                                    continue;
+
+                                string boneName = bone.name;
+                                if (!boneMudMeshes.ContainsKey(boneName))
+                                {
+                                    var mudMesh = bone.FindChildByKeyword("mudMesh");
+                                    if (mudMesh != null)
+                                        boneMudMeshes[boneName] = mudMesh;
+                                }
+                            }
+                    }
+
+                    foreach (var bone in boneChildren)
+                    {
+                        if (bone == null)
+                            continue;
+
+                        string boneName = bone.name;
+                        switch (boneName)
+                        {
+                            case "head.x":
+                                if (headBone == null)
+                                    headBone = bone;
+                                goto default;
+
+                            case "root.x":
+                                if (rootBone == null)
+                                    rootBone = bone;
+                                goto default;
+
+                            case "spine_02.x":
+                                if (spineBone == null)
+                                    spineBone = bone;
+                                goto default;
+
+                            case "hand.r":
+                                if (handBones.Item1 == null)
+                                    handBones.Item1 = bone;
+                                goto default;
+
+                            case "hand.l":
+                                if (handBones.Item2 == null)
+                                    handBones.Item2 = bone;
+                                goto default;
+
+                            case "foot.l":
+                                if (footBones.Item1 == null)
+                                    footBones.Item1 = bone;
+                                goto default;
+
+                            case "foot.r":
+                                if (footBones.Item2 == null)
+                                    footBones.Item2 = bone;
+                                goto default;
+
+                            default:
+                                break;
+                        }
+                    }
+                }
+            }
+
+            if (meshMaterials != null)
+            {
+                if (hairMaterial == null)
+                    hairMaterial = meshMaterials.FirstOrDefault(m => m.name.Contains("Hair2_lux"));
+
+                if (suitMaterial == null)
+                    suitMaterial = meshMaterials.FirstOrDefault(m => m.name.Contains("NewSuit_Oct22"));
+                if (suitMaterial != null)
+                {
+                    baseColor = suitMaterial.color;
+                    playerColor = baseColor;
+                }
+            }
+
+            if (headBone != null
+                && nateGlasses == null)
+            {
+                var gBone = headBone.FindChild("Nathan_Glasses");
+                if (gBone != null)
+                    nateGlasses = gBone.GetComponent<MeshRenderer>();
             }
         }
     }

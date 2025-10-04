@@ -108,15 +108,19 @@ namespace BabyStepsMultiplayerClient.Player
             // Base Initialization
             Initialize();
 
+            if (skinnedMeshRenderer != null) 
+                meshMaterials = skinnedMeshRenderer.materials;
+
+            SetupBonesAndMaterials();
+
             if (jiminyRibbon != null)
                 jiminyRibbon.active = false;
 
-            if (skinnedMeshRenderer != null)
+            if (meshMaterials != null)
             {
-                Material[] materialsArray = skinnedMeshRenderer.materials;
-                for (int i = 0; i < materialsArray.Length; i++)
+                for (int i = 0; i < meshMaterials.Length; i++)
                 {
-                    Material mat = materialsArray[i];
+                    Material mat = meshMaterials[i];
                     if (mat == null)
                         continue;
 
@@ -126,7 +130,6 @@ namespace BabyStepsMultiplayerClient.Player
 
                     MaterialKeywordHelper(mat);
                 }
-                skinnedMeshRenderer.materials = materialsArray;
             }
 
             if (suitMaterial != null)

@@ -41,7 +41,7 @@ namespace BabyStepsMultiplayerClient.Player
 
             // Base Initialization
             base.Initialize();
-
+            SetupBonesAndMaterials();
             ApplySuitColor();
 
             Core.DebugMsg("Variable sets finished");
