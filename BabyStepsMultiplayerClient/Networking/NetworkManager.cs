@@ -93,12 +93,6 @@ namespace BabyStepsMultiplayerClient.Networking
                 LocalPlayer.Instance.Dispose();
             LocalPlayer.Instance = null;
 
-            if (RemotePlayer.suitTexture != null)
-            {
-                GameObject.Destroy(RemotePlayer.suitTexture);
-                RemotePlayer.suitTexture = null;
-            }
-
             Core.uiManager.notificationsUI.AddMessage("Disconnected from server");
         }
 
@@ -169,16 +163,12 @@ namespace BabyStepsMultiplayerClient.Networking
             if (collisionsEnabled)
             {
                 player.netCollisionsEnabled = true;
-                Core.uiManager.notificationsUI.AddMessage($"{player.displayName} has enabled collisions");
-
                 if (ModSettings.player.Collisions.Value) player.EnableCollision();
                 else player.DisableCollision();
             }
             else
             {
                 player.netCollisionsEnabled = false;
-                Core.uiManager.notificationsUI.AddMessage($"{player.displayName} has disabled collisions");
-
                 player.DisableCollision();
             }
         }
@@ -654,7 +644,11 @@ namespace BabyStepsMultiplayerClient.Networking
 
                             byte playerUUID = data[1];
                             bool collisionsEnabled = Convert.ToBoolean(data[2]);
-                            if (players.TryGetValue(playerUUID, out var player)) ApplyCollisionToggle(player, collisionsEnabled);
+                            if (players.TryGetValue(playerUUID, out var player))
+                            {
+                                ApplyCollisionToggle(player, collisionsEnabled);
+                                Core.uiManager.notificationsUI.AddMessage($"{player.displayName} has {(collisionsEnabled ? "enabled" : "disabled")} collisions");
+                            }
                             else
                             {
                                 if (!pendingPlayerUpdatePackets.TryGetValue(playerUUID, out var list)) pendingPlayerUpdatePackets[playerUUID] = list = new List<byte[]>();
