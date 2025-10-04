@@ -86,12 +86,8 @@ namespace BabyStepsMultiplayerClient.Networking
             }
 
             foreach (var player in players)
-                player.Value.Destroy();
+                player.Value.Dispose();
             players.Clear();
-
-            foreach (var player in RemotePlayer.GlobalPool)
-                player.Destroy();
-            RemotePlayer.GlobalPool.Clear();
 
             if (LocalPlayer.Instance != null)
                 LocalPlayer.Instance.Dispose();

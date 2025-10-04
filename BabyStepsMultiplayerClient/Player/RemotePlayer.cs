@@ -120,25 +120,10 @@ namespace BabyStepsMultiplayerClient.Player
                     if (mat == null)
                         continue;
 
-                    // Clone Hair Material and Replace It
-                    if (mat == hairMaterial)
-                    {
-                        mat = new Material(hairMaterial);
-                        materialsArray[i] = mat;
-                        hairMaterial = mat;
-                    }
-
-                    // Clone Suit Material and Replace It
-                    if (mat == suitMaterial)
-                    {
-                        mat = new Material(suitMaterial);
-                        materialsArray[i] = mat;
-                        suitMaterial = mat;
-                    }
-
                     if (!mat.HasProperty("_DitherAlpha")
                         || mat.shader.name == "Better Lit/DuderSuit")
                         continue;
+
                     MaterialKeywordHelper(mat);
                 }
                 skinnedMeshRenderer.materials = materialsArray;
@@ -184,24 +169,7 @@ namespace BabyStepsMultiplayerClient.Player
             CreateFootData();
         }
 
-        public void Destroy()
-        {
-            Reset();
-
-            if (nameTag != null)
-            {
-                nameTag.Destroy();
-                nameTag = null;
-            }
-        }
-
         public override void Dispose()
-        {
-            Reset();
-            GlobalPool.Add(this);
-        }
-
-        private void Reset()
         {
             RemoveHat();
 
@@ -212,6 +180,7 @@ namespace BabyStepsMultiplayerClient.Player
 
             DisableCollision();
             SetActive(false);
+            SetOpacity(0f);
             ResetPosition();
 
             ResetSuitColor();
@@ -222,6 +191,8 @@ namespace BabyStepsMultiplayerClient.Player
             netCollisionsEnabled = false;
             firstAppearanceApplication = false;
             snapshotBuffer.Clear();
+
+            GlobalPool.Add(this);
         }
 
         public void ResetPosition()
@@ -612,11 +583,9 @@ namespace BabyStepsMultiplayerClient.Player
             {
                 UnityEngine.Object.Destroy(hat.gameObject);
                 hat = null;
+                SetHairHat(1, new Vector4(0, 1, 1, 0));
+                hatColliders = null;
             }
-
-            hatColliders = null;
-
-            SetHairHat(1, new Vector4(0, 1, 1, 0));
         }
 
 

@@ -53,11 +53,11 @@ namespace BabyStepsMultiplayerClient.Player
                     skinnedMeshRenderer = baseMesh.Find("Nathan.001").GetComponent<SkinnedMeshRenderer>();
                 if (skinnedMeshRenderer != null)
                 {
-                    var materialsArray = skinnedMeshRenderer.materials;
-
+                    var materialsArray = skinnedMeshRenderer.sharedMaterials;
                     if (hairMaterial == null)
                         hairMaterial = materialsArray.FirstOrDefault(m => m.name.Contains("Hair2_lux"));
 
+                    materialsArray = skinnedMeshRenderer.materials;
                     if (suitMaterial == null)
                         suitMaterial = materialsArray.FirstOrDefault(m => m.name.Contains("NewSuit_Oct22"));
                     if (suitMaterial != null)
@@ -215,11 +215,14 @@ namespace BabyStepsMultiplayerClient.Player
         }
 
         public void SetHairHat(float hatMax, Vector4 hatUp)
+            => SetHairValues(hairMaterial, hatMax, hatUp);
+        public static void SetHairValues(Material mat, float hatMax, Vector4 hatUp)
         {
-            if (hairMaterial == null)
+            if (mat == null)
                 return;
-            hairMaterial.SetFloat("_HatMax", hatMax);
-            hairMaterial.SetVector("_HatUp", hatUp);
+            mat.SetFloat("_HatMax", hatMax);
+            mat.SetVector("_HatUp", hatUp);
+            mat.MarkDirty();
         }
 
         public Color GetSuitColor()
