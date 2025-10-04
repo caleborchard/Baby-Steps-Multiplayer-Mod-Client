@@ -1,5 +1,6 @@
 ﻿using MelonLoader;
 using MelonLoader.Utils;
+using Tomlet;
 
 namespace BabyStepsMultiplayerClient.Config
 {
@@ -41,7 +42,20 @@ namespace BabyStepsMultiplayerClient.Config
 
             string filePath = Path.Combine(folderPath, $"{fileName}{FileExt}");
 
-
+            // Herp:
+            // This double checks if the config is readable by the Tomlet Parser
+            // If not then it deletes the file to be recreated
+            if (File.Exists(filePath))
+                try
+                {
+                    var doc = TomlParser.ParseFile(filePath);
+                    if (doc == null)
+                        throw new NullReferenceException();
+                }
+                catch 
+                {
+                    File.Delete(filePath);
+                }
 
             ID = categoryID;
             DisplayName = categoryDisplayName;
