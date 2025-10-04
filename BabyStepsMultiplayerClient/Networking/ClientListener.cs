@@ -1,6 +1,5 @@
-﻿using Il2Cpp;
+﻿using BabyStepsMultiplayerClient.Player;
 using LiteNetLib;
-using MelonLoader;
 using System.Net;
 using System.Net.Sockets;
 using UnityEngine;
@@ -11,45 +10,44 @@ namespace BabyStepsMultiplayerClient.Networking
     {
         public void OnPeerConnected(NetPeer peer)
         {
+            if (LocalPlayer.Instance == null)
+            {
+                LocalPlayer.Instance = new();
+                LocalPlayer.Instance.Initialize();
+            }
+
             Core.networkManager.server = peer;
             Core.networkManager.SendPlayerInformation();
 
-            Hat hat = Core.localPlayer.basePlayerMovement.currentHat;
-            if (hat != null) Core.networkManager.SendDonHat(hat);
-
-            Grabable rightItem = Core.localPlayer.basePlayerMovement.handItems[0];
-            Grabable leftItem = Core.localPlayer.basePlayerMovement.handItems[1];
-
-            if (rightItem != null) Core.networkManager.SendHoldGrabable(rightItem, 0);
-            if (leftItem != null) Core.networkManager.SendHoldGrabable(leftItem, 1);
-
-            Core.networkManager.SendJiminyRibbonState(Core.localPlayer.lastJiminyState);
-
-            Core.networkManager.SendCollisionToggle(Core.uiManager.serverConnectUI.uiCollisionsEnabled);
-
-            Core.uiManager.ingameMessagesUI.AddMessage("Connected to server");
+            Core.uiManager.notificationsUI.AddMessage("Connected to server");
         }
 
         public void OnPeerDisconnected(NetPeer peer, DisconnectInfo info)
         {
+            Core.networkManager.server = null;
             Core.networkManager.Disconnect();
+
             Resources.UnloadUnusedAssets();
         }
 
         public void OnConnectionRequest(ConnectionRequest req) 
             => req.AcceptIfKey("cuzzillobochfoddy");
-
         public void OnNetworkError(IPEndPoint ep, SocketError error)
-            => MelonLogger.Error($"Network error: {error}");
+            => Core.logger.Error($"Network error: {error}");
 
+        public void OnNetworkReceiveUnconnected(IPEndPoint ep, NetPacketReader reader, UnconnectedMessageType type)
+            => ReadPacket(reader);
         public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channel, DeliveryMethod method)
+            => ReadPacket(reader);
+
+        private void ReadPacket(NetPacketReader reader)
         {
             byte[] fullData = reader.GetRemainingBytes();
             reader.Recycle();
 
             if (fullData.Length < 2)
             {
-                MelonLogger.Warning("Received packet too short to contain length header.");
+                Core.logger.Warning("Received packet too short to contain length header.");
                 return;
             }
 
@@ -57,7 +55,7 @@ namespace BabyStepsMultiplayerClient.Networking
 
             if (declaredLength != fullData.Length)
             {
-                MelonLogger.Warning($"Packet length mismatch: expected {declaredLength}, got {fullData.Length}");
+                Core.logger.Warning($"Packet length mismatch: expected {declaredLength}, got {fullData.Length}");
                 return;
             }
 
@@ -67,7 +65,6 @@ namespace BabyStepsMultiplayerClient.Networking
             Core.networkManager.HandleServerMessage(data);
         }
 
-        public void OnNetworkReceiveUnconnected(IPEndPoint ep, NetPacketReader reader, UnconnectedMessageType type) { }
         public void OnNetworkLatencyUpdate(NetPeer peer, int latency) { }
     }
 }

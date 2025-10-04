@@ -1,4 +1,5 @@
 ﻿using BabyStepsMultiplayerClient.Networking;
+using BabyStepsMultiplayerClient.Player;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,25 +25,26 @@ namespace BabyStepsMultiplayerClient.UI
             float y = 20f;
             Rect panelRect = new Rect(x, y, panelWidth, panelHeight);
 
-            GUI.Box(panelRect, "Connected Players");
+            GUI.Box(panelRect, "Connected Players", Core.uiManager.boxStyle);
 
             GUILayout.BeginArea(new Rect(panelRect.x + 10, panelRect.y + headerHeight, panelRect.width - 20, panelRect.height - headerHeight - margin));
 
-            GUIStyle centeredLabel = new GUIStyle(GUI.skin.label)
-            {
-                alignment = TextAnchor.MiddleCenter
-            };
-
             if (Core.networkManager.players.Count == 0)
             {
-                GUILayout.Label("No players connected.", centeredLabel);
+                GUILayout.Label("No players connected.", Core.uiManager.centeredLabelStyle);
             }
             else
             {
                 foreach (var kvp in Core.networkManager.players)
                 {
                     RemotePlayer player = kvp.Value;
-                    GUILayout.Label($"{player.displayName} | Y:{((int)player.textObj.transform.position.y)-120}", centeredLabel);
+                    if (player == null)
+                        continue;
+                    if (player.rootBone == null)
+                        continue;
+
+                    int height = (int)player.rootBone.position.y - 121;
+                    GUILayout.Label($"[{height}] { player.displayName }", Core.uiManager.centeredLabelStyle);
                 }
             }
 

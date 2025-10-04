@@ -1,5 +1,4 @@
-﻿using BabyStepsMultiplayerClient.Debug;
-using BabyStepsMultiplayerClient.Networking;
+﻿using BabyStepsMultiplayerClient.Player;
 using Il2Cpp;
 using LiteNetLib;
 using LiteNetLib.Utils;
@@ -8,7 +7,7 @@ using System.Collections.Concurrent;
 using System.Text;
 using UnityEngine;
 
-namespace BabyStepsMultiplayerClient.UI
+namespace BabyStepsMultiplayerClient.Networking
 {
     public class NetworkManager
     {
@@ -16,34 +15,27 @@ namespace BabyStepsMultiplayerClient.UI
         public NetManager client { get; private set; }
         public NetPeer server;
         private ClientListener listener;
-        private NetDataWriter writer = new();
         private byte uuid;
         public ConcurrentQueue<Action> mainThreadActions = new();
         public ConcurrentQueue<Action> AwakeRuns = new();
         private float awakeRunTimer = 0f;
-        private List<byte> reusablePacketBuffer = new(1024);
-        private Dictionary<byte, ushort> lastSeenSequences = new();
+        private ConcurrentDictionary<byte, ushort> lastSeenSequences = new();
         private ushort localSequenceNumber = 0;
         private object boneSendCoroutineHandle;
         public bool isRunningNetParticle = false;
 
         // --- Material & Bone Info ---
-        private float lastBoneSendTime = 0f;
-        private const float boneSendInterval = 0.033f;
-        private const int maxPacketSize = 1020;
-        private const int bytesPerBone = 29;
-        private const int bonesPerPacket = maxPacketSize / bytesPerBone;
-        private bool sendBoneUpdates = false;
+        public const int maxPacketSize = 1024;
 
         // --- Player Tracking ---
-        public Dictionary<byte, RemotePlayer> players = new();
-        private Dictionary<byte, List<byte[]>> pendingPlayerUpdatePackets = new();
+        public ConcurrentDictionary<byte, RemotePlayer> players = new();
+        private ConcurrentDictionary<byte, List<byte[]>> pendingPlayerUpdatePackets = new();
         private int numClones = 1;
 
         private bool IsNewer(ushort current, ushort previous)
             => (ushort)(current - previous) < 32768;
 
-        private void ApplyCollisionLayers()
+        public NetworkManager()
         {
             Physics.IgnoreLayerCollision(6, 6, true); // Clones (6) cannot interact with each other
             Physics.IgnoreLayerCollision(6, 11, false); // Clones CAN interact with the main player (11)
@@ -52,20 +44,20 @@ namespace BabyStepsMultiplayerClient.UI
 
         public void Connect(string serverIP, int serverPort, string password)
         {
-            Core.localPlayer.OnConnect();
+            Disconnect();
 
-            client?.Stop();
-            client = null;
+            Core.uiManager.notificationsUI.AddMessage("Connecting to server...");
 
             listener = new ClientListener();
-            client = new NetManager(listener) { AutoRecycle = true, DisconnectTimeout = 15000 };
+            client = new NetManager(listener)
+            {
+                AutoRecycle = true,
+                DisconnectTimeout = 15000,
+                UseNativeSockets = true,
+            };
 
             client.Start();
             client.Connect(serverIP, serverPort, (password == "" ? "cuzzillobochfoddy" : password));
-
-            sendBoneUpdates = true;
-
-            ApplyCollisionLayers();
         }
 
 
@@ -74,12 +66,18 @@ namespace BabyStepsMultiplayerClient.UI
             if (client == null)
                 return;
 
-            MelonLogger.Msg("Disconnected from server");
-            Core.uiManager.ingameMessagesUI.AddMessage("Disconnected from server");
-
             client?.Stop();
             client = null;
             server = null;
+            localSequenceNumber = 0;
+            awakeRunTimer = 0;
+            uuid = 0;
+            numClones = 0;
+
+            AwakeRuns.Clear();
+            mainThreadActions.Clear();
+            pendingPlayerUpdatePackets.Clear();
+            lastSeenSequences.Clear();
 
             if (boneSendCoroutineHandle != null)
             {
@@ -88,14 +86,20 @@ namespace BabyStepsMultiplayerClient.UI
             }
 
             foreach (var player in players)
+                player.Value.Dispose();
+            players.Clear();
+
+            if (LocalPlayer.Instance != null)
+                LocalPlayer.Instance.Dispose();
+            LocalPlayer.Instance = null;
+
+            if (RemotePlayer.suitTexture != null)
             {
-                player.Value.Destroy();
-                players.Remove(player.Key);
+                GameObject.Destroy(RemotePlayer.suitTexture);
+                RemotePlayer.suitTexture = null;
             }
 
-            Core.localPlayer.OnDisconnect();
-
-            sendBoneUpdates = false;
+            Core.uiManager.notificationsUI.AddMessage("Disconnected from server");
         }
 
         public void Update()
@@ -103,42 +107,77 @@ namespace BabyStepsMultiplayerClient.UI
             if (client == null)
                 return;
 
-            client.PollEvents();
-
             awakeRunTimer += Time.deltaTime;
+
             if (!AwakeRuns.IsEmpty && awakeRunTimer >= 0.1f)
             {
-                if (AwakeRuns.TryDequeue(out var action)) action.Invoke();
+                if (AwakeRuns.TryDequeue(out var action))
+                    try
+                    {
+                        action.Invoke();
+                    }
+                    catch (Exception ex)
+                    {
+                        Core.logger.Error(ex.ToString());
+                    }
+
                 awakeRunTimer = 0f;
             }
+            
+            while (mainThreadActions.TryDequeue(out var action))
+                try
+                {
+                    action.Invoke();
+                }
+                catch (Exception ex)
+                {
+                    Core.logger.Error(ex.ToString());
+                }
 
-            while (mainThreadActions.TryDequeue(out var action)) action.Invoke();
+            try
+            {
+                if (!client.UnsyncedEvents)
+                    client.PollEvents();
+            }
+            catch (Exception ex)
+            {
+                Core.logger.Error(ex.ToString());
+            }
         }
 
         public void LateUpdate()
         {
-            UpdateBones();
-            UpdatePlayers();
-        }
+            if (client == null)
+                return;
+            if (players == null)
+                return;
 
+            foreach (var player in players.Values)
+            {
+                if (player == null)
+                    continue;
+
+                player.LateUpdate();
+            }
+        }
 
         private void ApplyJiminyRibbonStateChange(RemotePlayer player, bool jiminyState)
             => player.jiminyRibbon.active = jiminyState;
 
-        private void ApplyCollisionToggle(RemotePlayer player, bool collisionsEnabled)
+        internal void ApplyCollisionToggle(RemotePlayer player, bool collisionsEnabled)
         {
             if (collisionsEnabled)
             {
                 player.netCollisionsEnabled = true;
-                Core.uiManager.ingameMessagesUI.AddMessage($"{player.displayName} has enabled collisions");
+                Core.uiManager.notificationsUI.AddMessage($"{player.displayName} has enabled collisions");
 
-                if (Core.uiManager.serverConnectUI.uiCollisionsEnabled) player.EnableCollision();
+                if (ModSettings.player.Collisions.Value) player.EnableCollision();
                 else player.DisableCollision();
             }
             else
             {
                 player.netCollisionsEnabled = false;
-                Core.uiManager.ingameMessagesUI.AddMessage($"{player.displayName} has disabled collisions");
+                Core.uiManager.notificationsUI.AddMessage($"{player.displayName} has disabled collisions");
 
                 player.DisableCollision();
             }
@@ -148,25 +187,29 @@ namespace BabyStepsMultiplayerClient.UI
         {
             Color color = new Color(data[2] / 255f, data[3] / 255f, data[4] / 255f);
 
-            bool colorDifferent = player.color != color;
-
-            player.color = color;
+            bool colorDifferent = player.GetSuitColor() != color;
+            if (colorDifferent)
+                player.SetSuitColor(color);
 
             int nicknameLength = data.Length - 5;
             if (nicknameLength > 0)
             {
                 string name = Encoding.UTF8.GetString(data, 5, nicknameLength);
-                if (player.displayName == null) Core.uiManager.ingameMessagesUI.AddMessage($"{name} has connected");
+                if (!player.firstAppearanceApplication)
+                {
+                    Core.uiManager.notificationsUI.AddMessage($"{name} has connected");
+                    player.firstAppearanceApplication = true;
+                }
                 else
                 {
-                    if (player.displayName != name) Core.uiManager.ingameMessagesUI.AddMessage($"{player.displayName} has changed their nickname to {name}");
-                    if (colorDifferent) Core.uiManager.ingameMessagesUI.AddMessage($"{player.displayName} has updated their color");
+                    if (player.displayName != name)
+                        Core.uiManager.notificationsUI.AddMessage($"{player.displayName} has changed their nickname to {name}");
+                    if (colorDifferent)
+                        Core.uiManager.notificationsUI.AddMessage($"{player.displayName} has updated their color");
                 }
 
-                player.displayName = name;
+                player.SetDisplayName(name);
             }
-
-            player.RefreshNameAndColor();
         }
         private void ApplyAccessoryDon(RemotePlayer player, byte[] data)
         {
@@ -192,7 +235,7 @@ namespace BabyStepsMultiplayerClient.UI
 
                         player.WearHat(hatName, localPosition, localRotation);
 
-                        Core.uiManager.ingameMessagesUI.AddMessage($"{player.displayName} has donned the {hatName}");
+                        Core.uiManager.notificationsUI.AddMessage($"{player.displayName} has donned the {hatName}");
                         break;
                     }
                 case 0x01: // Held item
@@ -214,50 +257,22 @@ namespace BabyStepsMultiplayerClient.UI
 
                         player.HoldItem(itemName, handIndex, localPosition, localRotation);
 
-                        Core.uiManager.ingameMessagesUI.AddMessage($"{player.displayName} has picked up the {itemName}");
+                        Core.uiManager.notificationsUI.AddMessage($"{player.displayName} has picked up the {itemName}");
                         break;
                     }
                 default:
                     {
-                        MelonLogger.Msg($"Unknown Accessory type: {accessoryType}");
+                        Core.logger.Msg($"Unknown Accessory type: {accessoryType}");
                         break;
                     }
             }
         }
 
-        private void UpdatePlayers()
-        {
-            foreach (var player in players.Values)
-            {
-                player.InterpolateBoneTransforms();
-                player.RotateNametagTowardsCamera(Core.localPlayer.cinemachineBrain.ActiveVirtualCamera.VirtualCameraGameObject.transform.position);
-                player.HideNicknameOutsideDistance(Core.localPlayer.camera.position, 100f);
-                player.FadeByDistance(Core.localPlayer.camera);
-            }
-        }
-
-        private void UpdateBones()
-        {
-            if (!sendBoneUpdates) return;
-
-            if (Time.realtimeSinceStartup - lastBoneSendTime < boneSendInterval) return;
-
-            lastBoneSendTime = Time.realtimeSinceStartup;
-
-            var bonesToSend = TransformNet.ToNet(Core.localPlayer.sortedBones);
-
-            for (int i = 0; i < bonesToSend.Length; i += bonesPerPacket)
-            {
-                int count = Math.Min(bonesPerPacket, bonesToSend.Length - i);
-                TransformNet[] chunk = new TransformNet[count];
-                Array.Copy(bonesToSend, i, chunk, 0, count);
-                SendBones(chunk, i);
-            }
-        }
-
+        private void Send(List<byte> data, DeliveryMethod deliveryMethod)
+            => Send(data.ToArray(), deliveryMethod);
         private void Send(byte[] data, DeliveryMethod deliveryMethod)
         {
-            writer.Reset();
+            NetDataWriter writer = new();
             ushort totalLength = (ushort)(data.Length + 2);
             writer.Put(totalLength);
             writer.Put(data);
@@ -266,111 +281,123 @@ namespace BabyStepsMultiplayerClient.UI
 
         public void SendCollisionToggle(bool state)
         {
-            reusablePacketBuffer.Clear();
-            reusablePacketBuffer.Add((byte)eOpCode.ToggleCollisions);
-            reusablePacketBuffer.Add(Convert.ToByte(state));
-
-            Send(reusablePacketBuffer.ToArray(), DeliveryMethod.ReliableOrdered);
+            List<byte> writer = new(maxPacketSize)
+            {
+                (byte)eOpCode.ToggleCollisions,
+                Convert.ToByte(state)
+            };
+            Send(writer, DeliveryMethod.ReliableOrdered);
         }
 
         public void SendJiminyRibbonState(bool state)
         {
-            reusablePacketBuffer.Clear();
-            reusablePacketBuffer.Add((byte)eOpCode.JiminyRibbon);
-            reusablePacketBuffer.Add(Convert.ToByte(state));
-
-            Send(reusablePacketBuffer.ToArray(), DeliveryMethod.ReliableOrdered);
+            List<byte> writer = new(maxPacketSize)
+            {
+                (byte)eOpCode.JiminyRibbon,
+                Convert.ToByte(state)
+            };
+            Send(writer, DeliveryMethod.ReliableOrdered);
         }
 
         public void SendBones(TransformNet[] bones, int kickoffPoint)
         {
-            reusablePacketBuffer.Clear();
-            reusablePacketBuffer.Add((byte)eOpCode.BonePositionUpdate);
-            reusablePacketBuffer.Add((byte)kickoffPoint);
-            reusablePacketBuffer.AddRange(BitConverter.GetBytes(localSequenceNumber));
-            reusablePacketBuffer.AddRange(TransformNet.Serialize(bones));
-
-            Send(reusablePacketBuffer.ToArray(), DeliveryMethod.Unreliable);
+            List<byte> writer = new(maxPacketSize)
+            {
+                (byte)eOpCode.BonePositionUpdate,
+                (byte)kickoffPoint
+            };
+            writer.AddRange(BitConverter.GetBytes(localSequenceNumber));
+            writer.AddRange(TransformNet.Serialize(bones));
+            Send(writer, DeliveryMethod.Unreliable);
 
             localSequenceNumber++;
         }
 
+        private void SendAddAccessory(byte itemType,
+            string itemName,
+            Vector3 localPosition,
+            Quaternion localRotation,
+            int handIndex = 0)
+        {
+            List<byte> writer = new(maxPacketSize)
+            {
+                (byte)eOpCode.AddAccessory,
+                itemType
+            };
+
+            if (itemType == 0x01) // Held item
+                writer.Add((byte)handIndex);
+
+            writer.AddRange(BitConverter.GetBytes(localPosition.x));
+            writer.AddRange(BitConverter.GetBytes(localPosition.y));
+            writer.AddRange(BitConverter.GetBytes(localPosition.z));
+
+            writer.AddRange(BitConverter.GetBytes(localRotation.x));
+            writer.AddRange(BitConverter.GetBytes(localRotation.y));
+            writer.AddRange(BitConverter.GetBytes(localRotation.z));
+            writer.AddRange(BitConverter.GetBytes(localRotation.w));
+
+            writer.AddRange(Encoding.UTF8.GetBytes(itemName));
+
+            Send(writer, DeliveryMethod.ReliableOrdered);
+        }
+
+        private void SendRemoveAccessory(byte itemType, int handIndex = 0)
+        {
+            List<byte> writer = new(maxPacketSize)
+            {
+                (byte)eOpCode.RemoveAccessory,
+                itemType
+            };
+
+            if (itemType == 0x01) // Held item
+                writer.Add((byte)handIndex);
+
+            Send(writer, DeliveryMethod.ReliableOrdered);
+        }
+
         public void SendHoldGrabable(Grabable grabable, int handIndex)
         {
+            if (LocalPlayer.Instance == null)
+                return;
+
             Transform handBone;
-            if (handIndex == 0) handBone = Core.localPlayer.handBones.Item1;
-            else handBone = Core.localPlayer.handBones.Item2;
+            if (handIndex == 0) handBone = LocalPlayer.Instance.handBones.Item1;
+            else handBone = LocalPlayer.Instance.handBones.Item2;
+
+            if (handBone == null)
+                return;
 
             Vector3 localPosition = handBone.InverseTransformPoint(grabable.transform.position);
             Quaternion localRotation = Quaternion.Inverse(handBone.rotation) * grabable.transform.rotation;
 
             string grabName = grabable.name;
-            if (grabName.EndsWith(Core.cloneText)) grabName = grabName.Substring(0, grabName.Length - (Core.cloneText).Length);
+            if (grabName.EndsWith(Core.cloneText))
+                grabName = grabName.Substring(0, grabName.Length - (Core.cloneText).Length);
 
-            reusablePacketBuffer.Clear();
-            reusablePacketBuffer.Add((byte)eOpCode.AddAccessory);
-            reusablePacketBuffer.Add(0x01); // Held item
-
-            reusablePacketBuffer.Add((byte)handIndex);
-
-            reusablePacketBuffer.AddRange(BitConverter.GetBytes(localPosition.x));
-            reusablePacketBuffer.AddRange(BitConverter.GetBytes(localPosition.y));
-            reusablePacketBuffer.AddRange(BitConverter.GetBytes(localPosition.z));
-
-            reusablePacketBuffer.AddRange(BitConverter.GetBytes(localRotation.x));
-            reusablePacketBuffer.AddRange(BitConverter.GetBytes(localRotation.y));
-            reusablePacketBuffer.AddRange(BitConverter.GetBytes(localRotation.z));
-            reusablePacketBuffer.AddRange(BitConverter.GetBytes(localRotation.w));
-
-            reusablePacketBuffer.AddRange(Encoding.UTF8.GetBytes(grabName));
-
-            Send(reusablePacketBuffer.ToArray(), DeliveryMethod.ReliableOrdered);
+            SendAddAccessory(0x01, grabName, localPosition, localRotation, handIndex); // Held item
         }
-
         public void SendDropGrabable(int handIndex)
-        {
-            reusablePacketBuffer.Clear();
-            reusablePacketBuffer.Add((byte)eOpCode.RemoveAccessory);
-            reusablePacketBuffer.Add(0x01); // Held item
-
-            reusablePacketBuffer.Add((byte)handIndex);
-
-            Send(reusablePacketBuffer.ToArray(), DeliveryMethod.ReliableOrdered);
-        }
+            => SendRemoveAccessory(0x01, handIndex); // Held item
 
         public void SendDonHat(Hat hat)
         {
-            Vector3 localPosition = Core.localPlayer.headBone.InverseTransformPoint(hat.transform.position);
-            Quaternion localRotation = Quaternion.Inverse(Core.localPlayer.headBone.rotation) * hat.transform.rotation;
+            if (LocalPlayer.Instance == null)
+                return;
+            if (LocalPlayer.Instance.headBone == null)
+                return;
+
+            Vector3 localPosition = LocalPlayer.Instance.headBone.InverseTransformPoint(hat.transform.position);
+            Quaternion localRotation = Quaternion.Inverse(LocalPlayer.Instance.headBone.rotation) * hat.transform.rotation;
 
             string hatName = hat.name;
             if (hatName.EndsWith(Core.cloneText)) hatName = hatName.Substring(0, hatName.Length - Core.cloneText.Length);
 
-            reusablePacketBuffer.Clear();
-            reusablePacketBuffer.Add((byte)eOpCode.AddAccessory);
-            reusablePacketBuffer.Add(0x00); // Hat
-
-            reusablePacketBuffer.AddRange(BitConverter.GetBytes(localPosition.x));
-            reusablePacketBuffer.AddRange(BitConverter.GetBytes(localPosition.y));
-            reusablePacketBuffer.AddRange(BitConverter.GetBytes(localPosition.z));
-
-            reusablePacketBuffer.AddRange(BitConverter.GetBytes(localRotation.x));
-            reusablePacketBuffer.AddRange(BitConverter.GetBytes(localRotation.y));
-            reusablePacketBuffer.AddRange(BitConverter.GetBytes(localRotation.z));
-            reusablePacketBuffer.AddRange(BitConverter.GetBytes(localRotation.w));
-
-            reusablePacketBuffer.AddRange(Encoding.UTF8.GetBytes(hatName));
-
-            Send(reusablePacketBuffer.ToArray(), DeliveryMethod.ReliableOrdered);
+            SendAddAccessory(0, hatName, localPosition, localRotation); // Hat
         }
         public void SendDoffHat()
-        {
-            reusablePacketBuffer.Clear();
-            reusablePacketBuffer.Add((byte)eOpCode.RemoveAccessory);
-            reusablePacketBuffer.Add(0x00); // Hat
+            => SendRemoveAccessory(0); // Hat
 
-            Send(reusablePacketBuffer.ToArray(), DeliveryMethod.ReliableOrdered);
-        }
         /*
         public void SendParticle(byte[] raw)
         {
@@ -388,251 +415,265 @@ namespace BabyStepsMultiplayerClient.UI
 
         public void SendPlayerInformation()
         {
-            reusablePacketBuffer.Clear();
-            reusablePacketBuffer.Add((byte)eOpCode.PlayerInformation);
-            reusablePacketBuffer.Add((byte)(Core.uiManager.serverConnectUI.uiColorR * 255));
-            reusablePacketBuffer.Add((byte)(Core.uiManager.serverConnectUI.uiColorG * 255));
-            reusablePacketBuffer.Add((byte)(Core.uiManager.serverConnectUI.uiColorB * 255));
-            reusablePacketBuffer.AddRange(Encoding.UTF8.GetBytes(Core.uiManager.serverConnectUI.uiNNTB));
-            Send(reusablePacketBuffer.ToArray(), DeliveryMethod.ReliableOrdered);
+            List<byte> writer = new(maxPacketSize)
+            {
+                (byte)eOpCode.PlayerInformation,
+                (byte)(ModSettings.player.SuitColor.Value.r * 255),
+                (byte)(ModSettings.player.SuitColor.Value.g * 255),
+                (byte)(ModSettings.player.SuitColor.Value.b * 255)
+            };
+            writer.AddRange(Encoding.UTF8.GetBytes(ModSettings.player.Nickname.Value));
 
-            Core.localPlayer.ApplyColor();
+            Send(writer, DeliveryMethod.ReliableOrdered);
         }
 
         public void HandleServerMessage(byte[] data)
         {
-            if (data.Length < 1) return;
-            byte opcode = data[0];
-
-            switch (opcode)
+            try
             {
-                case 1: // UUID
-                    {
-                        BBSMMdBug.Log("Personal UUID packet received");
+                if (data.Length < 1) return;
+                byte opcode = data[0];
 
-                        uuid = data[1];
-                        MelonLogger.Msg($"Received UUID: {uuid}");
-                        break;
-                    }
-
-                case 2: // Player joined
-                    {
-                        BBSMMdBug.Log("Player join packet received");
-
-                        byte newUUID = data[1];
-                        MelonLogger.Msg($"Player {newUUID} has connected.");
-                        mainThreadActions.Enqueue(() =>
+                switch (opcode)
+                {
+                    case 1: // UUID
                         {
-                            if (RemotePlayer.nateRecycler.Count == 0)
+                            Core.DebugMsg("Personal UUID packet received");
+
+                            uuid = data[1];
+                            Core.logger.Msg($"Received UUID: {uuid}");
+                            break;
+                        }
+
+                    case 2: // Player joined
+                        {
+                            Core.DebugMsg("Player join packet received");
+
+                            byte newUUID = data[1];
+
+                            if (players.ContainsKey(newUUID))
+                                return;
+
+                            RemotePlayer nate = null;
+                            if (!RemotePlayer.GlobalPool.TryTake(out nate))
                             {
-                                players[newUUID] = new RemotePlayer(numClones++, mainThreadActions);
+                                nate = new();
+                                nate.Initialize(numClones++);
+                            }
+
+                            nate.SetActive(true);
+                            nate.RemoveHat(); // Redundancy, already called when player is first added to recycler
+                            nate.ResetBonesToBind();
+
+                            players[newUUID] = nate;
+
+                            if (pendingPlayerUpdatePackets.TryGetValue(newUUID, out List<byte[]> pendingPackets))
+                                foreach (byte[] packet in pendingPackets)
+                                    HandleServerMessage(packet);
+
+                            break;
+                        }
+
+                    case 3: // Player disconnected
+                        {
+                            Core.DebugMsg("Player disconnect packet received");
+                            byte disconnectedUUID = data[1];
+                            if (players.TryGetValue(disconnectedUUID, out var player))
+                            {
+                                players.Remove(disconnectedUUID, out _);
+                                lastSeenSequences.Remove(disconnectedUUID, out _);
+                                Core.uiManager.notificationsUI.AddMessage($"[{disconnectedUUID}] {player.displayName} has disconnected");
+                                player.Dispose();
+                            }
+                            else
+                                Core.logger.Warning($"No such player {disconnectedUUID} to disconnect.");
+                            break;
+                        }
+
+                    case 4: // Appearance update
+                        {
+                            Core.DebugMsg("Player appearance packet received");
+                            byte playerUUID = data[1];
+                            if (players.TryGetValue(playerUUID, out var targetPlayer)) ApplyAppearanceUpdate(targetPlayer, data);
+                            else
+                            {
+                                if (!pendingPlayerUpdatePackets.TryGetValue(playerUUID, out var list)) pendingPlayerUpdatePackets[playerUUID] = list = new List<byte[]>();
+                                list.Add(data);
+                            }
+
+                            break;
+                        }
+
+                    case 5: // Bone update
+                        {
+                            byte boneUUID = data[1];
+                            if (!players.TryGetValue(boneUUID, out var bonePlayer)) break;
+
+                            byte kickoffPoint = data[2];
+                            ushort seq = BitConverter.ToUInt16(data, 3);
+                            byte[] rawBoneData = data.Skip(5).ToArray();
+
+                            if (!lastSeenSequences.TryGetValue(boneUUID, out ushort lastSeq) 
+                                || IsNewer(seq, lastSeq))
+                            {
+                                lastSeenSequences[boneUUID] = seq;
+
+                                byte[] boneData = rawBoneData;
+                                var bones = TransformNet.Deserialize(boneData);
+                                bonePlayer.UpdateBones(bones, kickoffPoint);
+                            }
+
+                            break;
+                        }
+
+                    case 6: // Generic World Event
+                        {
+                            Core.DebugMsg("GWE packet received");
+
+                            byte eventUUID = data[1];
+                            ushort seq = BitConverter.ToUInt16(data, 2);
+                            byte[] rawEventData = data.Skip(4).ToArray();
+
+                            if (!lastSeenSequences.TryGetValue(eventUUID, out ushort lastSeq) || IsNewer(seq, lastSeq))
+                            {
+                                byte eID = rawEventData[0];
+                                switch (eID)
+                                {
+                                    case 0x00: // Particle GWE
+                                        {
+                                            switch (rawEventData[1])
+                                            {
+                                                case 0x00:
+                                                    {
+                                                        if ((LocalPlayer.Instance != null)
+                                                            && (LocalPlayer.Instance.particleParty != null))
+                                                        {
+                                                            FootData fd = FootDataHelpers.DeserializeFootData(rawEventData.Skip(2).ToArray(), players[eventUUID]);
+                                                            if (fd == null) return;
+                                                            isRunningNetParticle = true;
+                                                            LocalPlayer.Instance.particleParty.OnPlant(fd);
+                                                        }
+                                                        break;
+                                                    }
+                                                case 0x01:
+                                                    {
+                                                        if ((LocalPlayer.Instance != null)
+                                                            && (LocalPlayer.Instance.particleParty != null))
+                                                        {
+                                                            FootData fd = FootDataHelpers.DeserializeFootData(rawEventData.Skip(2).ToArray(), players[eventUUID]);
+                                                            if (fd == null) return;
+                                                            isRunningNetParticle = true;
+                                                            LocalPlayer.Instance.particleParty.OnSlip(fd);
+                                                        }
+                                                        break;
+                                                    }
+                                            }
+                                            break;
+                                        }
+                                    case 0x01: // Sound GWE
+                                        {
+                                            break;
+                                        }
+                                    default:
+                                        {
+                                            Core.logger.Msg($"Unknown GWE eID: {eID}");
+                                            break;
+                                        }
+                                }
+                            }
+                            break;
+                        }
+
+                    case 7: // Don Accessory
+                        {
+                            Core.DebugMsg("Accessory don packet received");
+
+                            byte playerUUID = data[1];
+                            if (players.TryGetValue(playerUUID, out var player))
+                            {
+                                ApplyAccessoryDon(player, data);
+                                ApplyCollisionToggle(player, player.netCollisionsEnabled);
                             }
                             else
                             {
-                                RemotePlayer nate = RemotePlayer.nateRecycler.Dequeue();
-                                nate.baseObj.active = true;
-                                nate.displayName = null;
-                                nate.RemoveHat(); // Redundancy, already called when player is first added to recycler
-                                nate.ResetBonesToBind();
-                                players[newUUID] = nate;
+                                if (!pendingPlayerUpdatePackets.TryGetValue(playerUUID, out var list)) pendingPlayerUpdatePackets[playerUUID] = list = new List<byte[]>();
+                                list.Add(data);
                             }
 
-                            if (pendingPlayerUpdatePackets.TryGetValue(newUUID, out List<byte[]> pendingPackets))
-                            {
-                                foreach (byte[] packet in pendingPackets)
-                                {
-                                    HandleServerMessage(packet);
-                                }
-                            }
-                        });
-                        break;
-                    }
-
-                case 3: // Player disconnected
-                    {
-                        BBSMMdBug.Log("Player disconnect packet received");
-
-                        byte disconnectedUUID = data[1];
-                        if (players.TryGetValue(disconnectedUUID, out var player))
-                        {
-                            mainThreadActions.Enqueue(() =>
-                            {
-                                Core.uiManager.ingameMessagesUI.AddMessage($"{player.displayName} has disconnected");
-                                player.Destroy();
-                                players.Remove(disconnectedUUID);
-                                lastSeenSequences.Remove(disconnectedUUID);
-                            });
-                            MelonLogger.Msg($"Player {disconnectedUUID} disconnected.");
-                        }
-                        else MelonLogger.Warning($"No such player {disconnectedUUID} to disconnect.");
-                        break;
-                    }
-
-                case 4: // Appearance update
-                    {
-                        BBSMMdBug.Log("Player appearance packet received");
-
-                        byte playerUUID = data[1];
-                        if (players.TryGetValue(playerUUID, out var targetPlayer)) ApplyAppearanceUpdate(targetPlayer, data);
-                        else
-                        {
-                            if (!pendingPlayerUpdatePackets.TryGetValue(playerUUID, out var list)) pendingPlayerUpdatePackets[playerUUID] = list = new List<byte[]>();
-                            list.Add(data);
+                            break;
                         }
 
-                        break;
-                    }
-
-                case 5: // Bone update
-                    {
-                        byte boneUUID = data[1];
-                        if (!players.TryGetValue(boneUUID, out var bonePlayer)) break;
-
-                        byte kickoffPoint = data[2];
-                        ushort seq = BitConverter.ToUInt16(data, 3);
-                        byte[] rawBoneData = data.Skip(5).ToArray();
-
-                        if (!lastSeenSequences.TryGetValue(boneUUID, out ushort lastSeq) || IsNewer(seq, lastSeq))
+                    case 8: // Doff Accessory
                         {
-                            lastSeenSequences[boneUUID] = seq;
+                            Core.DebugMsg("Accessory doff packet received");
 
-                            var bones = TransformNet.Deserialize(rawBoneData);
-                            bonePlayer.UpdateBones(bones, kickoffPoint);
-                        }
+                            byte playerUUID = data[1];
+                            if (!players.TryGetValue(playerUUID, out var player)) break;
+                            var accessoryType = data[2];
 
-                        break;
-                    }
-
-                case 6: // Generic World Event
-                    {
-                        BBSMMdBug.Log("GWE packet received");
-
-                        byte eventUUID = data[1];
-                        ushort seq = BitConverter.ToUInt16(data, 2);
-                        byte[] rawEventData = data.Skip(4).ToArray();
-
-                        if (!lastSeenSequences.TryGetValue(eventUUID, out ushort lastSeq) || IsNewer(seq, lastSeq))
-                        {
-                            byte eID = rawEventData[0];
-                            switch (eID)
+                            switch (accessoryType)
                             {
-                                case 0x00: // Particle GWE
+                                case 0x00: // Hat
                                     {
-                                        switch (rawEventData[1])
-                                        {
-                                            case 0x00:
-                                                {
-                                                    FootData fd = FootDataHelpers.DeserializeFootData(rawEventData.Skip(2).ToArray(), players[eventUUID]);
-                                                    if (fd == null) return;
-                                                    isRunningNetParticle = true;
-                                                    Core.localPlayer.particleParty.OnPlant(fd);
-                                                    break;
-                                                }
-                                            case 0x01:
-                                                {
-                                                    FootData fd = FootDataHelpers.DeserializeFootData(rawEventData.Skip(2).ToArray(), players[eventUUID]);
-                                                    if (fd == null) return;
-                                                    isRunningNetParticle = true;
-                                                    Core.localPlayer.particleParty.OnSlip(fd);
-                                                    break;
-                                                }
-                                        }
+                                        player.RemoveHat();
                                         break;
                                     }
-                                case 0x01: // Sound GWE
+                                case 0x01: // Held item
                                     {
+                                        player.DropItem(data[3]);
                                         break;
                                     }
                                 default:
                                     {
-                                        MelonLogger.Msg($"Unknown GWE eID: {eID}");
+                                        Core.logger.Msg($"Unknown Accessory type: {accessoryType}");
                                         break;
                                     }
                             }
+                            break;
                         }
-                        break;
-                    }
 
-                case 7: // Don Accessory
-                    {
-                        BBSMMdBug.Log("Accessory don packet received");
-
-                        byte playerUUID = data[1];
-                        if (players.TryGetValue(playerUUID, out var player)) ApplyAccessoryDon(player, data);
-                        else
+                    case 9: // Jiminy Ribbon State
                         {
-                            if (!pendingPlayerUpdatePackets.TryGetValue(playerUUID, out var list)) pendingPlayerUpdatePackets[playerUUID] = list = new List<byte[]>();
-                            list.Add(data);
+                            Core.DebugMsg("Jiminy Ribbon packet received");
+
+                            byte playerUUID = data[1];
+                            bool jiminyState = Convert.ToBoolean(data[2]);
+                            if (players.TryGetValue(playerUUID, out var player)) ApplyJiminyRibbonStateChange(player, jiminyState);
+                            else
+                            {
+                                if (!pendingPlayerUpdatePackets.TryGetValue(playerUUID, out var list)) pendingPlayerUpdatePackets[playerUUID] = list = new List<byte[]>();
+                                list.Add(data);
+                            }
+
+                            break;
                         }
 
-                        break;
-                    }
-
-                case 8: // Doff Accessory
-                    {
-                        BBSMMdBug.Log("Accessory doff packet received");
-
-                        byte playerUUID = data[1];
-                        if (!players.TryGetValue(playerUUID, out var player)) break;
-                        var accessoryType = data[2];
-
-                        switch (accessoryType)
+                    case 10: // Collision Toggle Event
                         {
-                            case 0x00: // Hat
-                                {
-                                    player.RemoveHat();
-                                    break;
-                                }
-                            case 0x01: // Held item
-                                {
-                                    player.DropItem(data[3]);
-                                    break;
-                                }
-                            default:
-                                {
-                                    MelonLogger.Msg($"Unknown Accessory type: {accessoryType}");
-                                    break;
-                                }
+                            Core.DebugMsg("Collision toggle packet received");
+
+                            byte playerUUID = data[1];
+                            bool collisionsEnabled = Convert.ToBoolean(data[2]);
+                            if (players.TryGetValue(playerUUID, out var player)) ApplyCollisionToggle(player, collisionsEnabled);
+                            else
+                            {
+                                if (!pendingPlayerUpdatePackets.TryGetValue(playerUUID, out var list)) pendingPlayerUpdatePackets[playerUUID] = list = new List<byte[]>();
+                                list.Add(data);
+                            }
+
+                            break;
                         }
-                        break;
-                    }
 
-                case 9: // Jiminy Ribbon State
-                    {
-                        BBSMMdBug.Log("Jiminy Ribbon packet received");
-
-                        byte playerUUID = data[1];
-                        bool jiminyState = Convert.ToBoolean(data[2]);
-                        if (players.TryGetValue(playerUUID, out var player)) ApplyJiminyRibbonStateChange(player, jiminyState);
-                        else
+                    default:
                         {
-                            if (!pendingPlayerUpdatePackets.TryGetValue(playerUUID, out var list)) pendingPlayerUpdatePackets[playerUUID] = list = new List<byte[]>();
-                            list.Add(data);
+                            Core.logger.Msg($"Unknown opcode from server: {opcode}");
+                            break;
                         }
-
-                        break;
-                    }
-                case 10: // Collision Toggle Event
-                    {
-                        BBSMMdBug.Log("Collision toggle packet received");
-
-                        byte playerUUID = data[1];
-                        bool collisionsEnabled = Convert.ToBoolean(data[2]);
-                        if (players.TryGetValue(playerUUID, out var player)) ApplyCollisionToggle(player, collisionsEnabled);
-                        else
-                        {
-                            if (!pendingPlayerUpdatePackets.TryGetValue(playerUUID, out var list)) pendingPlayerUpdatePackets[playerUUID] = list = new List<byte[]>();
-                            list.Add(data);
-                        }
-
-                        break;
-                    }
-
-                default:
-                    {
-                        MelonLogger.Msg($"Unknown opcode from server: {opcode}");
-                        break;
-                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Core.logger.Error(ex);
             }
         }
     }

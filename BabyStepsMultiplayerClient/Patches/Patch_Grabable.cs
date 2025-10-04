@@ -1,5 +1,4 @@
-﻿using BabyStepsMultiplayerClient.Debug;
-using HarmonyLib;
+﻿using HarmonyLib;
 using Il2Cpp;
 //using UnityEngine;
 
@@ -14,8 +13,7 @@ namespace BabyStepsMultiplayerClient.Patches
             //Transform __0, // hand
             int __1) // handIndex
         {
-
-            BBSMMdBug.Log("Grabable PlaceInHand HarmonyPatch");
+            Core.DebugMsg("Grabable PlaceInHand HarmonyPatch");
 
             if (Core.networkManager.client == null) 
                 return;
