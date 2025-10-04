@@ -53,7 +53,7 @@ namespace BabyStepsMultiplayerClient.Player
 
                 float distance = Vector3.Distance(LocalPlayer.Instance.camera.position, baseObject.transform.position);
                 SetActive(distance <= 100f);
-                RotateTowardsCamera(LocalPlayer.Instance.camera);
+                RotateTowardsCamera(LocalPlayer.Instance.cinemachineBrain.ActiveVirtualCamera.VirtualCameraGameObject.transform.position);
             }
         }
 
@@ -77,7 +77,7 @@ namespace BabyStepsMultiplayerClient.Player
             if ((LocalPlayer.Instance != null)
                 && (LocalPlayer.Instance.camera != null)
                 && baseObject.activeSelf)
-                RotateTowardsCamera(LocalPlayer.Instance.camera);
+                RotateTowardsCamera(LocalPlayer.Instance.cinemachineBrain.ActiveVirtualCamera.VirtualCameraGameObject.transform.position);
         }
 
         public void SetText(string text)
@@ -107,16 +107,11 @@ namespace BabyStepsMultiplayerClient.Player
             return textMeshPro.color;
         }
 
-        private void RotateTowardsCamera(Transform camera)
+        private void RotateTowardsCamera(Vector3 cameraPosition)
         {
-            if (camera == null)
-                return;
-            if (baseObject == null)
-                return;
-            if (!baseObject.activeSelf)
-                return;
-            baseObject.transform.rotation = 
-                Quaternion.LookRotation(baseObject.transform.position - camera.transform.position);
+            if (baseObject == null) return;
+            if (!baseObject.activeSelf) return;
+            baseObject.transform.rotation = Quaternion.LookRotation(baseObject.transform.position - cameraPosition);
         }
     }
 }
