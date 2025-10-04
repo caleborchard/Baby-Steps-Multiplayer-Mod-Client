@@ -10,17 +10,15 @@ namespace BabyStepsMultiplayerClient.Config
         public MelonPreferences_Category Category;
         public string FileExt = ".cfg";
 
-        public virtual eConfigType ConfigType { get; set; }
         public virtual string ID { get; set; }
         public virtual string DisplayName { get; set; }
 
         public ConfigCategory()
         {
             Setup(MelonEnvironment.UserDataDirectory,
-                "BabyStepsClientConfig", 
+                "BabyStepsClientConfig",
                 ID,
-                DisplayName, 
-                ConfigType);
+                DisplayName);
 
             if (!_allCategories.ContainsKey(ID))
                 _allCategories[ID] = this;
@@ -29,34 +27,30 @@ namespace BabyStepsMultiplayerClient.Config
         public ConfigCategory(string folderPath,
             string fileName,
             string categoryID,
-            string categoryDisplayName,
-            eConfigType categoryType)
-            => Setup(folderPath, fileName, categoryID, categoryDisplayName, categoryType);
+            string categoryDisplayName)
+            => Setup(folderPath, fileName, categoryID, categoryDisplayName);
 
         public void Setup(string folderPath,
             string fileName,
             string categoryID,
-            string categoryDisplayName,
-            eConfigType categoryType)
+            string categoryDisplayName)
         {
             if (string.IsNullOrEmpty(categoryDisplayName)
                 || string.IsNullOrWhiteSpace(categoryDisplayName))
                 categoryDisplayName = categoryID;
 
+            string filePath = Path.Combine(folderPath, $"{fileName}{FileExt}");
+
+
+
             ID = categoryID;
             DisplayName = categoryDisplayName;
-            ConfigType = categoryType;
 
             Category = MelonPreferences.GetCategory(ID);
             if (Category == null)
             {
                 Category = MelonPreferences.CreateCategory(ID, DisplayName, true, false);
                 Category.DestroyFileWatcher();
-
-                if (!Directory.Exists(folderPath))
-                    Directory.CreateDirectory(folderPath);
-
-                string filePath = Path.Combine(folderPath, $"{fileName}{FileExt}");
                 Category.SetFilePath(filePath, true, false);
             }
 

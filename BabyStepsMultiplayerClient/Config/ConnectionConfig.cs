@@ -8,11 +8,7 @@ namespace BabyStepsMultiplayerClient.Config
         internal MelonPreferences_Entry<int> Port;
         internal MelonPreferences_Entry<string> Password;
 
-        public override eConfigType ConfigType
-            => eConfigType.Connection;
         public override string ID
-            => "Connection";
-        public override string DisplayName
             => "Connection";
 
         public override void CreatePreferences()
