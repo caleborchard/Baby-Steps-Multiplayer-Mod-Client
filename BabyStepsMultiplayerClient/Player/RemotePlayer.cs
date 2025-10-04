@@ -218,9 +218,11 @@ namespace BabyStepsMultiplayerClient.Player
             {
                 if ((LocalPlayer.Instance.rootBone != null) && firstBoneInterpRan)
                     distanceFromPlayer = Vector3.Distance(LocalPlayer.Instance.rootBone.position, rootBone.transform.position);
-                if (LocalPlayer.Instance.camera != null)
+
+                GameObject camera = LocalPlayer.Instance.GetCameraObject();
+                if (camera != null)
                 {
-                    float distance = Vector3.Distance(LocalPlayer.Instance.camera.position, rootBone.transform.position);
+                    float distance = Vector3.Distance(camera.transform.position, rootBone.transform.position);
                     FadeByDistance(distance);
                 }
             }

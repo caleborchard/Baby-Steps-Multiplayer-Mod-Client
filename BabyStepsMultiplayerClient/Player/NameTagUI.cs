@@ -47,13 +47,15 @@ namespace BabyStepsMultiplayerClient.Player
             if (baseObject == null)
                 return;
 
-            if ((LocalPlayer.Instance != null)
-                && (LocalPlayer.Instance.camera != null))
+            if (LocalPlayer.Instance != null)
             {
-
-                float distance = Vector3.Distance(LocalPlayer.Instance.camera.position, baseObject.transform.position);
-                SetActive(distance <= 100f);
-                RotateTowardsCamera(LocalPlayer.Instance.cinemachineBrain.ActiveVirtualCamera.VirtualCameraGameObject.transform.position);
+                GameObject camera = LocalPlayer.Instance.GetCameraObject();
+                if (camera != null)
+                {
+                    float distance = Vector3.Distance(camera.transform.position, baseObject.transform.position);
+                    SetActive(distance <= 100f);
+                    RotateTowardsCamera(camera.transform.position);
+                }
             }
         }
 
@@ -74,10 +76,12 @@ namespace BabyStepsMultiplayerClient.Player
             baseObject.transform.SetParent(parent, false);
             baseObject.transform.localPosition = positionOffset;
 
-            if ((LocalPlayer.Instance != null)
-                && (LocalPlayer.Instance.camera != null)
-                && baseObject.activeSelf)
-                RotateTowardsCamera(LocalPlayer.Instance.cinemachineBrain.ActiveVirtualCamera.VirtualCameraGameObject.transform.position);
+            if (LocalPlayer.Instance != null)
+            {
+                GameObject camera = LocalPlayer.Instance.GetCameraObject();
+                if (camera != null)
+                    RotateTowardsCamera(camera.transform.position);
+            }
         }
 
         public void SetText(string text)

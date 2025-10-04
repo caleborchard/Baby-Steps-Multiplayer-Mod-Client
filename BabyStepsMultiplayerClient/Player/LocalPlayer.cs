@@ -11,7 +11,6 @@ namespace BabyStepsMultiplayerClient.Player
         public static LocalPlayer Instance;
 
         public PlayerMovement playerMovement;
-        public Transform camera;
         public GameObject cinemachineBrainObj;
         public CinemachineBrain cinemachineBrain;
         public Material pmSuitMaterial;
@@ -34,10 +33,9 @@ namespace BabyStepsMultiplayerClient.Player
             if (playerMovement != null)
                 pmSuitMaterial = playerMovement.suitMat;
 
-            camera = baseObject.transform.Find("GameCam");
-
             cinemachineBrainObj = GameObject.Find("BigManagerPrefab/Camera");
-            cinemachineBrain = cinemachineBrainObj.GetComponent<CinemachineBrain>();
+            if (cinemachineBrainObj != null)
+                cinemachineBrain = cinemachineBrainObj.GetComponent<CinemachineBrain>();
 
             // Base Initialization
             base.Initialize();
@@ -51,6 +49,22 @@ namespace BabyStepsMultiplayerClient.Player
         {
             SetSuitColor(Color.white);
             ResetSuitColor();
+        }
+
+        public GameObject GetCameraObject()
+        {
+            if (cinemachineBrain == null)
+                return null;
+
+            var virtualCam = cinemachineBrain.ActiveVirtualCamera;
+            if (virtualCam == null) 
+                return null;
+
+            var virtualCamObj = virtualCam.VirtualCameraGameObject;
+            if (virtualCamObj == null)
+                return null;
+
+            return virtualCamObj;
         }
 
         public void ApplySuitColor()
