@@ -60,16 +60,12 @@ namespace BabyStepsMultiplayerClient.Config
             ID = categoryID;
             DisplayName = categoryDisplayName;
 
-            Category = MelonPreferences.GetCategory(ID);
-            if (Category == null)
-            {
-                Category = MelonPreferences.CreateCategory(ID, DisplayName, true, false);
-                Category.DestroyFileWatcher();
-                Category.SetFilePath(filePath, true, false);
-            }
+            Category = MelonPreferences.CreateCategory(ID, DisplayName, true, false);
+            Category.DestroyFileWatcher();
+            Category.SetFilePath(filePath, true, false);
 
             CreatePreferences();
-            Category.SaveToFile(false);
+            Save();
         }
 
         public virtual void CreatePreferences() { }
