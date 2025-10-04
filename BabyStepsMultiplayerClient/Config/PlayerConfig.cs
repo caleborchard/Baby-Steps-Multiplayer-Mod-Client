@@ -9,11 +9,7 @@ namespace BabyStepsMultiplayerClient.Config
         internal MelonPreferences_Entry<Color> SuitColor;
         internal MelonPreferences_Entry<bool> Collisions;
 
-        public override eConfigType ConfigType
-            => eConfigType.Player;
         public override string ID
-            => "Player";
-        public override string DisplayName
             => "Player";
 
         public override void CreatePreferences()
