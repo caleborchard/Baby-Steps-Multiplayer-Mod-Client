@@ -46,6 +46,8 @@ namespace BabyStepsMultiplayerClient.Networking
         {
             Disconnect();
 
+            Core.uiManager.notificationsUI.AddMessage("Connecting to server...");
+
             listener = new ClientListener();
             client = new NetManager(listener)
             {
