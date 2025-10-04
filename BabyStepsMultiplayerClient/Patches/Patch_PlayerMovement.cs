@@ -1,4 +1,5 @@
-﻿using BabyStepsMultiplayerClient.Player;
+﻿using BabyStepsMultiplayerClient.Extensions;
+using BabyStepsMultiplayerClient.Player;
 using HarmonyLib;
 using Il2Cpp;
 
@@ -45,7 +46,8 @@ namespace BabyStepsMultiplayerClient.Patches
             if (Core.networkManager.client == null)
                 return;
 
-            Core.networkManager.SendDonHat(__0);
+            //Core.networkManager.SendDonHat(__0);
+            __instance.StartCoroutine(DelayedSendHat(__0));
 
             for (int i = 0; i < __instance.handItems.Length; i++)
             {
@@ -54,6 +56,14 @@ namespace BabyStepsMultiplayerClient.Patches
                     && item.name.Contains(__0.name))
                     Core.networkManager.SendDropGrabable(i);
             }
+        }
+
+        private static System.Collections.IEnumerator DelayedSendHat(Hat hat)
+        {
+            // 30 is arbitrary, not too long to be super noticeable but enough to solve most issues
+            for (int i = 0; i < 30; i++) yield return null;
+
+            Core.networkManager.SendDonHat(hat);
         }
     }
 }

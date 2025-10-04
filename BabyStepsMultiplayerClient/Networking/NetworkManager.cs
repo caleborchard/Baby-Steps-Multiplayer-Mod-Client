@@ -482,7 +482,7 @@ namespace BabyStepsMultiplayerClient.Networking
                             {
                                 players.Remove(disconnectedUUID, out _);
                                 lastSeenSequences.Remove(disconnectedUUID, out _);
-                                Core.uiManager.notificationsUI.AddMessage($"[{disconnectedUUID}] {player.displayName} has disconnected");
+                                Core.uiManager.notificationsUI.AddMessage($"{player.displayName} has disconnected");
                                 player.Dispose();
                             }
                             else
