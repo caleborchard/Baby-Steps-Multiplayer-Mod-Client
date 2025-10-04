@@ -93,12 +93,6 @@ namespace BabyStepsMultiplayerClient.Networking
                 LocalPlayer.Instance.Dispose();
             LocalPlayer.Instance = null;
 
-            if (RemotePlayer.suitTexture != null)
-            {
-                GameObject.Destroy(RemotePlayer.suitTexture);
-                RemotePlayer.suitTexture = null;
-            }
-
             Core.uiManager.notificationsUI.AddMessage("Disconnected from server");
         }
 
