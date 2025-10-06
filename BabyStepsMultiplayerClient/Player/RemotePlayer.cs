@@ -682,6 +682,29 @@ namespace BabyStepsMultiplayerClient.Player
             }
         }
 
+        private void ApplySnapshotInstant(BoneSnapshot latest)
+        {
+            for (int i = 0; i < latest.transformNets.Length; i++)
+            {
+                var net = latest.transformNets[i];
+                if (net == null) continue;
+
+                int hIdx = net.heirarchyIndex;
+                if (hIdx < 0 || hIdx >= boneChildren.Count) continue;
+
+                var bone = boneChildren[hIdx];
+                if (bone == null) continue;
+
+                var npos = net.position;
+                Vector3 pos = new Vector3(npos.X, npos.Y, npos.Z);
+
+                var nrot = net.rotation;
+                Quaternion rot = new Quaternion(nrot.X, nrot.Y, nrot.Z, nrot.W);
+
+                bone.position = pos;
+                bone.rotation = rot;
+            }
+        }
         public void UpdateBones(TransformNet[] bonesToUpdate, int kickoffPoint)
         {
             if (boneChildren == null)
@@ -714,7 +737,6 @@ namespace BabyStepsMultiplayerClient.Player
 
             currentBoneGroup = snapshot;
         }
-
         private void InterpolateBoneTransforms()
         {
             if (boneChildren == null)
@@ -729,26 +751,7 @@ namespace BabyStepsMultiplayerClient.Player
                 while (snapshotBuffer.Count > 0)
                     snapshotBuffer.TryDequeue(out latest);
 
-                for (int i = 0; i < latest.transformNets.Length; i++)
-                {
-                    var net = latest.transformNets[i];
-                    if (net == null) continue;
-
-                    int hIdx = net.heirarchyIndex;
-                    if (hIdx < 0 || hIdx >= boneChildren.Count) continue;
-
-                    var bone = boneChildren[hIdx];
-                    if (bone == null) continue;
-
-                    var npos = net.position;
-                    Vector3 pos = new Vector3(npos.X, npos.Y, npos.Z);
-
-                    var nrot = net.rotation;
-                    Quaternion rot = new Quaternion(nrot.X, nrot.Y, nrot.Z, nrot.W);
-
-                    bone.position = pos;
-                    bone.rotation = rot;
-                }
+                ApplySnapshotInstant(latest);
 
                 bool shouldEnableColliders = ModSettings.player.Collisions.Value && netCollisionsEnabled;
                 Core.networkManager.ApplyCollisionToggle(this, shouldEnableColliders);
@@ -783,9 +786,15 @@ namespace BabyStepsMultiplayerClient.Player
                 if (snap.time > renderTime) { next = snap; break; }
             }
 
-            if (prev == null || next == null) return; // Not enough data to interpolate
+            //if (prev == null || next == null) return; // Not enough data to interpolate
+            if (prev == null) return;
+            if (next == null)
+            {
+                ApplySnapshotInstant(prev);
+                return;
+            }
 
-            double t = (renderTime - prev.time) / (next.time - prev.time);
+                double t = (renderTime - prev.time) / (next.time - prev.time);
             float tf = Mathf.Clamp01((float)t);
 
             for (int i = 0; i < prev.transformNets.Length; i++)
