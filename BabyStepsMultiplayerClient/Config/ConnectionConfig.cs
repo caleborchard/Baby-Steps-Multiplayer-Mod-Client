@@ -16,7 +16,7 @@ namespace BabyStepsMultiplayerClient.Config
             Address = CreatePref("address",
                 "IP Address",
                 "IP Address",
-                "127.0.0.1");
+                "bbsmm.mooo.com");
 
             Port = CreatePref("port",
                 "Port",

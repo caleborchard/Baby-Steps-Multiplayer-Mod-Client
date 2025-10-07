@@ -93,7 +93,7 @@ namespace BabyStepsMultiplayerClient.UI
                     if (LocalPlayer.Instance != null)
                         LocalPlayer.Instance.ApplySuitColor();
                 });
-
+                Core.uiManager.notificationsUI.AddMessage("Your appearance has been updated");
             }
             GUI.enabled = true;
 
