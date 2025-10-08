@@ -40,6 +40,10 @@ namespace BabyStepsMultiplayerClient.Networking
             Physics.IgnoreLayerCollision(6, 6, true); // Clones (6) cannot interact with each other
             Physics.IgnoreLayerCollision(6, 11, false); // Clones CAN interact with the main player (11)
             Physics.IgnoreLayerCollision(6, 19, true); // Clones cannot interact with cutscene trigger colliders (19)
+
+            Physics.IgnoreLayerCollision(23, 23, true);
+            Physics.IgnoreLayerCollision(23, 11, false);
+            Physics.IgnoreLayerCollision(23, 19, true);
         }
 
         public void Connect(string serverIP, int serverPort, string password)

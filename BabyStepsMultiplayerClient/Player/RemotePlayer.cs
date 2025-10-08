@@ -400,7 +400,8 @@ namespace BabyStepsMultiplayerClient.Player
                 if (bone == null)
                     continue;
 
-                bone.gameObject.layer = 6;
+                //bone.gameObject.layer = 6;
+                bone.gameObject.layer = 23;
 
                 CreateBoneCollider(bone);
                 CreateBoneMudMesh(bone);
@@ -415,6 +416,9 @@ namespace BabyStepsMultiplayerClient.Player
             string boneName = bone.name;
             if (!colliderTemplate.TryGetValue(bone.name, out var template))
                 return;
+
+            // Temporary exception to test out player pushing. Maybe specify layer in the colliderTemplate Dictionary
+            if (boneName.Contains("spine_01") || boneName.Contains("root")) bone.gameObject.layer = 6;
 
             Rigidbody rb = bone.gameObject.GetComponent<Rigidbody>();
             if (rb == null)
