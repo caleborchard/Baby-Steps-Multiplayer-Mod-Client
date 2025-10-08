@@ -25,7 +25,8 @@ namespace BabyStepsMultiplayerClient.UI
             float y = 20f;
             Rect panelRect = new Rect(x, y, panelWidth, panelHeight);
 
-            GUI.Box(panelRect, "Connected Players", Core.uiManager.boxStyle);
+            int localHeight = (int)(LocalPlayer.Instance.headBone.position.y - 120);
+            GUI.Box(panelRect, $"Connected Players [Y:{localHeight}]", Core.uiManager.boxStyle);
 
             GUILayout.BeginArea(new Rect(panelRect.x + 10, panelRect.y + headerHeight, panelRect.width - 20, panelRect.height - headerHeight - margin));
 
@@ -43,8 +44,8 @@ namespace BabyStepsMultiplayerClient.UI
                     if (player.rootBone == null)
                         continue;
 
-                    int height = (int)player.rootBone.position.y - 121;
-                    GUILayout.Label($"[{height}] { player.displayName }", Core.uiManager.centeredLabelStyle);
+                    int height = (int)player.rootBone.position.y - 120;
+                    GUILayout.Label($"[Y:{height}] { player.displayName }", Core.uiManager.centeredLabelStyle);
                 }
             }
 
