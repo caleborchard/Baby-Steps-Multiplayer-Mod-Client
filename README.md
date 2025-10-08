@@ -13,6 +13,9 @@ The **Baby Steps: Multiplayer Mod** is an unofficial [MelonLoader](https://melon
 
 Cutscenes are triggered independently on each client and do not affect other players. Each player has full collisions and can bump into each other. Hats and held items are replicated.
 
+[Nexus Mods Link](https://www.nexusmods.com/babysteps/mods/1)
+---
+
 [Join the Discord!](https://discord.gg/fpBQW5cKdE)
 ---
 
