@@ -61,7 +61,9 @@ namespace BabyStepsMultiplayerClient.Networking
             };
 
             client.Start();
-            client.Connect(serverIP, serverPort, (password == "" ? "cuzzillobochfoddy" : password));
+
+            string effectivePassword = Core.SERVER_VERSION + (password == "" ? "cuzzillobochfoddy" : password);
+            client.Connect(serverIP, serverPort, effectivePassword);
         }
 
 
