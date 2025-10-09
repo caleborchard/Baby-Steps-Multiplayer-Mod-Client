@@ -7,10 +7,12 @@ namespace BabyStepsMultiplayerClient.UI
     {
         public bool showServerPanel { get; private set; }
         public bool showPlayersTab { get; private set; }
+        public bool showChatTab;
 
         public PlayersTabUI playersTabUI { get; private set; }
         public ServerConnectUI serverConnectUI { get; private set; }
         public NotificationUI notificationsUI { get; private set; }
+        public ChatTabUI chatTabUI { get; private set; }
 
         public Font arialFont;
         public GUIStyle labelStyle;
@@ -29,6 +31,7 @@ namespace BabyStepsMultiplayerClient.UI
 
             notificationsUI = new NotificationUI();
             playersTabUI = new PlayersTabUI();
+            chatTabUI = new ChatTabUI();
         }
 
         private void CreateLabelStyles()
@@ -82,6 +85,9 @@ namespace BabyStepsMultiplayerClient.UI
 
             if (showPlayersTab)
                 playersTabUI.DrawUI();
+
+            if (showChatTab)
+                chatTabUI.DrawUI();
         }
 
         public void Update()
@@ -93,6 +99,18 @@ namespace BabyStepsMultiplayerClient.UI
                 showPlayersTab = false;
             else
                 showPlayersTab = !showServerPanel && Input.GetKey(KeyCode.Tab);
+
+            if (Input.GetKeyDown(KeyCode.T) && Core.networkManager.client != null)
+                showChatTab = true;
+
+            if (Input.GetKeyDown(KeyCode.Escape))
+                showChatTab = false;
+
+            if (showChatTab && Input.GetKeyDown(KeyCode.Return) && Core.networkManager.client != null)
+            {
+                chatTabUI.SendCurrentMessage();
+                showChatTab = false;
+            }
         }
 
         public void ApplyCollisionToggle(RemotePlayer player, bool collisionsEnabled)

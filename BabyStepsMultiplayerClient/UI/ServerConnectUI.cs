@@ -7,7 +7,7 @@ namespace BabyStepsMultiplayerClient.UI
     public class ServerConnectUI
     {
         // --- Draw Parameters ---
-        public static Rect windowDimensions = new(30, 30, 250, 515); //25 is one label //530
+        public static Rect windowDimensions = new(30, 30, 250, 515); //25 is one label //515
         public static bool dragging = false;
         public static Vector2 dragOffset;
         public static GUIStyle sliderStyle;

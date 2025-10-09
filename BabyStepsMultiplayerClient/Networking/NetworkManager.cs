@@ -6,6 +6,7 @@ using MelonLoader;
 using System.Collections.Concurrent;
 using System.Text;
 using UnityEngine;
+using static Il2CppSystem.Xml.XmlWellFormedWriter.AttributeValueCache;
 
 namespace BabyStepsMultiplayerClient.Networking
 {
@@ -394,6 +395,18 @@ namespace BabyStepsMultiplayerClient.Networking
         public void SendDoffHat()
             => SendRemoveAccessory(0); // Hat
 
+        public void SendChatMessage(string message)
+        {
+            List<byte> writer = new(maxPacketSize)
+            {
+                (byte)eOpCode.ChatMessage
+            };
+
+            writer.AddRange(Encoding.UTF8.GetBytes(message));
+
+            Send(writer, DeliveryMethod.ReliableOrdered);
+        }
+
         /*
         public void SendParticle(byte[] raw)
         {
@@ -660,6 +673,17 @@ namespace BabyStepsMultiplayerClient.Networking
                                 if (!pendingPlayerUpdatePackets.TryGetValue(playerUUID, out var list)) pendingPlayerUpdatePackets[playerUUID] = list = new List<byte[]>();
                                 list.Add(data);
                             }
+
+                            break;
+                        }
+                    case 11:
+                        {
+                            Core.DebugMsg("Chat message received");
+
+                            byte playerUUID = data[1];
+                            string message = Encoding.UTF8.GetString(data.Skip(2).ToArray());
+
+                            Core.uiManager.notificationsUI.AddMessage($"{players[playerUUID].displayName}:{message}");
 
                             break;
                         }
