@@ -683,7 +683,7 @@ namespace BabyStepsMultiplayerClient.Networking
                             byte playerUUID = data[1];
                             string message = Encoding.UTF8.GetString(data.Skip(2).ToArray());
 
-                            Core.uiManager.notificationsUI.AddMessage($"{players[playerUUID].displayName}:{message}");
+                            Core.uiManager.notificationsUI.AddMessage($"{players[playerUUID].displayName}: {message}");
 
                             break;
                         }

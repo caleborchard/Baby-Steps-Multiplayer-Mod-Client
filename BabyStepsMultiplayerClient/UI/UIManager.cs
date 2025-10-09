@@ -102,15 +102,6 @@ namespace BabyStepsMultiplayerClient.UI
 
             if (Input.GetKeyDown(KeyCode.T) && Core.networkManager.client != null)
                 showChatTab = true;
-
-            if (Input.GetKeyDown(KeyCode.Escape))
-                showChatTab = false;
-
-            if (showChatTab && Input.GetKeyDown(KeyCode.Return) && Core.networkManager.client != null)
-            {
-                chatTabUI.SendCurrentMessage();
-                showChatTab = false;
-            }
         }
 
         public void ApplyCollisionToggle(RemotePlayer player, bool collisionsEnabled)
