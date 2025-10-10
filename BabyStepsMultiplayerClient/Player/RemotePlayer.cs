@@ -798,7 +798,7 @@ namespace BabyStepsMultiplayerClient.Player
                 return;
             }
 
-                double t = (renderTime - prev.time) / (next.time - prev.time);
+            double t = (renderTime - prev.time) / (next.time - prev.time);
             float tf = Mathf.Clamp01((float)t);
 
             for (int i = 0; i < prev.transformNets.Length; i++)

@@ -61,6 +61,8 @@ namespace BabyStepsMultiplayerClient.UI
                 return;
 
             Core.networkManager.SendChatMessage(message);
+
+            Core.uiManager.notificationsUI.AddMessage($"You: {message}");
             message = "";
         }
     }

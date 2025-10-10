@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using BabyStepsMultiplayerClient.Player;
+using UnityEngine;
 
 namespace BabyStepsMultiplayerClient.Networking
 {
@@ -12,6 +13,8 @@ namespace BabyStepsMultiplayerClient.Networking
 
     public class TransformNet
     {
+        private const float loopWidth = 512f;
+
         public int heirarchyIndex;
         public System.Numerics.Vector3 position;
         public System.Numerics.Quaternion rotation;
@@ -34,6 +37,7 @@ namespace BabyStepsMultiplayerClient.Networking
 
                 final[i] = new TransformNet(
                     i,
+                    //new System.Numerics.Vector3((b.position.x % loopWidth), b.position.y, b.position.z),
                     new System.Numerics.Vector3(b.position.x, b.position.y, b.position.z),
                     new System.Numerics.Quaternion(b.rotation.x, b.rotation.y, b.rotation.z, b.rotation.w)
                 );
@@ -48,7 +52,7 @@ namespace BabyStepsMultiplayerClient.Networking
             foreach (TransformNet bone in bones)
             {
                 data.Add((byte)bone.heirarchyIndex);
-                data.AddRange(BitConverter.GetBytes(bone.position.X));
+                data.AddRange(BitConverter.GetBytes(bone.position.X % loopWidth));
                 data.AddRange(BitConverter.GetBytes(bone.position.Y));
                 data.AddRange(BitConverter.GetBytes(bone.position.Z));
                 data.AddRange(BitConverter.GetBytes(bone.rotation.X));
@@ -72,6 +76,9 @@ namespace BabyStepsMultiplayerClient.Networking
 
                 byte index = data[offset];
                 float posX = BitConverter.ToSingle(data, offset + 1);
+
+                posX = posX + (loopWidth * MathF.Floor(LocalPlayer.Instance.rootBone.position.x / loopWidth));
+
                 float posY = BitConverter.ToSingle(data, offset + 5);
                 float posZ = BitConverter.ToSingle(data, offset + 9);
                 float rotX = BitConverter.ToSingle(data, offset + 13);
