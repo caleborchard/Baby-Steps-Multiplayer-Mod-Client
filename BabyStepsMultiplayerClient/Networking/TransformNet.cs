@@ -37,7 +37,6 @@ namespace BabyStepsMultiplayerClient.Networking
 
                 final[i] = new TransformNet(
                     i,
-                    //new System.Numerics.Vector3((b.position.x % loopWidth), b.position.y, b.position.z),
                     new System.Numerics.Vector3(b.position.x, b.position.y, b.position.z),
                     new System.Numerics.Quaternion(b.rotation.x, b.rotation.y, b.rotation.z, b.rotation.w)
                 );
@@ -52,7 +51,10 @@ namespace BabyStepsMultiplayerClient.Networking
             foreach (TransformNet bone in bones)
             {
                 data.Add((byte)bone.heirarchyIndex);
-                data.AddRange(BitConverter.GetBytes(bone.position.X % loopWidth));
+
+                //data.AddRange(BitConverter.GetBytes(bone.position.X % loopWidth));
+                data.AddRange(BitConverter.GetBytes(bone.position.X));
+
                 data.AddRange(BitConverter.GetBytes(bone.position.Y));
                 data.AddRange(BitConverter.GetBytes(bone.position.Z));
                 data.AddRange(BitConverter.GetBytes(bone.rotation.X));
@@ -69,7 +71,6 @@ namespace BabyStepsMultiplayerClient.Networking
             int boneSize = 1 + 4 * 7; // byte index + 7 floats
             int count = data.Length / boneSize;
             TransformNet[] bones = new TransformNet[count];
-
             for (int i = 0; i < count; i++)
             {
                 int offset = i * boneSize;
@@ -77,7 +78,15 @@ namespace BabyStepsMultiplayerClient.Networking
                 byte index = data[offset];
                 float posX = BitConverter.ToSingle(data, offset + 1);
 
-                posX = posX + (loopWidth * MathF.Floor(LocalPlayer.Instance.rootBone.position.x / loopWidth));
+                float localX = LocalPlayer.Instance.rootBone.position.x;
+                // Compute offset so loops are centered around local player
+                float centeredOffset = localX - (loopWidth * 0.5f);
+                // Shift into local-player-centered space
+                float relativeX = posX - centeredOffset;
+                // Wrap relative to that center
+                relativeX = ((relativeX % loopWidth) + loopWidth) % loopWidth; // safe positive mod
+                // Shift back to world space
+                posX = relativeX + centeredOffset;
 
                 float posY = BitConverter.ToSingle(data, offset + 5);
                 float posZ = BitConverter.ToSingle(data, offset + 9);
