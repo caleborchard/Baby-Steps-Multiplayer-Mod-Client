@@ -1,5 +1,6 @@
 ﻿using BabyStepsMultiplayerClient.Extensions;
 using Il2Cpp;
+using MelonLoader;
 using UnityEngine;
 
 namespace BabyStepsMultiplayerClient.Player
@@ -224,6 +225,13 @@ namespace BabyStepsMultiplayerClient.Player
             if (boneIndex < bones.Length)
                 Array.Resize(ref bones, boneIndex);
 
+            int j = 0;
+            foreach (var bone in bones)
+            {
+                MelonLogger.Msg(j + ":" + bone.name);
+                j++;
+            }
+
             return bones;
         }
         private static bool IsBoneNameValid(string name)
@@ -231,7 +239,7 @@ namespace BabyStepsMultiplayerClient.Player
             if (name == null) return false;
 
             string lowerName = name.ToLowerInvariant();
-            string[] forbiddenSubstrings = { "belly", "butt", "twist", "boob", "backfat" };
+            string[] forbiddenSubstrings = { "belly", "butt", "twist", "boob", "backfat", "index", "middle", "pinky", "thumb", "ring" };
 
             foreach (string forbidden in forbiddenSubstrings) if (lowerName.Contains(forbidden)) return false;
 

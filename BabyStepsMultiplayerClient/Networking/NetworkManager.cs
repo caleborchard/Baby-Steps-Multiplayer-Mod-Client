@@ -305,6 +305,7 @@ namespace BabyStepsMultiplayerClient.Networking
             };
             writer.AddRange(BitConverter.GetBytes(localSequenceNumber));
             writer.AddRange(TransformNet.Serialize(bones));
+
             Send(writer, DeliveryMethod.Unreliable);
 
             localSequenceNumber++;

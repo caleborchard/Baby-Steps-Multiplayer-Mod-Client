@@ -170,6 +170,8 @@ namespace BabyStepsMultiplayerClient.Player
             lastBoneSendTime = Time.realtimeSinceStartup;
 
             var bonesToSend = TransformNet.ToNet(boneChildren);
+            Core.networkManager.SendBones(bonesToSend, 0);
+            /*
             for (int i = 0; i < bonesToSend.Length; i += bonesPerPacket)
             {
                 int count = Math.Min(bonesPerPacket, bonesToSend.Length - i);
@@ -177,6 +179,7 @@ namespace BabyStepsMultiplayerClient.Player
                 Array.Copy(bonesToSend, i, chunk, 0, count);
                 Core.networkManager.SendBones(chunk, i);
             }
+            */
         }
     }
 }
