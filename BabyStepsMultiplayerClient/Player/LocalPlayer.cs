@@ -19,6 +19,7 @@ namespace BabyStepsMultiplayerClient.Player
         public bool lastJiminyState;
         public Grabable lastLeftHandItem;
         public Grabable lastRightHandItem;
+        public Hat lastHat;
 
         private bool _sentInitialState = false;
 
@@ -126,6 +127,7 @@ namespace BabyStepsMultiplayerClient.Player
                 Hat hat = playerMovement.currentHat;
                 if (hat != null)
                     Core.networkManager.SendDonHat(hat);
+                lastHat = hat;
 
                 Grabable rightItem = playerMovement.handItems[0];
                 Grabable leftItem = playerMovement.handItems[1];
@@ -144,7 +146,6 @@ namespace BabyStepsMultiplayerClient.Player
             }
             else
             {
-                // fix this
                 if (jiminyRibbon == null) { lastJiminyState = false; }
                 else if (lastJiminyState != jiminyRibbon.active)
                 {
@@ -152,37 +153,50 @@ namespace BabyStepsMultiplayerClient.Player
                     Core.networkManager.SendJiminyRibbonState(lastJiminyState);
                 }
 
-                if (true)
+                var leftItem = playerMovement.handItems[1];
+                var rightItem = playerMovement.handItems[0];
+                if (lastLeftHandItem != leftItem)
                 {
-                    var leftItem = playerMovement.handItems[1];
-                    var rightItem = playerMovement.handItems[0];
-                    if (lastLeftHandItem != leftItem)
+                    lastLeftHandItem = leftItem;
+                    if (leftItem != null)
                     {
-                        lastLeftHandItem = leftItem;
-                        if (leftItem != null)
-                        {
-                            Core.DebugMsg("Left Hand Pickup!");
-                            Core.networkManager.SendHoldGrabable(leftItem, 1);
-                        }
-                        else
-                        {
-                            Core.DebugMsg("Left Hand Drop!");
-                            Core.networkManager.SendDropGrabable(1);
-                        }
+                        Core.DebugMsg("Left Hand Pickup!");
+                        Core.networkManager.SendHoldGrabable(leftItem, 1);
                     }
-                    if (lastRightHandItem != rightItem)
+                    else
                     {
-                        lastRightHandItem = rightItem;
-                        if (rightItem != null)
-                        {
-                            Core.DebugMsg("Right Hand Pickup!");
-                            Core.networkManager.SendHoldGrabable(rightItem, 0);
-                        }
-                        else
-                        {
-                            Core.DebugMsg("Right Hand Drop!");
-                            Core.networkManager.SendDropGrabable(0);
-                        }
+                        Core.DebugMsg("Left Hand Drop!");
+                        Core.networkManager.SendDropGrabable(1);
+                    }
+                }
+                if (lastRightHandItem != rightItem)
+                {
+                    lastRightHandItem = rightItem;
+                    if (rightItem != null)
+                    {
+                        Core.DebugMsg("Right Hand Pickup!");
+                        Core.networkManager.SendHoldGrabable(rightItem, 0);
+                    }
+                    else
+                    {
+                        Core.DebugMsg("Right Hand Drop!");
+                        Core.networkManager.SendDropGrabable(0);
+                    }
+                }
+
+                var hat = playerMovement.currentHat;
+                if (lastHat != hat)
+                {
+                    lastHat = hat;
+                    if (hat != null)
+                    {
+                        Core.DebugMsg("Hat Don!");
+                        Core.networkManager.SendDonHat(hat);
+                    }
+                    else
+                    {
+                        Core.DebugMsg("Hat Doff!");
+                        Core.networkManager.SendDoffHat();
                     }
                 }
             }
