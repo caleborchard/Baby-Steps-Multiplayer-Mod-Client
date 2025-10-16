@@ -225,13 +225,6 @@ namespace BabyStepsMultiplayerClient.Player
             if (boneIndex < bones.Length)
                 Array.Resize(ref bones, boneIndex);
 
-            int j = 0;
-            foreach (var bone in bones)
-            {
-                MelonLogger.Msg(j + ":" + bone.name);
-                j++;
-            }
-
             return bones;
         }
         private static bool IsBoneNameValid(string name)

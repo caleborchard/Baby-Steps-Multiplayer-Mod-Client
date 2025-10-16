@@ -72,7 +72,7 @@ namespace BabyStepsMultiplayerClient.Networking
                 data.Add(b2);
                 data.Add(b3);
 
-                data.AddRange(BitConverter.GetBytes((short)(bone.position.Y * 1000f)));
+                data.AddRange(BitConverter.GetBytes(bone.position.Y));
                 data.AddRange(BitConverter.GetBytes(bone.position.Z));
 
                 System.Numerics.Quaternion q = bone.rotation;
@@ -92,7 +92,7 @@ namespace BabyStepsMultiplayerClient.Networking
 
         public static TransformNet[] Deserialize(byte[] data, float loopWidth = 512f)
         {
-            int boneSize = 15;
+            int boneSize = 17;
             int count = data.Length / boneSize;
             TransformNet[] bones = new TransformNet[count];
 
@@ -125,16 +125,15 @@ namespace BabyStepsMultiplayerClient.Networking
                 posX = relativeX + centeredOffset;
 
                 // --- Position Y ---
-                short posYshort = BitConverter.ToInt16(data, offset + 3);
-                float posY = posYshort / 1000f;
+                float posY = BitConverter.ToSingle(data, offset + 3);
 
                 // --- Position Z ---
-                float posZ = BitConverter.ToSingle(data, offset + 5);
+                float posZ = BitConverter.ToSingle(data, offset + 7);
 
                 // --- Rotation ---
-                short rotXshort = BitConverter.ToInt16(data, offset + 9);
-                short rotYshort = BitConverter.ToInt16(data, offset + 11);
-                short rotZshort = BitConverter.ToInt16(data, offset + 13);
+                short rotXshort = BitConverter.ToInt16(data, offset + 11);
+                short rotYshort = BitConverter.ToInt16(data, offset + 13);
+                short rotZshort = BitConverter.ToInt16(data, offset + 15);
 
                 float rotX = rotXshort / 32767f;
                 float rotY = rotYshort / 32767f;
