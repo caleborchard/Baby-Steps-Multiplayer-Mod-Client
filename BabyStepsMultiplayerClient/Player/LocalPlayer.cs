@@ -2,6 +2,7 @@
 using BabyStepsMultiplayerClient.Networking;
 using Il2Cpp;
 using Il2CppCinemachine;
+using MelonLoader;
 using UnityEngine;
 
 namespace BabyStepsMultiplayerClient.Player
@@ -16,6 +17,8 @@ namespace BabyStepsMultiplayerClient.Player
         public Material pmSuitMaterial;
 
         public bool lastJiminyState;
+        public Grabable lastLeftHandItem;
+        public Grabable lastRightHandItem;
 
         private bool _sentInitialState = false;
 
@@ -126,6 +129,7 @@ namespace BabyStepsMultiplayerClient.Player
 
                 Grabable rightItem = playerMovement.handItems[0];
                 Grabable leftItem = playerMovement.handItems[1];
+                lastLeftHandItem = leftItem; lastRightHandItem = rightItem;
 
                 if (rightItem != null)
                     Core.networkManager.SendHoldGrabable(rightItem, 0);
@@ -140,17 +144,47 @@ namespace BabyStepsMultiplayerClient.Player
             }
             else
             {
-                if (jiminyRibbon == null)
+                // fix this
+                if (jiminyRibbon == null) { lastJiminyState = false; }
+                else if (lastJiminyState != jiminyRibbon.active)
                 {
-                    lastJiminyState = false;
-                    return;
+                    lastJiminyState = jiminyRibbon.active;
+                    Core.networkManager.SendJiminyRibbonState(lastJiminyState);
                 }
 
-                if (lastJiminyState == jiminyRibbon.active)
-                    return;
-
-                lastJiminyState = jiminyRibbon.active;
-                Core.networkManager.SendJiminyRibbonState(lastJiminyState);
+                if (true)
+                {
+                    var leftItem = playerMovement.handItems[1];
+                    var rightItem = playerMovement.handItems[0];
+                    if (lastLeftHandItem != leftItem)
+                    {
+                        lastLeftHandItem = leftItem;
+                        if (leftItem != null)
+                        {
+                            Core.DebugMsg("Left Hand Pickup!");
+                            Core.networkManager.SendHoldGrabable(leftItem, 1);
+                        }
+                        else
+                        {
+                            Core.DebugMsg("Left Hand Drop!");
+                            Core.networkManager.SendDropGrabable(1);
+                        }
+                    }
+                    if (lastRightHandItem != rightItem)
+                    {
+                        lastRightHandItem = rightItem;
+                        if (rightItem != null)
+                        {
+                            Core.DebugMsg("Right Hand Pickup!");
+                            Core.networkManager.SendHoldGrabable(rightItem, 0);
+                        }
+                        else
+                        {
+                            Core.DebugMsg("Right Hand Drop!");
+                            Core.networkManager.SendDropGrabable(0);
+                        }
+                    }
+                }
             }
         }
 

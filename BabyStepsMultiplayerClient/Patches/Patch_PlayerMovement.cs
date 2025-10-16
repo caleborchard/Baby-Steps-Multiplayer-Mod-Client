@@ -9,23 +9,6 @@ namespace BabyStepsMultiplayerClient.Patches
     internal class Patch_PlayerMovement
     {
         [HarmonyPostfix]
-        [HarmonyPatch(typeof(PlayerMovement), nameof(PlayerMovement.DropHandItem))]
-        private static void DropHandItem_Postfix(PlayerMovement __instance,
-            int __0) // hat
-        {
-            Core.DebugMsg("PlayerMovement DropHandItem HarmonyPatch");
-
-            if (Core.networkManager.client == null)
-                return;
-            if (LocalPlayer.Instance == null)
-                return;
-
-            Grabable heldItem = LocalPlayer.Instance.playerMovement.handItems[__0];
-            if (heldItem != null)
-                Core.networkManager.SendDropGrabable(__0);
-        }
-
-        [HarmonyPostfix]
         [HarmonyPatch(typeof(PlayerMovement), nameof(PlayerMovement.KnockOffHat))]
         private static void KnockOffHat_Postfix(PlayerMovement __instance)
         {

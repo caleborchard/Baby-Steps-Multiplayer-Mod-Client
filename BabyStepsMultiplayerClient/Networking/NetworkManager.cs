@@ -67,7 +67,6 @@ namespace BabyStepsMultiplayerClient.Networking
             client.Connect(serverIP, serverPort, effectivePassword);
         }
 
-
         public void Disconnect()
         {
             if (client == null)
