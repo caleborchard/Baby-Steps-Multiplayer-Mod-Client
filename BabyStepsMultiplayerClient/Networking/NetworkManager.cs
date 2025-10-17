@@ -229,7 +229,8 @@ namespace BabyStepsMultiplayerClient.Networking
 
                         string hatName = Encoding.UTF8.GetString(data, offset, data.Length - offset);
 
-                        player.WearHat(hatName, localPosition, localRotation);
+                        //player.WearHat(hatName, localPosition, localRotation);
+                        player.WearHat(hatName, new Vector3(0f, 0.21f, -0.02f), new Quaternion(-0.21517f, 0.0000689f, -0.0003178f, 0.97627f));
 
                         Core.uiManager.notificationsUI.AddMessage($"{player.displayName} has donned the {hatName}");
                         break;
