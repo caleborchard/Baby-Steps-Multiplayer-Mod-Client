@@ -39,6 +39,8 @@ namespace BabyStepsMultiplayerClient
             networkManager = new();
 
             logger.Msg("Initialized!");
+
+            VersionCheck.CheckForUpdateAsync();
         }
 
         public override void OnGUI()
