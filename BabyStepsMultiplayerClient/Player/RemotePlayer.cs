@@ -5,6 +5,8 @@ using Il2Cpp;
 using Il2CppNWH.DWP2.WaterObjects;
 using MelonLoader;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -18,6 +20,7 @@ namespace BabyStepsMultiplayerClient.Player
 
         public static Texture2D suitTexture;
         public NameTagUI nameTag;
+        public Gazable gazable;
 
         public Dictionary<string, (Rigidbody, CapsuleCollider)> boneColliders;
         public Dictionary<Transform, Transform> boneCrushers;
@@ -161,6 +164,12 @@ namespace BabyStepsMultiplayerClient.Player
                 && nameTag != null)
                 nameTag.SetParent(headBone);
 
+            if (headBone != null)
+            {
+                gazable = headBone.gameObject.AddComponent<Gazable>();
+                MelonCoroutines.Start(DelayedGazableFillin(gazable));
+            }
+
             if (nateGlasses != null)
                 MaterialKeywordHelper(nateGlasses.material);
 
@@ -170,6 +179,13 @@ namespace BabyStepsMultiplayerClient.Player
             SetupBones();
             CreateParticleCrushers();
             CreateFootData();
+        }
+
+        private static System.Collections.IEnumerator DelayedGazableFillin(Gazable _gazable)
+        {
+            yield return null;
+            _gazable.wontMove = false;
+            _gazable.sqrRad = 10f;
         }
 
         public override void Dispose()
