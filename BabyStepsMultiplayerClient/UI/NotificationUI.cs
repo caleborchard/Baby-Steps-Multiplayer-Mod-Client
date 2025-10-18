@@ -5,12 +5,13 @@ namespace BabyStepsMultiplayerClient.UI
     public class NotificationUI
     {
         private const float fadeDuration = 1f; // Seconds to fade out
-        private const float holdDuration = 3f; // Seconds to stay visible before fade out
 
         private class Message
         {
             public string Text;
             public float TimeAdded;
+            public Color Color;
+            public float HoldDuration; // Seconds to stay visible before fade out
         }
 
         private readonly List<Message> messages = new List<Message>();
@@ -21,12 +22,14 @@ namespace BabyStepsMultiplayerClient.UI
         private static float GetTime()
             => Time.unscaledTime;
 
-        public void AddMessage(string message)
+        public void AddMessage(string message, float? holdDuration = null, Color? color = null)
         {
             Core.logger.Msg(message);
             messages.Add(new Message
             {
                 Text = message,
+                HoldDuration = holdDuration ?? 3f,
+                Color = color ?? Color.white
             });
         }
 
@@ -43,14 +46,15 @@ namespace BabyStepsMultiplayerClient.UI
                     msg.TimeAdded = now;
 
                 float age = now - msg.TimeAdded;
-                if (FadeMessage(age, out float alpha))
+                if (FadeMessage(msg.HoldDuration, age, out float alpha))
                 {
                     messagesToRemove.Add(msg);
                     continue;
                 }
 
-                Color oldColor = GUI.color;
-                GUI.color = new Color(oldColor.r, oldColor.g, oldColor.b, alpha);
+                //Color oldColor = GUI.color;
+                //GUI.color = new Color(oldColor.r, oldColor.g, oldColor.b, alpha);
+                GUI.color = new Color(msg.Color.r, msg.Color.g, msg.Color.b, alpha);
 
                 GUI.Label(new Rect(10, yOffset, Screen.width, 25), msg.Text, Core.uiManager.labelStyle);
 
@@ -65,13 +69,13 @@ namespace BabyStepsMultiplayerClient.UI
             }
         }
 
-        private static bool FadeMessage(float age, out float alpha)
+        private static bool FadeMessage(float HoldDuration, float age, out float alpha)
         {
-            if (age < holdDuration)
+            if (age < HoldDuration)
                 alpha = 1f;
             else
             {
-                float fadeOutAge = (age - fadeDuration) - holdDuration;
+                float fadeOutAge = (age - fadeDuration) - HoldDuration;
                 alpha = Mathf.Clamp01(1f - (fadeOutAge / fadeDuration));
                 if (alpha <= 0f)
                     return true;
