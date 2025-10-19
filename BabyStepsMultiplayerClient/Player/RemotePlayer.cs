@@ -654,6 +654,9 @@ namespace BabyStepsMultiplayerClient.Player
             grabable.grabable = false;
             UnityEngine.Object.Destroy(grabable.rb);
 
+            var pedometer = grabable.GetComponent<Pedometer>();
+            if (pedometer != null) GameObject.Destroy(pedometer);
+
             grabable.transform.localPosition = localPosition;
             grabable.transform.localRotation = localRotation;
 
