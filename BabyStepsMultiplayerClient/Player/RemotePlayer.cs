@@ -185,7 +185,8 @@ namespace BabyStepsMultiplayerClient.Player
         {
             yield return null;
             _gazable.wontMove = false;
-            _gazable.sqrRad = 10f;
+            _gazable.sqrRad = 5f; // Maybe position the Gazable object slightly behind the head?
+                                  // The problem is that when someone is walking behind you your player looks down to try to look backwards at them.
         }
 
         public override void Dispose()
