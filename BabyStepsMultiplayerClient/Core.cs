@@ -6,6 +6,7 @@ using Il2Cpp;
 using Il2CppInterop.Runtime.Injection;
 using MelonLoader;
 using UnityEngine;
+using FMOD = Il2CppFMOD;
 
 [assembly: MelonInfo(typeof(BabyStepsMultiplayerClient.Core),
     "BabyStepsMultiplayerClient",
@@ -26,6 +27,7 @@ namespace BabyStepsMultiplayerClient
 
         public static UIManager uiManager;
         public static NetworkManager networkManager;
+        public static Il2CppFMOD.System CoreSystem;
 
         public override void OnInitializeMelon() { }
         [Obsolete]
@@ -46,6 +48,10 @@ namespace BabyStepsMultiplayerClient
         public override void OnGUI()
             => uiManager.Draw();
 
+        Il2CppFMOD.Sound sound;
+        Il2CppFMOD.Channel channel;
+        Il2CppFMOD.ChannelGroup masterGroup;
+
         public override void OnUpdate()
         {
             uiManager.Update();
@@ -64,6 +70,12 @@ namespace BabyStepsMultiplayerClient
                 if (Input.GetKeyDown(KeyCode.F4))
                     networkManager.Disconnect();
             }
+        }
+
+        private static FMOD.VECTOR UnityToFMOD(Vector3 v)
+        {
+            // FMOD uses a left-handed coordinate system: +X right, +Y up, +Z forward
+            return new FMOD.VECTOR { x = v.x, y = v.y, z = v.z };
         }
 
         public override void OnLateUpdate()
