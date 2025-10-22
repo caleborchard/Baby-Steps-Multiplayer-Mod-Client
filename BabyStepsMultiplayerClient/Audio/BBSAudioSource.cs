@@ -1,15 +1,16 @@
-﻿using FMOD = Il2CppFMOD;
+﻿using Il2CppFMOD;
+using FMOD = Il2CppFMOD;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
-using Il2CppFMOD;
+using MelonLoader;
 
 namespace BabyStepsMultiplayerClient.Audio
 {
-    public class AudioSource
+    public class BBSAudioSource
     {
         public static FMOD.System CoreSystem;
 
@@ -25,7 +26,13 @@ namespace BabyStepsMultiplayerClient.Audio
         private FMOD.VECTOR fmodForward = new FMOD.VECTOR();
         private FMOD.VECTOR fmodUp = new FMOD.VECTOR();
 
-        public AudioSource(Transform targetTransform)
+        // Placeholder streaming data for testing
+        private byte[] placeholderPCMData;
+        private const int sampleRate = 44100;
+        private const float toneFrequency = 440f;
+        private const float durationSeconds = 2f;
+
+        public BBSAudioSource(Transform targetTransform)
         {
             if (!CoreSystem.hasHandle()) CoreSystem = Il2CppBabySteps.Core.Audio.Services.Player.system;
 
@@ -40,20 +47,31 @@ namespace BabyStepsMultiplayerClient.Audio
             if (result != RESULT.OK) return result;
             ChannelGroup = tempGroup;
 
+            // Generate placeholder audio data
+            placeholderPCMData = GenerateSineWave(toneFrequency, durationSeconds);
+
+            for (int i = 0; i < 15; i++) MelonLogger.Msg(placeholderPCMData[i]);
+
+            var exInfo = new FMOD.CREATESOUNDEXINFO();
+            exInfo.cbsize = (int)System.Runtime.InteropServices.Marshal.SizeOf(typeof(FMOD.CREATESOUNDEXINFO));
+            exInfo.length = (uint)placeholderPCMData.Length;
+            exInfo.numchannels = 1;
+            exInfo.defaultfrequency = sampleRate;
+            exInfo.format = SOUND_FORMAT.PCM16;
+
             // Placeholder 3D sound object (to be replaced with a PCM callback version)
-            Sound tempSound = new Sound();
             result = CoreSystem.createSound(
-                "placeholder", // FMOD requires a name when using Il2Cpp Unity bindings
-                MODE._3D | MODE.LOOP_NORMAL | MODE.CREATESTREAM,
-                out tempSound
+                placeholderPCMData,
+                MODE.OPENMEMORY | MODE.OPENRAW | MODE.LOOP_NORMAL | MODE._3D,
+                ref exInfo,
+                out var tempSound
             );
             if (result != RESULT.OK) return result;
 
             Sound = tempSound;
             Sound.set3DMinMaxDistance(0.5f, 50f);
 
-            Channel tempChannel = new Channel();
-            result = CoreSystem.playSound(Sound, ChannelGroup, true, out tempChannel);
+            result = CoreSystem.playSound(Sound, ChannelGroup, true, out var tempChannel);
             if (result != RESULT.OK) return result;
 
             Channel = tempChannel;
@@ -65,7 +83,7 @@ namespace BabyStepsMultiplayerClient.Audio
         }
         public void Update()
         {
-            if (!initialized || TargetTransform == null || Channel.hasHandle()) return;
+            if (!initialized || TargetTransform == null || !Channel.hasHandle()) return;
 
             Vector3 pos = TargetTransform.position;
             Vector3 fwd = TargetTransform.forward;
@@ -86,7 +104,7 @@ namespace BabyStepsMultiplayerClient.Audio
             Channel.set3DAttributes(ref fmodPos, ref fmodVel);
             CoreSystem.update();
         }
-        public RESULT FeedAudioDate(byte[] pcmData)
+        public RESULT FeedAudioData(byte[] pcmData)
         {
             if (!initialized || Sound.hasHandle()) return RESULT.ERR_UNINITIALIZED;
 
@@ -108,6 +126,26 @@ namespace BabyStepsMultiplayerClient.Audio
                 Sound.clearHandle();
             }
             initialized = false;
+        }
+
+        // Placeholder helper function to generate solid tone dummy data
+        private byte[] GenerateSineWave(float frequency, float duration)
+        {
+            int sampleCount = (int)(sampleRate * duration);
+            short[] samples = new short[sampleCount];
+
+            double increment = (Math.PI * 2.0 * frequency) / sampleRate;
+            double phase = 0;
+
+            for (int i = 0; i < sampleCount; i++)
+            {
+                samples[i] = (short)(Math.Sin(phase) * short.MaxValue);
+                phase += increment;
+            }
+
+            byte[] pcmBytes = new byte[sampleCount * 2];
+            Buffer.BlockCopy(samples, 0, pcmBytes, 0, pcmBytes.Length);
+            return pcmBytes;
         }
     }
 }

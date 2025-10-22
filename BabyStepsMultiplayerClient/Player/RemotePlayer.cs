@@ -1,6 +1,7 @@
 ﻿using BabyStepsMultiplayerClient.Components;
 using BabyStepsMultiplayerClient.Extensions;
 using BabyStepsMultiplayerClient.Networking;
+using BabyStepsMultiplayerClient.Audio;
 using Il2Cpp;
 using Il2CppNWH.DWP2.WaterObjects;
 using MelonLoader;
@@ -27,6 +28,8 @@ namespace BabyStepsMultiplayerClient.Player
 
         public Hat hat;
         public Collider[] hatColliders;
+
+        public BBSAudioSource audioSource;
 
         public (Grabable, Grabable) heldItems;
         public (Collider[], Collider[]) heldItemColliders;
@@ -179,6 +182,10 @@ namespace BabyStepsMultiplayerClient.Player
             SetupBones();
             CreateParticleCrushers();
             CreateFootData();
+
+            audioSource = new BBSAudioSource(headBone);
+            var result = audioSource.Initialize();
+            Core.DebugMsg(Il2CppFMOD.Error.String(result));
         }
 
         private static System.Collections.IEnumerator DelayedGazableFillin(Gazable _gazable)
@@ -205,6 +212,8 @@ namespace BabyStepsMultiplayerClient.Player
 
             ResetSuitColor();
             SetDisplayName("Nate");
+
+            audioSource.Dispose();
 
             distanceFromPlayer = 0f;
             firstBoneInterpRan = false;
@@ -243,6 +252,8 @@ namespace BabyStepsMultiplayerClient.Player
                     FadeByDistance(distance);
                 }
             }
+
+            audioSource.Update();
         }
 
         public void SetDisplayName(string name)
