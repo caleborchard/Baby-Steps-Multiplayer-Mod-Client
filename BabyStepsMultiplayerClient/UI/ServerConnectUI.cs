@@ -31,7 +31,7 @@ namespace BabyStepsMultiplayerClient.UI
                 thumbStyle.fixedWidth = 20;
             }
 
-            GUI.Box(windowDimensions, "Server Join Panel", Core.uiManager.boxStyle);
+            GUI.Box(windowDimensions, "Server Join Panel v" + Core.CLIENT_VERSION, Core.uiManager.boxStyle);
 
             float contentHeight = 515f;
 
@@ -111,7 +111,7 @@ namespace BabyStepsMultiplayerClient.UI
 
             GUI.enabled = !(Core.networkManager.client == null);
             GUILayout.Space(5);
-            if (GUILayout.Button("Update Appearance and Nickname", Core.uiManager.buttonStyle) && Core.networkManager.client != null)
+            if (GUILayout.Button("Update Name & Appearance", Core.uiManager.buttonStyle) && Core.networkManager.client != null)
             {
                 SaveConfig();
                 Core.networkManager.mainThreadActions.Enqueue(() => {

@@ -44,14 +44,11 @@ namespace BabyStepsMultiplayerClient.Player
 
         public virtual void Initialize()
         {
-            if (baseObject == null)
-                return;
+            if (baseObject == null) return;
 
-            if (puppetMaster == null)
-                puppetMaster = baseObject.transform.FindChild("PuppetMaster");
+            if (puppetMaster == null) puppetMaster = baseObject.transform.FindChild("PuppetMaster");
 
-            if (baseMesh == null)
-                baseMesh = baseObject.transform.Find("IKTargets/HipTarget/NathanAnimIK_October2022");
+            if (baseMesh == null) baseMesh = baseObject.transform.Find("IKTargets/HipTarget/NathanAnimIK_October2022");
 
             if (baseMesh != null)
             {

@@ -20,6 +20,7 @@ namespace BabyStepsMultiplayerClient
     public class Core : MelonMod
     {
         public const string SERVER_VERSION = "104";
+        public static string CLIENT_VERSION;
 
         public const string cloneText = "(Clone)";
 
@@ -33,6 +34,8 @@ namespace BabyStepsMultiplayerClient
         [Obsolete]
         public override void OnApplicationStart() 
         {
+            CLIENT_VERSION = Info.Version;
+
             logger = LoggerInstance;
 
             ManagedEnumerator.Register();

@@ -33,13 +33,15 @@ namespace BabyStepsMultiplayerClient.Player
             Core.DebugMsg("Starting LocalPlayer Initialize function");
 
             baseObject = GameObject.Find("Dudest");
+            if (baseObject == null) Core.DebugMsg("Failed to find Dudest gO!");
             playerMovement = baseObject.GetComponent<PlayerMovement>();
-            if (playerMovement != null)
-                pmSuitMaterial = playerMovement.suitMat;
+            if (playerMovement == null) Core.DebugMsg("Failed to find PlayerMovement component!");
+            else pmSuitMaterial = playerMovement.suitMat;
 
             cinemachineBrainObj = GameObject.Find("BigManagerPrefab/Camera");
-            if (cinemachineBrainObj != null)
-                cinemachineBrain = cinemachineBrainObj.GetComponent<CinemachineBrain>();
+            if (cinemachineBrainObj == null) Core.DebugMsg("Failed to find cinemachineBrainObj!");
+            else cinemachineBrain = cinemachineBrainObj.GetComponent<CinemachineBrain>();
+            if (cinemachineBrain == null) Core.DebugMsg("Failed to find CinemachineBrain Component!");
 
             // Base Initialization
             base.Initialize();
