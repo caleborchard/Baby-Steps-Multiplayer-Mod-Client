@@ -104,8 +104,7 @@ namespace BabyStepsMultiplayerClient.Networking
 
         public void Update()
         {
-            if (client == null)
-                return;
+            if (client == null) return;
 
             awakeRunTimer += Time.deltaTime;
 
@@ -136,8 +135,7 @@ namespace BabyStepsMultiplayerClient.Networking
 
             try
             {
-                if (!client.UnsyncedEvents)
-                    client.PollEvents();
+                if (!client.UnsyncedEvents) client.PollEvents();
             }
             catch (Exception ex)
             {
@@ -147,15 +145,12 @@ namespace BabyStepsMultiplayerClient.Networking
 
         public void LateUpdate()
         {
-            if (client == null)
-                return;
-            if (players == null)
-                return;
+            if (client == null) return;
+            if (players == null) return;
 
             foreach (var player in players.Values)
             {
-                if (player == null)
-                    continue;
+                if (player == null) continue;
 
                 player.LateUpdate();
             }
@@ -184,8 +179,7 @@ namespace BabyStepsMultiplayerClient.Networking
             Color color = new Color(data[2] / 255f, data[3] / 255f, data[4] / 255f);
 
             bool colorDifferent = player.GetSuitColor() != color;
-            if (colorDifferent)
-                player.SetSuitColor(color);
+            if (colorDifferent) player.SetSuitColor(color);
 
             int nicknameLength = data.Length - 5;
             if (nicknameLength > 0)

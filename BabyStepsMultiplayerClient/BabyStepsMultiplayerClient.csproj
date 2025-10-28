@@ -58,6 +58,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Concentus" Version="2.2.2" />
 		<PackageReference Include="LavaGang.MelonLoader" Version="0.7.1" ExcludeAssets="Runtime" />
 		<PackageReference Include="HarmonyX" Version="2.10.2" ExcludeAssets="Runtime" />
 		<PackageReference Include="Il2CppInterop.Common" Version="1.5.1" ExcludeAssets="Runtime" />

@@ -185,7 +185,7 @@ namespace BabyStepsMultiplayerClient.Player
 
             audioSource = new BBSAudioSource(headBone);
             var result = audioSource.Initialize();
-            Core.DebugMsg(Il2CppFMOD.Error.String(result));
+            Core.DebugMsg("RemotePlayer audioSource Init: " + Il2CppFMOD.Error.String(result));
         }
 
         private static System.Collections.IEnumerator DelayedGazableFillin(Gazable _gazable)
@@ -234,13 +234,11 @@ namespace BabyStepsMultiplayerClient.Player
 
         public override void LateUpdate()
         {
-            if (nameTag != null)
-                nameTag.LateUpdate();
+            if (nameTag != null) nameTag.LateUpdate();
 
             InterpolateBoneTransforms();
 
-            if ((rootBone != null) 
-                && (LocalPlayer.Instance != null))
+            if ((rootBone != null) && (LocalPlayer.Instance != null))
             {
                 if ((LocalPlayer.Instance.rootBone != null) && firstBoneInterpRan)
                     distanceFromPlayer = Vector3.Distance(LocalPlayer.Instance.rootBone.position, rootBone.transform.position);
@@ -258,8 +256,7 @@ namespace BabyStepsMultiplayerClient.Player
 
         public void SetDisplayName(string name)
         {
-            if (nameTag == null)
-                return;
+            if (nameTag == null) return;
             displayName = name;
             nameTag.SetText(name);
         }
@@ -278,8 +275,7 @@ namespace BabyStepsMultiplayerClient.Player
 
         public void SetActive(bool active)
         {
-            if (baseObject == null)
-                return;
+            if (baseObject == null) return;
             baseObject.active = active;
         }
 
@@ -296,45 +292,39 @@ namespace BabyStepsMultiplayerClient.Player
 
         public void EnableCollision()
         {
-            if (collisionCoroutineToken != null)
-                MelonCoroutines.Stop(collisionCoroutineToken);
+            if (collisionCoroutineToken != null) MelonCoroutines.Stop(collisionCoroutineToken);
             collisionCoroutineToken = MelonCoroutines.Start(EnableCollisionCoroutine());
         }
 
         private System.Collections.IEnumerator EnableCollisionCoroutine()
         {
-            while (distanceFromPlayer <= 0.6f)
-                yield return null;
+            while (distanceFromPlayer <= 0.6f) yield return null;
 
             if (boneColliders != null)
                 foreach ((Rigidbody, CapsuleCollider) val in boneColliders.Values)
                 {
-                    if (val.Item2 == null)
-                        continue;
+                    if (val.Item2 == null) continue;
                     val.Item2.enabled = true;
                 }
 
             if (hatColliders != null)
                 foreach (Collider val in hatColliders)
                 {
-                    if (val == null)
-                        continue;
+                    if (val == null) continue;
                     val.enabled = true;
                 }
 
              if (heldItemColliders.Item1 != null)
                 foreach (Collider val in heldItemColliders.Item1)
                 {
-                    if (val == null)
-                        continue;
+                    if (val == null) continue;
                     val.enabled = true;
                 }
 
             if (heldItemColliders.Item2 != null)
                 foreach (Collider val in heldItemColliders.Item2)
                 {
-                    if (val == null)
-                        continue;
+                    if (val == null) continue;
                     val.enabled = true;
                 }
 
@@ -353,8 +343,7 @@ namespace BabyStepsMultiplayerClient.Player
             if (boneColliders != null)
                 foreach ((Rigidbody, CapsuleCollider) val in boneColliders.Values)
                 {
-                    if (val.Item2 == null)
-                        continue;
+                    if (val.Item2 == null) continue;
                     val.Item2.enabled = false;
                 }
 
@@ -363,8 +352,7 @@ namespace BabyStepsMultiplayerClient.Player
                 var allHatColliders = hat.GetComponentsInChildren<Collider>();
                 foreach (Collider val in allHatColliders)
                 {
-                    if (val == null)
-                        continue;
+                    if (val == null) continue;
                     val.enabled = false;
                 }
             }
@@ -372,16 +360,14 @@ namespace BabyStepsMultiplayerClient.Player
             if (heldItemColliders.Item1 != null)
                 foreach (Collider val in heldItemColliders.Item1)
                 {
-                    if (val == null)
-                        continue;
+                    if (val == null) continue;
                     val.enabled = false;
                 }
 
             if (heldItemColliders.Item2 != null)
                 foreach (Collider val in heldItemColliders.Item2)
                 {
-                    if (val == null)
-                        continue;
+                    if (val == null) continue;
                     val.enabled = false;
                 }
         }
@@ -399,8 +385,7 @@ namespace BabyStepsMultiplayerClient.Player
 
         private static void MaterialKeywordHelper(Material mat)
         {
-            if (mat == null)
-                return;
+            if (mat == null) return;
 
             mat.EnableKeyword("_DITHERCONSTANT");
             mat.EnableKeyword("_SPECULAR");
@@ -417,16 +402,13 @@ namespace BabyStepsMultiplayerClient.Player
 
         private void SetupBones()
         {
-            if (boneChildren == null)
-                return;
+            if (boneChildren == null) return;
 
-            if (boneColliders == null)
-                boneColliders = new();
+            if (boneColliders == null) boneColliders = new();
 
             foreach (var bone in boneChildren)
             {
-                if (bone == null)
-                    continue;
+                if (bone == null) continue;
 
                 //bone.gameObject.layer = 6;
                 bone.gameObject.layer = 23;
@@ -438,12 +420,10 @@ namespace BabyStepsMultiplayerClient.Player
 
         private void CreateBoneCollider(Transform bone)
         {
-            if (bone == null)
-                return;
+            if (bone == null) return;
 
             string boneName = bone.name;
-            if (!colliderTemplate.TryGetValue(bone.name, out var template))
-                return;
+            if (!colliderTemplate.TryGetValue(bone.name, out var template)) return;
 
             // Temporary exception to test out player pushing. Maybe specify layer in the colliderTemplate Dictionary
             if (boneName.Contains("spine_01") || boneName.Contains("root")) bone.gameObject.layer = 6;
@@ -483,16 +463,12 @@ namespace BabyStepsMultiplayerClient.Player
 
         private void CreateBoneMudMesh(Transform bone)
         {
-            if (bone == null)
-                return;
-            if (LocalPlayer.Instance == null)
-                return;
-            if (LocalPlayer.Instance.boneMudMeshes == null)
-                return;
+            if (bone == null) return;
+            if (LocalPlayer.Instance == null) return;
+            if (LocalPlayer.Instance.boneMudMeshes == null) return;
 
             string boneName = bone.name;
-            if (!LocalPlayer.Instance.boneMudMeshes.TryGetValue(boneName, out Transform mesh))
-                return;
+            if (!LocalPlayer.Instance.boneMudMeshes.TryGetValue(boneName, out Transform mesh)) return;
 
             if (boneMudMeshes == null)
                 boneMudMeshes = new();
@@ -503,41 +479,35 @@ namespace BabyStepsMultiplayerClient.Player
             mudMesh.transform.localRotation = mesh.transform.localRotation;
 
             WaterObject wO = mudMesh.GetComponent<WaterObject>();
-            if (wO != null)
-                UnityEngine.Object.Destroy(wO);
+            if (wO != null) UnityEngine.Object.Destroy(wO);
 
             boneMudMeshes[boneName] = mudMesh.transform;
         }
 
         private void CreateParticleCrushers()
         {
-            if (particleCrushers == null)
-                return;
+            if (particleCrushers == null) return;
 
-            if (boneCrushers == null)
-                boneCrushers = new();
+            if (boneCrushers == null) boneCrushers = new();
 
             if (rootBone != null)
             {
                 Transform crusher = null;
-                if (particleCrushers != null)
-                    crusher = particleCrushers.GetChild(0);
+                if (particleCrushers != null) crusher = particleCrushers.GetChild(0);
                 boneCrushers.Add(rootBone, crusher);
             }
 
             if (spineBone != null)
             {
                 Transform crusher = null;
-                if (particleCrushers != null)
-                    crusher = particleCrushers.GetChild(1);
+                if (particleCrushers != null) crusher = particleCrushers.GetChild(1);
                 boneCrushers.Add(spineBone, crusher);
             }
 
             if (headBone != null)
             {
                 Transform crusher = null;
-                if (particleCrushers != null)
-                    crusher = particleCrushers.GetChild(2);
+                if (particleCrushers != null) crusher = particleCrushers.GetChild(2);
                 boneCrushers.Add(headBone, crusher);
             }
         }
@@ -550,8 +520,7 @@ namespace BabyStepsMultiplayerClient.Player
                 feetData.Item1.bone = footBones.Item1;
 
                 var boneName = footBones.Item1.name;
-                if (boneColliders.TryGetValue(boneName, out (Rigidbody, CapsuleCollider) cc))
-                    feetData.Item1.rb = cc.Item1;
+                if (boneColliders.TryGetValue(boneName, out (Rigidbody, CapsuleCollider) cc)) feetData.Item1.rb = cc.Item1;
             }
 
             feetData.Item2 = new();
@@ -560,8 +529,7 @@ namespace BabyStepsMultiplayerClient.Player
                 feetData.Item2.bone = footBones.Item1;
 
                 var boneName = footBones.Item1.name;
-                if (boneColliders.TryGetValue(boneName, out (Rigidbody, CapsuleCollider) cc))
-                    feetData.Item2.rb = cc.Item1;
+                if (boneColliders.TryGetValue(boneName, out (Rigidbody, CapsuleCollider) cc)) feetData.Item2.rb = cc.Item1;
             }
         }
 
@@ -569,11 +537,9 @@ namespace BabyStepsMultiplayerClient.Player
             Vector3 localPosition,
             Quaternion localRotation)
         {
-            if (hat != null)
-                RemoveHat();
+            if (hat != null) RemoveHat();
 
-            if (headBone == null)
-                return;
+            if (headBone == null) return;
 
             if (!savablePrefabs.TryGetValue(hatName, out GameObject prefab))
             {
@@ -590,12 +556,10 @@ namespace BabyStepsMultiplayerClient.Player
             Hat hHat = hatGO.transform.GetComponentInChildren<Hat>();
 
             Transform fruitShine = hatGO.transform.FindChildByKeyword("FruitShine");
-            if (fruitShine != null)
-                UnityEngine.Object.Destroy(fruitShine.gameObject);
+            if (fruitShine != null) UnityEngine.Object.Destroy(fruitShine.gameObject);
 
             WaterObject wO = hatGO.GetComponentInChildren<WaterObject>();
-            if (wO != null)
-                UnityEngine.Object.Destroy(wO);
+            if (wO != null) UnityEngine.Object.Destroy(wO);
 
             hHat.grabable = false;
             UnityEngine.Object.Destroy(hHat.rb);
@@ -609,8 +573,7 @@ namespace BabyStepsMultiplayerClient.Player
             hatColliders = hat.GetComponentsInChildren<Collider>();
             foreach (Collider val in hatColliders)
             {
-                if (val == null)
-                    continue;
+                if (val == null) continue;
                 val.enabled = false;
             }
         }
@@ -640,11 +603,9 @@ namespace BabyStepsMultiplayerClient.Player
                 item = heldItems.Item2;
                 hand = handBones.Item2;
             }
-            if (hand == null)
-                return;
+            if (hand == null) return;
 
-            if (item != null)
-                DropItem(handIndex);
+            if (item != null) DropItem(handIndex);
 
             if (!savablePrefabs.TryGetValue(grabableName, out GameObject prefab))
             {
@@ -688,18 +649,15 @@ namespace BabyStepsMultiplayerClient.Player
 
             foreach (Collider val in colliderArr)
             {
-                if (val == null)
-                    continue;
+                if (val == null) continue;
                 val.enabled = false;
             }
 
             Transform fruitShine = itemGO.transform.FindChildByKeyword("FruitShine");
-            if (fruitShine != null)
-                UnityEngine.Object.Destroy(fruitShine.gameObject);
+            if (fruitShine != null) UnityEngine.Object.Destroy(fruitShine.gameObject);
 
             WaterObject wO = itemGO.GetComponentInChildren<WaterObject>();
-            if (wO != null)
-                UnityEngine.Object.Destroy(wO);
+            if (wO != null) UnityEngine.Object.Destroy(wO);
         }
         public void DropItem(int handIndex)
         {
@@ -742,10 +700,8 @@ namespace BabyStepsMultiplayerClient.Player
         }
         public void UpdateBones(TransformNet[] bonesToUpdate, int kickoffPoint)
         {
-            if (boneChildren == null)
-                return;
-            if (bonesToUpdate == null)
-                return;
+            if (boneChildren == null) return;
+            if (bonesToUpdate == null) return;
 
             BoneSnapshot snapshot;
             if (kickoffPoint != 0) snapshot = currentBoneGroup;
@@ -754,8 +710,7 @@ namespace BabyStepsMultiplayerClient.Player
                 if (currentBoneGroup != null)
                 {
                     snapshotBuffer.Enqueue(currentBoneGroup);
-                    while (snapshotBuffer.Count > 10)
-                        snapshotBuffer.TryDequeue(out _); // Prevent infinite growth
+                    while (snapshotBuffer.Count > 10) snapshotBuffer.TryDequeue(out _); // Prevent infinite growth
                 }
 
                 snapshot = new BoneSnapshot(boneChildren.Count);
@@ -774,17 +729,14 @@ namespace BabyStepsMultiplayerClient.Player
         }
         private void InterpolateBoneTransforms()
         {
-            if (boneChildren == null)
-                return;
-            if (boneColliders == null)
-                return;
+            if (boneChildren == null) return;
+            if (boneColliders == null) return;
 
             if (!firstBoneInterpRan && snapshotBuffer.Count > 0)
             {
                 // Get latest bone snapshot and set position and rotation to that immediately instead of lerping
                 BoneSnapshot latest = null;
-                while (snapshotBuffer.Count > 0)
-                    snapshotBuffer.TryDequeue(out latest);
+                while (snapshotBuffer.Count > 0) snapshotBuffer.TryDequeue(out latest);
 
                 ApplySnapshotInstant(latest);
 
@@ -797,19 +749,15 @@ namespace BabyStepsMultiplayerClient.Player
 
             if (snapshotBuffer.Count < 2)
             {
-                if (skinnedMeshRenderer != null)
-                    skinnedMeshRenderer.gameObject.active = false;
-                if (nameTag != null)
-                    nameTag.SetActive(false);
+                if (skinnedMeshRenderer != null) skinnedMeshRenderer.gameObject.active = false;
+                if (nameTag != null) nameTag.SetActive(false);
                 return;
             }
 
-            if (skinnedMeshRenderer != null
-                && !skinnedMeshRenderer.gameObject.active)
+            if (skinnedMeshRenderer != null && !skinnedMeshRenderer.gameObject.active)
             {
                 skinnedMeshRenderer.gameObject.active = true;
-                if (nameTag != null)
-                    nameTag.SetActive(true);
+                if (nameTag != null) nameTag.SetActive(true);
             }
 
             double renderTime = Time.timeAsDouble - INTERPDELAY;
@@ -861,10 +809,8 @@ namespace BabyStepsMultiplayerClient.Player
 
             foreach (var b2c in boneCrushers)
             {
-                if (b2c.Key == null)
-                    continue;
-                if (b2c.Value == null)
-                    continue;
+                if (b2c.Key == null) continue;
+                if (b2c.Value == null) continue;
                 b2c.Value.position = b2c.Key.position;
             }
         }
