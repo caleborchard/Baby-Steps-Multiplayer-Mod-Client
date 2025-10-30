@@ -81,6 +81,8 @@ namespace BabyStepsMultiplayerClient.Player
                 { "foot.r", (new Vector3(0, 0.1f, -0.02f), 0.06f, 0.3f, 1) },
             };
 
+        BBSMicrophoneCapture mic;
+
         public void Initialize(int numClones)
         {
             if (LocalPlayer.Instance == null)
@@ -184,8 +186,12 @@ namespace BabyStepsMultiplayerClient.Player
             CreateFootData();
 
             audioSource = new BBSAudioSource(headBone);
-            var result = audioSource.Initialize();
-            Core.DebugMsg("RemotePlayer audioSource Init: " + Il2CppFMOD.Error.String(result));
+            audioSource.Initialize();
+
+            mic = new BBSMicrophoneCapture();
+            mic.Initialize(0);
+            mic.SetVolume(1f);
+            mic.StartRecording();
         }
 
         private static System.Collections.IEnumerator DelayedGazableFillin(Gazable _gazable)
@@ -252,6 +258,13 @@ namespace BabyStepsMultiplayerClient.Player
             }
 
             audioSource.Update();
+
+            byte[] frame = mic.GetAudioFrame();
+            if (frame != null)
+            {
+                byte[] stereo = mic.ConvertToStereo(frame);
+                audioSource.WriteAudioData(stereo);
+            }
         }
 
         public void SetDisplayName(string name)

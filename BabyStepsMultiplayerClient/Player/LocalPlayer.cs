@@ -206,14 +206,10 @@ namespace BabyStepsMultiplayerClient.Player
 
         public override void LateUpdate()
         {
-            if (!_sentInitialState)
-                return;
-            if (Core.networkManager.server == null)
-                return;
-            if (playerMovement == null)
-                return;
-            if (boneChildren == null)
-                return;
+            if (!_sentInitialState) return;
+            if (Core.networkManager.server == null) return;
+            if (playerMovement == null) return;
+            if (boneChildren == null) return;
 
             if (Time.realtimeSinceStartup - lastBoneSendTime < boneSendInterval) return;
 
