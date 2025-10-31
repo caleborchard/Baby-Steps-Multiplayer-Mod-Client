@@ -1,9 +1,9 @@
-﻿using BabyStepsMultiplayerClient.Player.Audio;
-using BabyStepsMultiplayerClient.Extensions;
+﻿using BabyStepsMultiplayerClient.Extensions;
 using BabyStepsMultiplayerClient.Networking;
 using Il2Cpp;
 using Il2CppCinemachine;
 using UnityEngine;
+using BabyStepsMultiplayerClient.Audio;
 
 namespace BabyStepsMultiplayerClient.Player
 {

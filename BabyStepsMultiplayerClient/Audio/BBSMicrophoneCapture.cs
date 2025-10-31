@@ -4,7 +4,7 @@ using UnityEngine;
 using Il2CppFMOD;
 using FMOD = Il2CppFMOD;
 
-namespace BabyStepsMultiplayerClient.Player.Audio
+namespace BabyStepsMultiplayerClient.Audio
 {
     public class BBSMicrophoneCapture
     {

@@ -9,8 +9,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using BabyStepsMultiplayerClient.Player.UI;
-using BabyStepsMultiplayerClient.Player.Audio;
+using BabyStepsMultiplayerClient.Audio;
 
 namespace BabyStepsMultiplayerClient.Player
 {
