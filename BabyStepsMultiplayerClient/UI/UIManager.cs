@@ -6,7 +6,6 @@ namespace BabyStepsMultiplayerClient.UI
 {
     public class UIManager
     {
-        public bool showServerPanel;
         public bool showPlayersTab;
         public bool showChatTab;
 
@@ -31,9 +30,7 @@ namespace BabyStepsMultiplayerClient.UI
             StyleManager.Styles.Prepare();
 
             notificationsUI.DrawUI();
-
-            if (showServerPanel)
-                serverConnectUI.DrawUI();
+            serverConnectUI.Draw();
 
             if (showPlayersTab)
                 playersTabUI.DrawUI();
@@ -46,10 +43,10 @@ namespace BabyStepsMultiplayerClient.UI
         {
             // Toggle the Menu but only when Chat Input is Disabled
             if (!showChatTab && Input.GetKeyDown(KeyCode.F2))
-                showServerPanel = !showServerPanel;
+                serverConnectUI.IsOpen = !serverConnectUI.IsOpen;
 
             // Only use while Connected and the Menu is Closed
-            if (showServerPanel || (Core.networkManager.client == null))
+            if (serverConnectUI.IsOpen || (Core.networkManager.client == null))
             {
                 showPlayersTab = false;
                 showChatTab = false;

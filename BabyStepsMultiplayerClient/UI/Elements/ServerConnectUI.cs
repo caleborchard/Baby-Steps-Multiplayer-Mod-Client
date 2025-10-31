@@ -4,66 +4,44 @@ using BabyStepsMultiplayerClient.Player;
 
 namespace BabyStepsMultiplayerClient.UI.Elements
 {
-    public class ServerConnectUI
+    public class ServerConnectUI : RuntimeWindow
     {
-        // --- Draw Parameters ---
-        public static Rect windowDimensions = new(30, 30, 250, 400); //25 is one label //515
-        public static bool dragging = false;
-        public static Vector2 dragOffset;
-        public static bool draggingScrollbar;
-        public static Vector2 scrollPos;
+        public RuntimeFoldout serverInfoFoldout = new RuntimeFoldout("Server Information", true);
+        public RuntimeFoldout playerCustomizationFoldout = new RuntimeFoldout("Player Customization", false);
 
-        public static RuntimeFoldout serverInfoFoldout = new RuntimeFoldout("Server Information", true);
-        public static RuntimeFoldout playerCustomizationFoldout = new RuntimeFoldout("Player Customization", false);
-
-        public void DrawUI()
+        public ServerConnectUI()
+            : base($"{Core.MOD_NAME} v{Core.CLIENT_VERSION}", 0, new(30, 30), new(250, 400), false)
         {
-            GUI.Box(windowDimensions, "Server Join Panel v" + Core.CLIENT_VERSION, StyleManager.Styles.Box);
+            IsDraggable = true;
+            ShouldDrawOptions = true;
+            ShouldDrawScrollBar = true;
+        }
 
-            float contentHeight = 515f;
-
-            Rect innerAreaRect = new Rect(windowDimensions.x + 10, windowDimensions.y + 25, windowDimensions.width - 20, windowDimensions.height - 35);
-            Rect contentRect = new Rect(0, 0, innerAreaRect.width - 20, contentHeight); // approximate content height
-
-            GUI.BeginGroup(innerAreaRect);
-
-            float scrollbarWidth = 16f;
-            float viewHeight = innerAreaRect.height;
-            float scrollMax = Mathf.Max(0, contentHeight - viewHeight);
-
-            // --- Detect if mouse is over scrollbar ---
-            Rect scrollbarRect = new Rect(innerAreaRect.width - scrollbarWidth, 0, scrollbarWidth, viewHeight);
-            bool mouseOverScrollbar = scrollbarRect.Contains(Event.current.mousePosition);
-
-            // Only capture mouse when inside scrollbar area
-            if (mouseOverScrollbar || draggingScrollbar)
-            {
-                float oldScroll = scrollPos.y;
-                float newScroll = GUI.VerticalScrollbar(scrollbarRect, oldScroll, viewHeight, 0, contentHeight, StyleManager.Styles.VerticalScrollBar);
-                if (Math.Abs(newScroll - oldScroll) > 0.01f)
-                    draggingScrollbar = true; // actively dragging
-
-                scrollPos.y = newScroll;
-
-                if (Event.current.type == EventType.MouseUp)
-                    draggingScrollbar = false;
-            }
-            else
-            {
-                GUI.VerticalScrollbar(scrollbarRect, scrollPos.y, viewHeight, 0, contentHeight, StyleManager.Styles.VerticalScrollBar);
-            }
-
-            // --- Scrollable content ---
-            GUI.BeginGroup(new Rect(0, -scrollPos.y, contentRect.width, contentHeight));
-            GUILayout.BeginArea(new Rect(0, 0, contentRect.width - 5, contentHeight));
-
+        internal override void DrawContent()
+        {
             serverInfoFoldout.Draw(HandleServerInfo);
-
             GUILayout.Space(10);
-
             playerCustomizationFoldout.Draw(HandlePlayerCustomization);
+        }
 
-            GUILayout.Space(10);
+        internal override void DrawOptions()
+        {
+        }
+
+        private void HandleServerInfo()
+        {
+            GUILayout.Label("Server IP:", StyleManager.Styles.Label);
+            ModSettings.connection.Address.Value = GUILayout.TextField(ModSettings.connection.Address.Value, 32, StyleManager.Styles.TextField);
+            GUILayout.Label("Server Port:", StyleManager.Styles.Label);
+
+            string newPort = GUILayout.TextField(ModSettings.connection.Port.Value.ToString(), 5, StyleManager.Styles.TextField);
+            if (int.TryParse(newPort, out int customPort))
+                ModSettings.connection.Port.Value = customPort;
+
+            GUILayout.Label("Password (Optional):", StyleManager.Styles.Label);
+            ModSettings.connection.Password.Value = GUILayout.PasswordField(ModSettings.connection.Password.Value, '*', 32, StyleManager.Styles.TextField);
+
+            GUILayout.Space(5);
 
             GUI.enabled = Core.networkManager.client == null;
             if (GUILayout.Button("Connect", StyleManager.Styles.Button) && Core.networkManager.client == null)
@@ -81,29 +59,8 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             {
                 Core.networkManager.Disconnect();
             }
+            GUILayout.Space(5);
             GUI.enabled = true;
-
-            GUILayout.EndArea();
-            GUI.EndGroup();
-            GUI.EndGroup();
-
-            // --- Only handle drag if not over or dragging the scrollbar ---
-            if (!mouseOverScrollbar && !draggingScrollbar)
-                HandleDrag();
-        }
-
-        private void HandleServerInfo()
-        {
-            GUILayout.Label("Server IP:", StyleManager.Styles.Label);
-            ModSettings.connection.Address.Value = GUILayout.TextField(ModSettings.connection.Address.Value, 32, StyleManager.Styles.TextField);
-            GUILayout.Label("Server Port:", StyleManager.Styles.Label);
-
-            string newPort = GUILayout.TextField(ModSettings.connection.Port.Value.ToString(), 5, StyleManager.Styles.TextField);
-            if (int.TryParse(newPort, out int customPort))
-                ModSettings.connection.Port.Value = customPort;
-
-            GUILayout.Label("Password (Optional):", StyleManager.Styles.Label);
-            ModSettings.connection.Password.Value = GUILayout.PasswordField(ModSettings.connection.Password.Value, '*', 32, StyleManager.Styles.TextField);
         }
 
         private void HandlePlayerCustomization()
@@ -158,29 +115,8 @@ namespace BabyStepsMultiplayerClient.UI.Elements
                     else player.Value.DisableCollision();
                 }
             }
+            GUILayout.Space(5);
             GUI.enabled = true;
-        }
-
-        private void HandleDrag()
-        {
-            var mousePos = Event.current.mousePosition;
-
-            if (Event.current.type == EventType.MouseDown &&
-                new Rect(windowDimensions.x, windowDimensions.y, windowDimensions.width, 40).Contains(mousePos))
-            {
-                dragging = true;
-                dragOffset = mousePos - windowDimensions.position;
-                Event.current.Use();
-            }
-
-            if (dragging && Event.current.type == EventType.MouseDrag)
-            {
-                windowDimensions.position = mousePos - dragOffset;
-                Event.current.Use();
-            }
-
-            if (Event.current.type == EventType.MouseUp)
-                dragging = false;
         }
 
         // --- Helpers ---

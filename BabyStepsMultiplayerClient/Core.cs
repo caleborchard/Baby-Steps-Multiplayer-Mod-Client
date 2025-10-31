@@ -18,6 +18,8 @@ namespace BabyStepsMultiplayerClient
     public class Core : MelonMod
     {
         public const string SERVER_VERSION = "104";
+
+        public static string MOD_NAME;
         public static string CLIENT_VERSION;
 
         public const string cloneText = "(Clone)";
@@ -33,6 +35,7 @@ namespace BabyStepsMultiplayerClient
         [Obsolete]
         public override void OnApplicationStart() 
         {
+            MOD_NAME = Info.Name;
             CLIENT_VERSION = Info.Version;
 
             logger = LoggerInstance;
@@ -56,7 +59,7 @@ namespace BabyStepsMultiplayerClient
                 && sceneName.Contains("Title"))
             {
                 _firstOpen = true;
-                uiManager.showServerPanel = true;
+                uiManager.serverConnectUI.IsOpen = true;
             }
         }
 
