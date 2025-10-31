@@ -6,8 +6,8 @@ namespace BabyStepsMultiplayerClient.UI
 {
     public class UIManager
     {
-        public bool showServerPanel { get; private set; }
-        public bool showPlayersTab { get; private set; }
+        public bool showServerPanel;
+        public bool showPlayersTab;
         public bool showChatTab;
 
         public PlayersTabUI playersTabUI { get; private set; }
@@ -44,16 +44,25 @@ namespace BabyStepsMultiplayerClient.UI
 
         public void Update()
         {
-            if (Input.GetKeyDown(KeyCode.F2))
+            // Toggle the Menu but only when Chat Input is Disabled
+            if (!showChatTab && Input.GetKeyDown(KeyCode.F2))
                 showServerPanel = !showServerPanel;
 
-            if (Core.networkManager.client == null)
+            // Only use while Connected and the Menu is Closed
+            if (showServerPanel || (Core.networkManager.client == null))
+            {
                 showPlayersTab = false;
+                showChatTab = false;
+            }
             else
-                showPlayersTab = !showServerPanel && Input.GetKey(KeyCode.Tab);
+            {
+                // Toggle the Chat Input when not already Active
+                if (!showChatTab && Input.GetKeyDown(KeyCode.T))
+                    showChatTab = true;
 
-            if (Input.GetKeyDown(KeyCode.T) && Core.networkManager.client != null)
-                showChatTab = true;
+                // Toggle the Scoreboard only when Chat Input is Disabled
+                showPlayersTab = !showChatTab && Input.GetKey(KeyCode.Tab);
+            }
         }
 
         public void ApplyCollisionToggle(RemotePlayer player, bool collisionsEnabled)
