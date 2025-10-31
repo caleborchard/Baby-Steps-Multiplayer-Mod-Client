@@ -1,6 +1,6 @@
-﻿using BabyStepsMultiplayerClient.Extensions;
+﻿using BabyStepsMultiplayerClient.Player.Audio;
+using BabyStepsMultiplayerClient.Extensions;
 using BabyStepsMultiplayerClient.Networking;
-using BabyStepsMultiplayerClient.Player.Audio;
 using Il2Cpp;
 using Il2CppCinemachine;
 using MelonLoader;
