@@ -185,6 +185,7 @@ namespace BabyStepsMultiplayerClient.Player
             CreateParticleCrushers();
             CreateFootData();
 
+#if DEBUG
             audioSource = new BBSAudioSource(headBone);
             audioSource.Initialize();
 
@@ -192,6 +193,7 @@ namespace BabyStepsMultiplayerClient.Player
             mic.Initialize(0);
             mic.SetVolume(1f);
             mic.StartRecording();
+#endif
         }
 
         private static System.Collections.IEnumerator DelayedGazableFillin(Gazable _gazable)
@@ -219,7 +221,9 @@ namespace BabyStepsMultiplayerClient.Player
             ResetSuitColor();
             SetDisplayName("Nate");
 
+#if DEBUG
             audioSource.Dispose();
+#endif
 
             distanceFromPlayer = 0f;
             firstBoneInterpRan = false;
@@ -257,6 +261,7 @@ namespace BabyStepsMultiplayerClient.Player
                 }
             }
 
+#if DEBUG
             audioSource.Update();
 
             byte[] frame = mic.GetAudioFrame();
@@ -265,6 +270,7 @@ namespace BabyStepsMultiplayerClient.Player
                 byte[] stereo = mic.ConvertToStereo(frame);
                 audioSource.WriteAudioData(stereo);
             }
+#endif
         }
 
         public void SetDisplayName(string name)
