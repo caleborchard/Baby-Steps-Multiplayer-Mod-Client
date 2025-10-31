@@ -1,7 +1,7 @@
 ﻿using Il2CppTMPro;
 using UnityEngine;
 
-namespace BabyStepsMultiplayerClient.Player
+namespace BabyStepsMultiplayerClient.Player.UI
 {
     public class NameTagUI
     {
@@ -39,7 +39,7 @@ namespace BabyStepsMultiplayerClient.Player
         public void Destroy()
         {
             if (baseObject != null)
-                GameObject.Destroy(baseObject);
+                UnityEngine.Object.Destroy(baseObject);
         }
 
         public void LateUpdate()

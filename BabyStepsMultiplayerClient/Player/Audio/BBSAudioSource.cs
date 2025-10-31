@@ -4,14 +4,14 @@ using UnityEngine;
 using Il2CppFMOD;
 using FMOD = Il2CppFMOD;
 
-namespace BabyStepsMultiplayerClient.Audio
+namespace BabyStepsMultiplayerClient.Player.Audio
 {
     public class BBSAudioSource
     {
         private Transform transform;
         private FMOD.System fmodSystem;
-        private FMOD.Sound sound;
-        private FMOD.Channel channel;
+        private Sound sound;
+        private Channel channel;
 
         private const int SAMPLE_RATE = 48000;
         private const int CHANNELS = 2;
@@ -45,11 +45,11 @@ namespace BabyStepsMultiplayerClient.Audio
                 // Create sound info for streaming PCM
                 CREATESOUNDEXINFO exinfo = new CREATESOUNDEXINFO();
                 exinfo.cbsize = System.Runtime.InteropServices.Marshal.SizeOf(typeof(CREATESOUNDEXINFO));
-                exinfo.length = (uint)BUFFER_SIZE;
+                exinfo.length = BUFFER_SIZE;
                 exinfo.numchannels = CHANNELS;
                 exinfo.defaultfrequency = SAMPLE_RATE;
                 exinfo.format = SOUND_FORMAT.PCM16;
-                exinfo.decodebuffersize = (uint)(SAMPLE_RATE / 10); // 100ms decode buffer
+                exinfo.decodebuffersize = SAMPLE_RATE / 10; // 100ms decode buffer
 
                 // Create the sound
                 RESULT result = fmodSystem.createSound(
@@ -171,7 +171,7 @@ namespace BabyStepsMultiplayerClient.Audio
                     {
                         int idx = (i * CHANNELS + c) * 2;
                         frameBuffer[idx] = (byte)(sample & 0xFF);
-                        frameBuffer[idx + 1] = (byte)((sample >> 8) & 0xFF);
+                        frameBuffer[idx + 1] = (byte)(sample >> 8 & 0xFF);
                     }
                 }
 
