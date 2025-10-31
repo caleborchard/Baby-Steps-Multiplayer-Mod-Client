@@ -39,8 +39,8 @@ namespace BabyStepsMultiplayerClient.UI
                         font = Fonts.Arial,
                         normal = new()
                         {
-                            textColor = Color.white,
-                        };
+                            textColor = Color.white
+                        }
                     };
 
                 if (MiddleCenterLabel == null)
