@@ -48,6 +48,10 @@
 		<AssemblyName>$(ProjectName)_Demo</AssemblyName>
 	</PropertyGroup>
 	
+	<PropertyGroup Condition="'$(Configuration)' == 'Demo - Debug' Or '$(Configuration)' == 'Retail - Debug'">
+		<DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
+	</PropertyGroup>
+	
 	<PropertyGroup>
 		<ModsDir>$(GameDir)\Mods</ModsDir>
 		<MelonLoaderDir>$(GameDir)\MelonLoader</MelonLoaderDir>
