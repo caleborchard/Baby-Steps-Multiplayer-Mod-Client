@@ -21,7 +21,7 @@ namespace BabyStepsMultiplayerClient.UI
         {
             // Draw foldout header with arrow
             string headerLabel = (isExpanded ? "▼ " : "▶ ") + label;
-            if (GUILayout.Button(headerLabel))
+            if (GUILayout.Button(headerLabel, StyleManager.Styles.Button))
             {
                 isExpanded = !isExpanded;
             }

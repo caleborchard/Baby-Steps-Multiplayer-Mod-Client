@@ -2,7 +2,7 @@
 using System.Text.RegularExpressions;
 using BabyStepsMultiplayerClient.Player;
 
-namespace BabyStepsMultiplayerClient.UI
+namespace BabyStepsMultiplayerClient.UI.Elements
 {
     public class ServerConnectUI
     {
@@ -12,26 +12,12 @@ namespace BabyStepsMultiplayerClient.UI
         public static Vector2 dragOffset;
         public static bool draggingScrollbar;
         public static Vector2 scrollPos;
-        public static GUIStyle sliderStyle;
-        public static GUIStyle thumbStyle;
 
         public static RuntimeFoldout serverInfoFoldout = new RuntimeFoldout("Server Information", false);
 
         public void DrawUI()
         {
-            if (sliderStyle == null)
-            {
-                sliderStyle = new(GUI.skin.horizontalSlider);
-                sliderStyle.fixedHeight = 20;
-            }
-            if (thumbStyle == null)
-            {
-                thumbStyle = new GUIStyle(GUI.skin.horizontalSliderThumb);
-                thumbStyle.fixedHeight = 20;
-                thumbStyle.fixedWidth = 20;
-            }
-
-            GUI.Box(windowDimensions, "Server Join Panel v" + Core.CLIENT_VERSION, Core.uiManager.boxStyle);
+            GUI.Box(windowDimensions, "Server Join Panel v" + Core.CLIENT_VERSION, StyleManager.Styles.Box);
 
             float contentHeight = 515f;
 
@@ -73,20 +59,20 @@ namespace BabyStepsMultiplayerClient.UI
 
             serverInfoFoldout.Draw(() =>
             {
-                GUILayout.Label("Server IP:", Core.uiManager.labelStyle);
+                GUILayout.Label("Server IP:", StyleManager.Styles.Label);
                 ModSettings.connection.Address.Value = GUILayout.TextField(ModSettings.connection.Address.Value, 32);
-                GUILayout.Label("Server Port:", Core.uiManager.labelStyle);
+                GUILayout.Label("Server Port:", StyleManager.Styles.Label);
 
                 string newPort = GUILayout.TextField(ModSettings.connection.Port.Value.ToString(), 5);
                 if (int.TryParse(newPort, out int customPort))
                     ModSettings.connection.Port.Value = customPort;
 
-                GUILayout.Label("Password (Optional):", Core.uiManager.labelStyle);
+                GUILayout.Label("Password (Optional):", StyleManager.Styles.Label);
                 ModSettings.connection.Password.Value = GUILayout.PasswordField(ModSettings.connection.Password.Value, '*', 32);
             });
 
             GUILayout.Space(10);
-            GUILayout.Label("Nickname:", Core.uiManager.labelStyle);
+            GUILayout.Label("Nickname:", StyleManager.Styles.Label);
             ModSettings.player.Nickname.Value = FilterKeyboardCharacters(GUILayout.TextField(ModSettings.player.Nickname.Value, 20));
 
             var currentColor = ModSettings.player.SuitColor.Value;
@@ -94,24 +80,24 @@ namespace BabyStepsMultiplayerClient.UI
                 currentColor.a = 1f;
 
             GUILayout.Space(5);
-            GUILayout.Label("Suit Tint:", Core.uiManager.labelStyle);
+            GUILayout.Label("Suit Tint:", StyleManager.Styles.Label);
             GUILayout.Space(2);
-            GUILayout.Label($"Red: {(int)(currentColor.r * 255)}", Core.uiManager.labelStyle);
-            currentColor.r = GUILayout.HorizontalSlider(currentColor.r, 0f, 1f, sliderStyle, thumbStyle);
-            GUILayout.Label($"Green: {(int)(currentColor.g * 255)}", Core.uiManager.labelStyle);
-            currentColor.g = GUILayout.HorizontalSlider(currentColor.g, 0f, 1f, sliderStyle, thumbStyle);
-            GUILayout.Label($"Blue: {(int)(currentColor.b * 255)}", Core.uiManager.labelStyle);
-            currentColor.b = GUILayout.HorizontalSlider(currentColor.b, 0f, 1f, sliderStyle, thumbStyle);
+            GUILayout.Label($"Red: {(int)(currentColor.r * 255)}", StyleManager.Styles.Label);
+            currentColor.r = GUILayout.HorizontalSlider(currentColor.r, 0f, 1f, StyleManager.Styles.HorizontalSlider, StyleManager.Styles.HorizontalSliderThumb);
+            GUILayout.Label($"Green: {(int)(currentColor.g * 255)}", StyleManager.Styles.Label);
+            currentColor.g = GUILayout.HorizontalSlider(currentColor.g, 0f, 1f, StyleManager.Styles.HorizontalSlider, StyleManager.Styles.HorizontalSliderThumb);
+            GUILayout.Label($"Blue: {(int)(currentColor.b * 255)}", StyleManager.Styles.Label);
+            currentColor.b = GUILayout.HorizontalSlider(currentColor.b, 0f, 1f, StyleManager.Styles.HorizontalSlider, StyleManager.Styles.HorizontalSliderThumb);
 
             GUILayout.Space(5);
             GUI.color = currentColor;
-            GUILayout.Label("████████████", Core.uiManager.centeredLabelStyle);
+            GUILayout.Label("████████████", StyleManager.Styles.MiddleCenterLabel);
             GUI.color = Color.white;
             ModSettings.player.SuitColor.Value = currentColor;
 
             GUI.enabled = !(Core.networkManager.client == null);
             GUILayout.Space(5);
-            if (GUILayout.Button("Update Name & Appearance", Core.uiManager.buttonStyle) && Core.networkManager.client != null)
+            if (GUILayout.Button("Update Name & Appearance", StyleManager.Styles.Button) && Core.networkManager.client != null)
             {
                 SaveConfig();
                 Core.networkManager.mainThreadActions.Enqueue(() => {
@@ -125,7 +111,7 @@ namespace BabyStepsMultiplayerClient.UI
 
             GUI.enabled = !(Core.networkManager.client == null);
             GUILayout.Space(5);
-            if (GUILayout.Button((ModSettings.player.Collisions.Value ? "Disable" : "Enable") + " Collisions", Core.uiManager.buttonStyle))
+            if (GUILayout.Button((ModSettings.player.Collisions.Value ? "Disable" : "Enable") + " Collisions", StyleManager.Styles.Button))
             {
                 ModSettings.player.Collisions.Value = !ModSettings.player.Collisions.Value;
                 Core.networkManager.SendCollisionToggle(ModSettings.player.Collisions.Value);
@@ -140,7 +126,7 @@ namespace BabyStepsMultiplayerClient.UI
 
             GUILayout.Space(10);
             GUI.enabled = Core.networkManager.client == null;
-            if (GUILayout.Button("Connect", Core.uiManager.buttonStyle) && Core.networkManager.client == null)
+            if (GUILayout.Button("Connect", StyleManager.Styles.Button) && Core.networkManager.client == null)
             {
                 Core.logger.Msg($"{ModSettings.player.Nickname.Value}, {ModSettings.connection.Address.Value}:{ModSettings.connection.Port.Value}");
                 SaveConfig();
@@ -151,7 +137,7 @@ namespace BabyStepsMultiplayerClient.UI
             GUI.enabled = true;
 
             GUI.enabled = !(Core.networkManager.client == null);
-            if (GUILayout.Button("Disconnect", Core.uiManager.buttonStyle) && Core.networkManager.client != null)
+            if (GUILayout.Button("Disconnect", StyleManager.Styles.Button) && Core.networkManager.client != null)
             {
                 Core.networkManager.Disconnect();
             }

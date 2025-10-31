@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace BabyStepsMultiplayerClient.UI
+namespace BabyStepsMultiplayerClient.UI.Elements
 {
     public class NotificationUI
     {
@@ -56,7 +56,7 @@ namespace BabyStepsMultiplayerClient.UI
                 //GUI.color = new Color(oldColor.r, oldColor.g, oldColor.b, alpha);
                 GUI.color = new Color(msg.Color.r, msg.Color.g, msg.Color.b, alpha);
 
-                GUI.Label(new Rect(10, yOffset, Screen.width, 25), msg.Text, Core.uiManager.labelStyle);
+                GUI.Label(new Rect(10, yOffset, Screen.width, 25), msg.Text, StyleManager.Styles.Label);
 
                 yOffset += 20;
             }
@@ -75,8 +75,8 @@ namespace BabyStepsMultiplayerClient.UI
                 alpha = 1f;
             else
             {
-                float fadeOutAge = (age - fadeDuration) - HoldDuration;
-                alpha = Mathf.Clamp01(1f - (fadeOutAge / fadeDuration));
+                float fadeOutAge = age - fadeDuration - HoldDuration;
+                alpha = Mathf.Clamp01(1f - fadeOutAge / fadeDuration);
                 if (alpha <= 0f)
                     return true;
             }

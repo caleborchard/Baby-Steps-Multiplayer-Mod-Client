@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace BabyStepsMultiplayerClient.UI
+namespace BabyStepsMultiplayerClient.UI.Elements
 {
     public class PlayersTabUI
     {
@@ -26,13 +26,13 @@ namespace BabyStepsMultiplayerClient.UI
             Rect panelRect = new Rect(x, y, panelWidth, panelHeight);
 
             int localHeight = (int)(LocalPlayer.Instance.headBone.position.y - 120);
-            GUI.Box(panelRect, $"Connected Players [Y:{localHeight}]", Core.uiManager.boxStyle);
+            GUI.Box(panelRect, $"Connected Players [Y:{localHeight}]", StyleManager.Styles.Box);
 
             GUILayout.BeginArea(new Rect(panelRect.x + 10, panelRect.y + headerHeight, panelRect.width - 20, panelRect.height - headerHeight - margin));
 
             if (Core.networkManager.players.Count == 0)
             {
-                GUILayout.Label("No players connected.", Core.uiManager.centeredLabelStyle);
+                GUILayout.Label("No players connected.", StyleManager.Styles.MiddleCenterLabel);
             }
             else
             {
@@ -45,7 +45,7 @@ namespace BabyStepsMultiplayerClient.UI
                         continue;
 
                     int height = (int)player.rootBone.position.y - 120;
-                    GUILayout.Label($"[Y:{height}] { player.displayName }", Core.uiManager.centeredLabelStyle);
+                    GUILayout.Label($"[Y:{height}] { player.displayName }", StyleManager.Styles.MiddleCenterLabel);
                 }
             }
 

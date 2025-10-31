@@ -1,4 +1,5 @@
 ﻿using BabyStepsMultiplayerClient.Player;
+using BabyStepsMultiplayerClient.UI.Elements;
 using UnityEngine;
 
 namespace BabyStepsMultiplayerClient.UI
@@ -14,18 +15,8 @@ namespace BabyStepsMultiplayerClient.UI
         public NotificationUI notificationsUI { get; private set; }
         public ChatTabUI chatTabUI { get; private set; }
 
-        public Font arialFont;
-        public GUIStyle labelStyle;
-        public GUIStyle centeredLabelStyle;
-
-        public GUIStyle boxStyle;
-        public GUIStyle buttonStyle;
-
         public UIManager()
         {
-            arialFont = Resources.GetBuiltinResource<Font>("Arial.ttf");
-            CreateLabelStyles();
-
             serverConnectUI = new ServerConnectUI();
             serverConnectUI.LoadConfig();
 
@@ -34,49 +25,10 @@ namespace BabyStepsMultiplayerClient.UI
             chatTabUI = new ChatTabUI();
         }
 
-        private void CreateLabelStyles()
-        {
-            labelStyle = new GUIStyle()
-            {
-                font = arialFont,
-                normal = new()
-                {
-                    textColor = Color.white,
-                },
-            };
-
-            centeredLabelStyle = new GUIStyle(labelStyle)
-            {
-                alignment = TextAnchor.MiddleCenter
-            };
-        }
-
-        private void CloneDefaultStyles()
-        {
-            if (buttonStyle == null)
-            {
-                buttonStyle = new GUIStyle(GUI.skin.button);
-                buttonStyle.font = arialFont;
-
-                if (buttonStyle.normal == null)
-                    buttonStyle.normal = new();
-                buttonStyle.normal.textColor = Color.white;
-            }
-
-            if (boxStyle == null)
-            {
-                boxStyle = new GUIStyle(GUI.skin.box);
-                boxStyle.font = arialFont;
-
-                if (boxStyle.normal == null)
-                    boxStyle.normal = new();
-                boxStyle.normal.textColor = Color.white;
-            }
-        }
-
         public void Draw()
         {
-            CloneDefaultStyles();
+            StyleManager.Fonts.Prepare();
+            StyleManager.Styles.Prepare();
 
             notificationsUI.DrawUI();
 
