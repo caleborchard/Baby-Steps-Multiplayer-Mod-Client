@@ -13,7 +13,8 @@ namespace BabyStepsMultiplayerClient.UI.Elements
         public static bool draggingScrollbar;
         public static Vector2 scrollPos;
 
-        public static RuntimeFoldout serverInfoFoldout = new RuntimeFoldout("Server Information", false);
+        public static RuntimeFoldout serverInfoFoldout = new RuntimeFoldout("Server Information", true);
+        public static RuntimeFoldout playerCustomizationFoldout = new RuntimeFoldout("Player Customization", false);
 
         public void DrawUI()
         {
@@ -56,21 +57,57 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             GUI.BeginGroup(new Rect(0, -scrollPos.y, contentRect.width, contentHeight));
             GUILayout.BeginArea(new Rect(0, 0, contentRect.width - 5, contentHeight));
 
-            serverInfoFoldout.Draw(() =>
-            {
-                GUILayout.Label("Server IP:", StyleManager.Styles.Label);
-                ModSettings.connection.Address.Value = GUILayout.TextField(ModSettings.connection.Address.Value, 32, StyleManager.Styles.TextField);
-                GUILayout.Label("Server Port:", StyleManager.Styles.Label);
-
-                string newPort = GUILayout.TextField(ModSettings.connection.Port.Value.ToString(), 5, StyleManager.Styles.TextField);
-                if (int.TryParse(newPort, out int customPort))
-                    ModSettings.connection.Port.Value = customPort;
-
-                GUILayout.Label("Password (Optional):", StyleManager.Styles.Label);
-                ModSettings.connection.Password.Value = GUILayout.PasswordField(ModSettings.connection.Password.Value, '*', 32, StyleManager.Styles.TextField);
-            });
+            serverInfoFoldout.Draw(HandleServerInfo);
 
             GUILayout.Space(10);
+
+            playerCustomizationFoldout.Draw(HandlePlayerCustomization);
+
+            GUILayout.Space(10);
+
+            GUI.enabled = Core.networkManager.client == null;
+            if (GUILayout.Button("Connect", StyleManager.Styles.Button) && Core.networkManager.client == null)
+            {
+                Core.logger.Msg($"{ModSettings.player.Nickname.Value}, {ModSettings.connection.Address.Value}:{ModSettings.connection.Port.Value}");
+                SaveConfig();
+                Core.networkManager.Connect(ModSettings.connection.Address.Value,
+                    ModSettings.connection.Port.Value,
+                    ModSettings.connection.Password.Value);
+            }
+            GUI.enabled = true;
+
+            GUI.enabled = !(Core.networkManager.client == null);
+            if (GUILayout.Button("Disconnect", StyleManager.Styles.Button) && Core.networkManager.client != null)
+            {
+                Core.networkManager.Disconnect();
+            }
+            GUI.enabled = true;
+
+            GUILayout.EndArea();
+            GUI.EndGroup();
+            GUI.EndGroup();
+
+            // --- Only handle drag if not over or dragging the scrollbar ---
+            if (!mouseOverScrollbar && !draggingScrollbar)
+                HandleDrag();
+        }
+
+        private void HandleServerInfo()
+        {
+            GUILayout.Label("Server IP:", StyleManager.Styles.Label);
+            ModSettings.connection.Address.Value = GUILayout.TextField(ModSettings.connection.Address.Value, 32, StyleManager.Styles.TextField);
+            GUILayout.Label("Server Port:", StyleManager.Styles.Label);
+
+            string newPort = GUILayout.TextField(ModSettings.connection.Port.Value.ToString(), 5, StyleManager.Styles.TextField);
+            if (int.TryParse(newPort, out int customPort))
+                ModSettings.connection.Port.Value = customPort;
+
+            GUILayout.Label("Password (Optional):", StyleManager.Styles.Label);
+            ModSettings.connection.Password.Value = GUILayout.PasswordField(ModSettings.connection.Password.Value, '*', 32, StyleManager.Styles.TextField);
+        }
+
+        private void HandlePlayerCustomization()
+        {
             GUILayout.Label("Nickname:", StyleManager.Styles.Label);
             ModSettings.player.Nickname.Value = FilterKeyboardCharacters(GUILayout.TextField(ModSettings.player.Nickname.Value, 20, StyleManager.Styles.TextField));
 
@@ -122,33 +159,6 @@ namespace BabyStepsMultiplayerClient.UI.Elements
                 }
             }
             GUI.enabled = true;
-
-            GUILayout.Space(10);
-            GUI.enabled = Core.networkManager.client == null;
-            if (GUILayout.Button("Connect", StyleManager.Styles.Button) && Core.networkManager.client == null)
-            {
-                Core.logger.Msg($"{ModSettings.player.Nickname.Value}, {ModSettings.connection.Address.Value}:{ModSettings.connection.Port.Value}");
-                SaveConfig();
-                Core.networkManager.Connect(ModSettings.connection.Address.Value,
-                    ModSettings.connection.Port.Value,
-                    ModSettings.connection.Password.Value);
-            }
-            GUI.enabled = true;
-
-            GUI.enabled = !(Core.networkManager.client == null);
-            if (GUILayout.Button("Disconnect", StyleManager.Styles.Button) && Core.networkManager.client != null)
-            {
-                Core.networkManager.Disconnect();
-            }
-            GUI.enabled = true;
-
-            GUILayout.EndArea();
-            GUI.EndGroup();
-            GUI.EndGroup();
-
-            // --- Only handle drag if not over or dragging the scrollbar ---
-            if (!mouseOverScrollbar && !draggingScrollbar)
-                HandleDrag();
         }
 
         private void HandleDrag()
