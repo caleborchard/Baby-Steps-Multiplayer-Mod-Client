@@ -1,7 +1,7 @@
 ﻿using Il2CppTMPro;
 using UnityEngine;
 
-namespace BabyStepsMultiplayerClient.Player.UI
+namespace BabyStepsMultiplayerClient.Player
 {
     public class NameTagUI
     {
