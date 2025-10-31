@@ -38,7 +38,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             if (mouseOverScrollbar || draggingScrollbar)
             {
                 float oldScroll = scrollPos.y;
-                float newScroll = GUI.VerticalScrollbar(scrollbarRect, oldScroll, viewHeight, 0, contentHeight);
+                float newScroll = GUI.VerticalScrollbar(scrollbarRect, oldScroll, viewHeight, 0, contentHeight, StyleManager.Styles.VerticalScrollBar);
                 if (Math.Abs(newScroll - oldScroll) > 0.01f)
                     draggingScrollbar = true; // actively dragging
 
@@ -49,31 +49,30 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             }
             else
             {
-                GUI.VerticalScrollbar(scrollbarRect, scrollPos.y, viewHeight, 0, contentHeight);
+                GUI.VerticalScrollbar(scrollbarRect, scrollPos.y, viewHeight, 0, contentHeight, StyleManager.Styles.VerticalScrollBar);
             }
 
             // --- Scrollable content ---
             GUI.BeginGroup(new Rect(0, -scrollPos.y, contentRect.width, contentHeight));
             GUILayout.BeginArea(new Rect(0, 0, contentRect.width - 5, contentHeight));
 
-
             serverInfoFoldout.Draw(() =>
             {
                 GUILayout.Label("Server IP:", StyleManager.Styles.Label);
-                ModSettings.connection.Address.Value = GUILayout.TextField(ModSettings.connection.Address.Value, 32);
+                ModSettings.connection.Address.Value = GUILayout.TextField(ModSettings.connection.Address.Value, 32, StyleManager.Styles.TextField);
                 GUILayout.Label("Server Port:", StyleManager.Styles.Label);
 
-                string newPort = GUILayout.TextField(ModSettings.connection.Port.Value.ToString(), 5);
+                string newPort = GUILayout.TextField(ModSettings.connection.Port.Value.ToString(), 5, StyleManager.Styles.TextField);
                 if (int.TryParse(newPort, out int customPort))
                     ModSettings.connection.Port.Value = customPort;
 
                 GUILayout.Label("Password (Optional):", StyleManager.Styles.Label);
-                ModSettings.connection.Password.Value = GUILayout.PasswordField(ModSettings.connection.Password.Value, '*', 32);
+                ModSettings.connection.Password.Value = GUILayout.PasswordField(ModSettings.connection.Password.Value, '*', 32, StyleManager.Styles.TextField);
             });
 
             GUILayout.Space(10);
             GUILayout.Label("Nickname:", StyleManager.Styles.Label);
-            ModSettings.player.Nickname.Value = FilterKeyboardCharacters(GUILayout.TextField(ModSettings.player.Nickname.Value, 20));
+            ModSettings.player.Nickname.Value = FilterKeyboardCharacters(GUILayout.TextField(ModSettings.player.Nickname.Value, 20, StyleManager.Styles.TextField));
 
             var currentColor = ModSettings.player.SuitColor.Value;
             if (currentColor.a != 1f)

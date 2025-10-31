@@ -17,8 +17,6 @@ namespace BabyStepsMultiplayerClient.UI
 
         internal static class Styles
         {
-            internal static GUIStyleState WhiteTextColorState { get; private set; }
-
             internal static GUIStyle Label { get; private set; }
             internal static GUIStyle MiddleCenterLabel { get; private set; }
 
@@ -27,23 +25,22 @@ namespace BabyStepsMultiplayerClient.UI
 
             internal static GUIStyle Box { get; private set; }
             internal static GUIStyle Button { get; private set; }
+            internal static GUIStyle VerticalScrollBar { get; private set; }
 
             internal static GUIStyle HorizontalSlider { get; private set; }
             internal static GUIStyle HorizontalSliderThumb { get; private set; }
 
+
             internal static void Prepare()
             {
-                if (WhiteTextColorState == null)
-                    WhiteTextColorState = new()
-                    {
-                        textColor = Color.white,
-                    };
-
                 if (Label == null)
                     Label = new GUIStyle(GUI.skin.label)
                     {
                         font = Fonts.Arial,
-                        normal = WhiteTextColorState
+                        normal = new()
+                        {
+                            textColor = Color.white,
+                        };
                     };
 
                 if (MiddleCenterLabel == null)
@@ -55,22 +52,19 @@ namespace BabyStepsMultiplayerClient.UI
                 if (Box == null)
                     Box = new GUIStyle(GUI.skin.box)
                     {
-                        font = Fonts.Arial,
-                        //normal = WhiteTextColorState
+                        font = Fonts.Arial
                     };
 
                 if (Button == null)
                     Button = new GUIStyle(GUI.skin.button)
                     {
-                        font = Fonts.Arial,
-                        //normal = WhiteTextColorState
+                        font = Fonts.Arial
                     };
 
                 if (HorizontalSlider == null)
                     HorizontalSlider = new GUIStyle(GUI.skin.horizontalSlider)
                     {
                         font = Fonts.Arial,
-                        //normal = WhiteTextColorState,
                         fixedHeight = 20
                     };
                 
@@ -78,16 +72,20 @@ namespace BabyStepsMultiplayerClient.UI
                     HorizontalSliderThumb = new GUIStyle(GUI.skin.horizontalSliderThumb)
                     {
                         font = Fonts.Arial,
-                        //normal = WhiteTextColorState,
                         fixedHeight = 20,
                         fixedWidth = 20
+                    };
+
+                if (VerticalScrollBar == null)
+                    VerticalScrollBar = new GUIStyle(GUI.skin.verticalScrollbar)
+                    {
+                        font = Fonts.Arial
                     };
 
                 if (TextField == null)
                     TextField = new GUIStyle(GUI.skin.textField)
                     {
                         font = Fonts.Arial,
-                        normal = WhiteTextColorState
                     };
 
                 if (MiddleLeftTextField == null)
