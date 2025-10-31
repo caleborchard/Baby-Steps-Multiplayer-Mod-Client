@@ -31,6 +31,7 @@
 		<PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
 		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+		<ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
 		
 		<Configurations>Retail - Debug;Retail - Release;Demo - Debug;Demo - Release</Configurations>
 		
