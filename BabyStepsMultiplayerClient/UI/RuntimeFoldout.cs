@@ -7,7 +7,8 @@ namespace BabyStepsMultiplayerClient.UI
         private bool isExpanded;
         private string label;
 
-        public RuntimeFoldout(string label, bool defaultState = false)
+        public RuntimeFoldout(string label,
+            bool defaultState = false)
         {
             this.label = label;
             this.isExpanded = defaultState;
@@ -29,7 +30,7 @@ namespace BabyStepsMultiplayerClient.UI
             // Draw contents if expanded
             if (isExpanded && contents != null)
             {
-                GUILayout.BeginVertical("box");
+                GUILayout.BeginVertical(StyleManager.Styles.Box);
                 contents.Invoke();
                 GUILayout.EndVertical();
             }
