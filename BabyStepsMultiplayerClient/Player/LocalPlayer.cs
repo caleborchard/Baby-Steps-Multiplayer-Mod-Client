@@ -3,7 +3,6 @@ using BabyStepsMultiplayerClient.Extensions;
 using BabyStepsMultiplayerClient.Networking;
 using Il2Cpp;
 using Il2CppCinemachine;
-using MelonLoader;
 using UnityEngine;
 
 namespace BabyStepsMultiplayerClient.Player
