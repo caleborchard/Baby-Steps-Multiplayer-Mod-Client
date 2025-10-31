@@ -26,7 +26,8 @@ namespace BabyStepsMultiplayerClient
 
         public static UIManager uiManager;
         public static NetworkManager networkManager;
-        public static Il2CppFMOD.System CoreSystem;
+
+        private static bool _firstOpen = false;
 
         public override void OnInitializeMelon() { }
         [Obsolete]
@@ -48,6 +49,16 @@ namespace BabyStepsMultiplayerClient
 
         public override void OnGUI()
             => uiManager.Draw();
+
+        public override void OnSceneWasInitialized(int buildIndex, string sceneName)
+        {
+            if (!_firstOpen 
+                && sceneName.Contains("Title"))
+            {
+                _firstOpen = true;
+                uiManager.showServerPanel = true;
+            }
+        }
 
         public override void OnUpdate()
         {
