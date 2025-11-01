@@ -173,7 +173,9 @@ namespace BabyStepsMultiplayerClient.Player
 
         public override void Update()
         {
+#if DEBUG
             UpdateMicrophone();
+#endif
 
             if (Core.networkManager.server == null)
                 return;

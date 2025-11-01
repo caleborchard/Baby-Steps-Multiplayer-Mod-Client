@@ -31,6 +31,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
                 localHeight = (int)(LocalPlayer.Instance.headBone.position.y - 120);
             Label = $"Connected Players [Y:{localHeight}]";
 
+            GUILayout.Space(1);
             if (Core.networkManager.players.Count == 0)
                 GUILayout.Label("No players connected.", StyleManager.Styles.MiddleCenterLabel);
             else
@@ -45,6 +46,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
                         height = (int)player.rootBone.position.y - 120;
                     GUILayout.Label($"[Y:{height}] { player.displayName }", StyleManager.Styles.MiddleCenterLabel);
                 }
+            GUILayout.Space(2);
         }
     }
 }

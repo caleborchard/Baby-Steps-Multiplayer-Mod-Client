@@ -74,6 +74,8 @@ namespace BabyStepsMultiplayerClient.UI
                     Label = string.Empty;
                 if (ShouldDrawBox)
                     GUI.Box(_windowRect, Label, StyleManager.Styles.Box);
+
+                // Window Inner Box Group
                 GUI.BeginGroup(windowContentRect);
 
                 // Window ScrollBar
@@ -170,38 +172,33 @@ namespace BabyStepsMultiplayerClient.UI
 
         private void HandleDrag(Rect windowHeaderRect)
         {
-            Vector2 mousePos = Event.current.mousePosition;
+            Vector2 mousePos = Input.mousePosition;
+            mousePos.y = -mousePos.y;
+
             if (_hasClicked)
             {
-                if (Event.current.type == EventType.MouseUp)
+                if (Input.GetMouseButtonUp(0))
                 {
                     _hasClicked = false;
-                    if (_isDragging)
-                        Event.current.Use();
                     _isDragging = false;
                 }
-                if (_isDragging && (Event.current.type == EventType.MouseDown))
-                    Event.current.Use();
             }
             else
             {
-                if (Event.current.type == EventType.MouseDown)
+                if (Input.GetMouseButtonDown(0))
                 {
                     _hasClicked = true;
+
                     if (windowHeaderRect.Contains(Event.current.mousePosition))
                     {
                         _isDragging = true;
                         _dragOffset = mousePos - Position;
-                        Event.current.Use();
                     }
                 }
             }
 
-            if (_isDragging && (Event.current.type == EventType.MouseDrag))
-            {
+            if (_isDragging)
                 Position = mousePos - _dragOffset;
-                Event.current.Use();
-            }
         }
     }
 }
