@@ -31,31 +31,31 @@ namespace BabyStepsMultiplayerClient.UI
 
         private bool _hasClicked;
         private bool _isDragging;
-        private float _dragOffset_x;
-        private float _dragOffset_y;
 
-        public float Pos_X
+        private Vector2 _dragOffset = new();
+        private Vector2 _posCache = new();
+        private Vector2 _sizeCache = new();
+
+        public Vector2 Position
         {
-            get => _windowRect.x;
-            set => _windowRect.x = value;
+            get => _posCache;
+            set
+            {
+                _posCache.x = value.x;
+                _posCache.y = value.y;
+                _windowRect.position = _posCache;
+            }
         }
 
-        public float Pos_Y
+        public Vector2 Size
         {
-            get => _windowRect.y;
-            set => _windowRect.y = value;
-        }
-
-        public float Width
-        {
-            get => _windowRect.width;
-            set => _windowRect.width = value;
-        }
-
-        public float Height
-        {
-            get => _windowRect.height;
-            set => _windowRect.height = value;
+            get => _sizeCache;
+            set
+            {
+                _sizeCache.x = value.x;
+                _sizeCache.y = value.y;
+                _windowRect.size = _sizeCache;
+            }
         }
 
         public RuntimeWindow(string label,
@@ -65,10 +65,8 @@ namespace BabyStepsMultiplayerClient.UI
             bool defaultState = false)
         {
             this.Label = label;
-            this.Pos_X = defaultPos.x;
-            this.Pos_Y = defaultPos.y;
-            this.Width = defaultSize.x;
-            this.Height = defaultSize.y;
+            this.Position = defaultPos;
+            this.Size = defaultSize;
             this._contentHeight = defaultSize.y;
             this.IsOpen = defaultState;
         }
@@ -128,9 +126,12 @@ namespace BabyStepsMultiplayerClient.UI
                 // Do Window Resize
                 if (ShouldAutoResizeHeight)
                 {
-                    Height = Height + _contentHeight + 10;
-                    if (Height > MaxResizeHeight)
-                        Height = MaxResizeHeight;
+                    Vector2 newSize = Size;
+                    float newHeight = newSize.y + _contentHeight + 10;
+                    if (newHeight > MaxResizeHeight)
+                        newHeight = MaxResizeHeight;
+                    newSize.y = newHeight;
+                    Size = newSize;
                 }
             }
 
@@ -144,17 +145,20 @@ namespace BabyStepsMultiplayerClient.UI
 
         private void RecalculateBounds()
         {
+            Vector2 currentPos = Position;
+            Vector2 currentSize = Size;
+
             // Window Header Area
-            _windowHeaderRect.x = _windowRect.x;
-            _windowHeaderRect.y = _windowRect.y;
-            _windowHeaderRect.width = _windowRect.width + 8;
+            _windowHeaderRect.x = currentPos.x;
+            _windowHeaderRect.y = currentPos.y;
+            _windowHeaderRect.width = currentSize.x + 8;
             _windowHeaderRect.height = 30f;
 
             // Window Content Area
             _windowContentRect.x = _windowHeaderRect.x + 10;
             _windowContentRect.y = _windowHeaderRect.y + _windowHeaderRect.height;
             _windowContentRect.width = _windowHeaderRect.width - 28;
-            _windowContentRect.height = _windowRect.height - (_windowHeaderRect.height + 10);
+            _windowContentRect.height = currentSize.y - (_windowHeaderRect.height + 10);
             if (ShouldDrawScrollBar && (_contentHeight > _windowContentRect.height))
                 _windowContentRect.width += 5;
 
@@ -178,6 +182,8 @@ namespace BabyStepsMultiplayerClient.UI
 
         private void HandleDrag()
         {
+            Vector2 currentPos = Position;
+
             Vector2 mousePos = Input.mousePosition;
             mousePos.y = -mousePos.y;
 
@@ -203,16 +209,17 @@ namespace BabyStepsMultiplayerClient.UI
                         && _windowHeaderRect.Contains(Event.current.mousePosition))
                     {
                         _isDragging = true;
-                        _dragOffset_x = mousePos.x - Pos_X;
-                        _dragOffset_y = mousePos.y - Pos_Y;
+                        _dragOffset.x = mousePos.x - currentPos.x;
+                        _dragOffset.y = mousePos.y - currentPos.y;
                     }
                 }
             }
 
             if (_isDragging)
             {
-                Pos_X = mousePos.x - _dragOffset_x;
-                Pos_Y = mousePos.y - _dragOffset_y;
+                currentPos.x = mousePos.x - _dragOffset.x;
+                currentPos.y = mousePos.y - _dragOffset.y;
+                Position = currentPos;
             }
         }
     }
