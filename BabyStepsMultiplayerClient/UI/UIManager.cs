@@ -6,7 +6,6 @@ namespace BabyStepsMultiplayerClient.UI
 {
     public class UIManager
     {
-        public bool showPlayersTab;
         public bool showChatTab;
 
         public PlayersTabUI playersTabUI { get; private set; }
@@ -31,10 +30,9 @@ namespace BabyStepsMultiplayerClient.UI
             StyleManager.Styles.Prepare();
 
             notificationsUI.DrawUI();
-            serverConnectUI.Draw();
 
-            if (showPlayersTab)
-                playersTabUI.DrawUI();
+            serverConnectUI.Draw();
+            playersTabUI.Draw();
 
             if (showChatTab)
                 chatTabUI.DrawUI();
@@ -49,7 +47,7 @@ namespace BabyStepsMultiplayerClient.UI
             // Only use while Connected and the Menu is Closed
             if (serverConnectUI.IsOpen || (Core.networkManager.client == null))
             {
-                showPlayersTab = false;
+                playersTabUI.IsOpen = false;
                 showChatTab = false;
             }
             else
@@ -59,7 +57,7 @@ namespace BabyStepsMultiplayerClient.UI
                     showChatTab = true;
 
                 // Toggle the Scoreboard only when Chat Input is Disabled
-                showPlayersTab = !showChatTab && Input.GetKey(KeyCode.Tab);
+                playersTabUI.IsOpen = !showChatTab && Input.GetKey(KeyCode.Tab);
             }
         }
 

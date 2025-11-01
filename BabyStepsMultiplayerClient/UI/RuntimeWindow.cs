@@ -13,7 +13,8 @@ namespace BabyStepsMultiplayerClient.UI
         public bool ShouldDrawScrollBar = true;
         public bool ShouldDrawContentBacker = true;
 
-        public (bool, bool) ShouldAutoExpandSize = (false, false);
+        public bool ShouldAutoResizeHeight;
+        public float MaxResizeHeight;
 
         public string Label;
 
@@ -109,6 +110,14 @@ namespace BabyStepsMultiplayerClient.UI
                 // Do Window Drag
                 if (IsDraggable)
                     HandleDrag(windowHeaderRect);
+
+                // Do Window Resize
+                if (ShouldAutoResizeHeight)
+                {
+                    _windowRect.height = windowHeaderRect.height + _contentHeight + 10;
+                    if (_windowRect.height > MaxResizeHeight)
+                        _windowRect.height = MaxResizeHeight;
+                }
             }
 
             return IsOpen;

@@ -1,55 +1,50 @@
-﻿using BabyStepsMultiplayerClient.Networking;
-using BabyStepsMultiplayerClient.Player;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using BabyStepsMultiplayerClient.Player;
 using UnityEngine;
 
 namespace BabyStepsMultiplayerClient.UI.Elements
 {
-    public class PlayersTabUI
+    public class PlayersTabUI : RuntimeWindow
     {
-        public void DrawUI()
+        private static Vector2 defaultSize = new Vector2(300, 100);
+
+        public PlayersTabUI()
+            : base("Connected Players", 2, 
+                  new(((Screen.width / 2f) - defaultSize.x), 20), 
+                  defaultSize, false)
         {
-            float panelWidth = 300f;
-            float rowHeight = 25f;
-            float headerHeight = 30f;
-            float margin = 10f;
+            ShouldDrawScrollBar = false;
+            ShouldAutoResizeHeight = true;
+            MaxResizeHeight = Screen.height - 20;
+        }
 
-            int rowCount = Math.Max(1, Core.networkManager.players.Count);
-            float panelHeight = headerHeight + rowCount * rowHeight + margin;
+        internal override void DrawContent()
+        {
+            Vector2 pos = Position;
+            pos.x = (Screen.width / 2f) - Size.x;
+            Position = pos;
 
-            float x = (Screen.width - panelWidth) / 2f;
-            float y = 20f;
-            Rect panelRect = new Rect(x, y, panelWidth, panelHeight);
+            MaxResizeHeight = ((Screen.height - pos.y) - 20);
 
-            int localHeight = (int)(LocalPlayer.Instance.headBone.position.y - 120);
-            GUI.Box(panelRect, $"Connected Players [Y:{localHeight}]", StyleManager.Styles.Box);
-
-            GUILayout.BeginArea(new Rect(panelRect.x + 10, panelRect.y + headerHeight, panelRect.width - 20, panelRect.height - headerHeight - margin));
+            int localHeight = 0;
+            if ((LocalPlayer.Instance != null)
+                && (LocalPlayer.Instance.headBone != null))
+                localHeight = (int)(LocalPlayer.Instance.headBone.position.y - 120);
+            Label = $"Connected Players [Y:{localHeight}]";
 
             if (Core.networkManager.players.Count == 0)
-            {
                 GUILayout.Label("No players connected.", StyleManager.Styles.MiddleCenterLabel);
-            }
             else
-            {
                 foreach (var kvp in Core.networkManager.players)
                 {
                     RemotePlayer player = kvp.Value;
                     if (player == null)
                         continue;
-                    if (player.rootBone == null)
-                        continue;
 
-                    int height = (int)player.rootBone.position.y - 120;
+                    int height = 0;
+                    if (player.rootBone != null)
+                        height = (int)player.rootBone.position.y - 120;
                     GUILayout.Label($"[Y:{height}] { player.displayName }", StyleManager.Styles.MiddleCenterLabel);
                 }
-            }
-
-            GUILayout.EndArea();
         }
     }
 }
