@@ -19,11 +19,8 @@ namespace BabyStepsMultiplayerClient.UI.Elements
 
         internal override void DrawContent()
         {
-            Vector2 pos = Position;
-            pos.x = (Screen.width / 2f) - Size.x;
-            Position = pos;
-
-            MaxResizeHeight = ((Screen.height - pos.y) - 20);
+            Pos_X = (Screen.width / 2f) - Width;
+            MaxResizeHeight = ((Screen.height - Pos_Y) - 20);
 
             int localHeight = 0;
             if ((LocalPlayer.Instance != null)

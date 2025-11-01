@@ -31,18 +31,31 @@ namespace BabyStepsMultiplayerClient.UI
 
         private bool _hasClicked;
         private bool _isDragging;
-        private Vector2 _dragOffset;
+        private float _dragOffset_x;
+        private float _dragOffset_y;
 
-        public Vector2 Position
+        public float Pos_X
         {
-            get => _windowRect.position;
-            set => _windowRect.position = value;
+            get => _windowRect.x;
+            set => _windowRect.x = value;
         }
 
-        public Vector2 Size
+        public float Pos_Y
         {
-            get => _windowRect.size;
-            set => _windowRect.size = value;
+            get => _windowRect.y;
+            set => _windowRect.y = value;
+        }
+
+        public float Width
+        {
+            get => _windowRect.width;
+            set => _windowRect.width = value;
+        }
+
+        public float Height
+        {
+            get => _windowRect.height;
+            set => _windowRect.height = value;
         }
 
         public RuntimeWindow(string label,
@@ -52,8 +65,10 @@ namespace BabyStepsMultiplayerClient.UI
             bool defaultState = false)
         {
             this.Label = label;
-            this.Position = defaultPos;
-            this.Size = defaultSize;
+            this.Pos_X = defaultPos.x;
+            this.Pos_Y = defaultPos.y;
+            this.Width = defaultSize.x;
+            this.Height = defaultSize.y;
             this._contentHeight = defaultSize.y;
             this.IsOpen = defaultState;
         }
@@ -113,12 +128,9 @@ namespace BabyStepsMultiplayerClient.UI
                 // Do Window Resize
                 if (ShouldAutoResizeHeight)
                 {
-                    Vector2 currentSize = Size;
-                    float newHeight = currentSize.y + _contentHeight + 10;
-                    if (newHeight > MaxResizeHeight)
-                        newHeight = MaxResizeHeight;
-                    currentSize.y = newHeight;
-                    Size = currentSize;
+                    Height = Height + _contentHeight + 10;
+                    if (Height > MaxResizeHeight)
+                        Height = MaxResizeHeight;
                 }
             }
 
@@ -161,7 +173,7 @@ namespace BabyStepsMultiplayerClient.UI
             // ScrollBar
             _scrollBarRect.x = (_windowScrollViewRect.width + 5);
             _scrollBarRect.width = ScrollbarWidth;
-            _scrollBarRect.height = _windowContentRect.height;;
+            _scrollBarRect.height = _windowContentRect.height;
         }
 
         private void HandleDrag()
@@ -191,13 +203,17 @@ namespace BabyStepsMultiplayerClient.UI
                         && _windowHeaderRect.Contains(Event.current.mousePosition))
                     {
                         _isDragging = true;
-                        _dragOffset = mousePos - Position;
+                        _dragOffset_x = mousePos.x - Pos_X;
+                        _dragOffset_y = mousePos.y - Pos_Y;
                     }
                 }
             }
 
             if (_isDragging)
-                Position = mousePos - _dragOffset;
+            {
+                Pos_X = mousePos.x - _dragOffset_x;
+                Pos_Y = mousePos.y - _dragOffset_y;
+            }
         }
     }
 }
