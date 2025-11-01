@@ -13,6 +13,7 @@ namespace BabyStepsMultiplayerClient.UI
         public bool ShouldDrawScrollBar = true;
         public bool ShouldDrawBox = true;
         public bool ShouldDrawContentBacker = true;
+        public (bool, bool) ShouldAutoExpandSize = (false, false);
 
         public string Label;
 
@@ -98,6 +99,8 @@ namespace BabyStepsMultiplayerClient.UI
                 if (ShouldDrawScrollBar
                     && (_contentHeight > windowContentRect.height))
                     _scrollPos.y = GUI.VerticalScrollbar(scrollBarRect, _scrollPos.y, scrollBarRect.height, 0, _contentHeight, StyleManager.Styles.VerticalScrollBar);
+                else
+                    _scrollPos.y = 0;
             }
 
             return IsOpen;
