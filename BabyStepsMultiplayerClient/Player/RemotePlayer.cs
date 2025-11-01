@@ -312,6 +312,7 @@ namespace BabyStepsMultiplayerClient.Player
 
         private System.Collections.IEnumerator EnableCollisionCoroutine()
         {
+            while (!firstBoneInterpRan) yield return null;
             while (distanceFromPlayer <= 0.6f) yield return null;
 
             if (boneColliders != null)
