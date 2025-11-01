@@ -2,8 +2,8 @@
 using BabyStepsMultiplayerClient.Networking;
 using Il2Cpp;
 using Il2CppCinemachine;
-using MelonLoader;
 using UnityEngine;
+using BabyStepsMultiplayerClient.Audio;
 
 namespace BabyStepsMultiplayerClient.Player
 {
@@ -28,6 +28,10 @@ namespace BabyStepsMultiplayerClient.Player
         private const int bytesPerBone = 29;
         private const int bonesPerPacket = (NetworkManager.maxPacketSize - 4) / bytesPerBone;
 
+#if DEBUG
+        private BBSMicrophoneCapture mic;
+#endif
+
         public override void Initialize()
         {
             Core.DebugMsg("Starting LocalPlayer Initialize function");
@@ -48,14 +52,64 @@ namespace BabyStepsMultiplayerClient.Player
             SetupBonesAndMaterials();
             ApplySuitColor();
 
-            Core.DebugMsg("Variable sets finished");
+#if DEBUG
+            mic = new BBSMicrophoneCapture();
+            mic.Initialize(0);
+            mic.SetVolume(1f);
+            mic.StartRecording();
+#endif
+
+            Core.DebugMsg("LocalPlayer Initialized");
         }
 
         public override void Dispose()
         {
             SetSuitColor(Color.white);
             ResetSuitColor();
+
+#if DEBUG
+            if (mic != null)
+                mic.Dispose();
+            mic = null;
+#endif
         }
+
+#if DEBUG
+        private void UpdateMicrophone()
+        {
+            if (mic == null)
+                return;
+
+            // Only Record when Connected to Server
+            if ((Core.networkManager == null)
+                || Core.networkManager.server == null)
+            {
+                if (mic.IsRecording())
+                    mic.StopRecording();
+            }
+            else
+            {
+                if (!mic.IsRecording())
+                    mic.StopRecording();
+            }
+        }
+
+        public void WriteMicrophoneToAudioSource(BBSAudioSource audioSource)
+        {
+            if ((audioSource == null)
+                || (mic == null)
+                || !mic.IsInitialized()
+                || !mic.IsRecording()) 
+                return;
+
+            byte[] frame = mic.GetAudioFrame();
+            if (frame != null)
+            {
+                byte[] stereo = mic.ConvertToStereo(frame);
+                audioSource.WriteAudioData(stereo);
+            }
+        }
+#endif
 
         public GameObject GetCameraObject()
         {
@@ -119,6 +173,10 @@ namespace BabyStepsMultiplayerClient.Player
 
         public override void Update()
         {
+#if DEBUG
+            UpdateMicrophone();
+#endif
+
             if (Core.networkManager.server == null)
                 return;
             if (playerMovement == null)

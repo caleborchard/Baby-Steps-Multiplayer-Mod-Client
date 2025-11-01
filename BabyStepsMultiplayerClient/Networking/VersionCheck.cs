@@ -5,7 +5,6 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace BabyStepsMultiplayerClient.Networking
@@ -16,24 +15,25 @@ namespace BabyStepsMultiplayerClient.Networking
         {
             return Assembly.GetExecutingAssembly().GetName().Version;
         }
-        public static async Task<string> GetLatestTagAsync()
+        public static string GetLatestTag()
         {
             using var client = new HttpClient();
             client.DefaultRequestHeaders.UserAgent.ParseAdd($"BBSMMClient/{GetAssemblyVersion().ToString()}");
 
-            var response = await client.GetStringAsync("https://api.github.com/repos/caleborchard/Baby-Steps-Multiplayer-Mod-Client/tags");
+            var response = client.GetStringAsync("https://api.github.com/repos/caleborchard/Baby-Steps-Multiplayer-Mod-Client/tags").Result;
 
             using var doc = JsonDocument.Parse(response);
             var latestTag = doc.RootElement.EnumerateArray()
                 .Select(tag => tag.GetProperty("name").GetString())
                 .FirstOrDefault();
+
             return latestTag;
         }
-        public static async void CheckForUpdateAsync()
+        public static void CheckForUpdate()
         {
             try
             {
-                var latestTag = await GetLatestTagAsync();
+                var latestTag = GetLatestTag();
                 var assemblyVersion = GetAssemblyVersion();
 
                 if (Version.TryParse(latestTag, out var latestVersion))

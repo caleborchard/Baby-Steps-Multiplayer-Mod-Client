@@ -9,7 +9,7 @@ namespace BabyStepsMultiplayerClient.Audio
     public class BBSMicrophoneCapture
     {
         private FMOD.System fmodSystem;
-        private FMOD.Sound recordSound;
+        private Sound recordSound;
         private int selectedDeviceIndex = 0;
         private bool isRecording = false;
         private bool isInitialized = false;
@@ -94,7 +94,7 @@ namespace BabyStepsMultiplayerClient.Audio
                 // Create sound for recording
                 CREATESOUNDEXINFO exinfo = new CREATESOUNDEXINFO();
                 exinfo.cbsize = System.Runtime.InteropServices.Marshal.SizeOf(typeof(CREATESOUNDEXINFO));
-                exinfo.length = (uint)BUFFER_SIZE;
+                exinfo.length = BUFFER_SIZE;
                 exinfo.numchannels = CHANNELS;
                 exinfo.defaultfrequency = SAMPLE_RATE;
                 exinfo.format = SOUND_FORMAT.PCM16;
@@ -232,7 +232,7 @@ namespace BabyStepsMultiplayerClient.Audio
                 {
                     DroppedFrames++;
                     // Skip ahead to most recent data
-                    int framesToSkip = (availableBytes / frameSizeBytes) - 1;
+                    int framesToSkip = availableBytes / frameSizeBytes - 1;
                     lastRecordPosBytes = (lastRecordPosBytes + (uint)(framesToSkip * frameSizeBytes)) % BUFFER_SIZE;
                 }
 
@@ -267,7 +267,7 @@ namespace BabyStepsMultiplayerClient.Audio
 
                 // Update position for next frame
                 lastRecordPos = (uint)((lastRecordPosBytes + frameSizeBytes) / (CHANNELS * 2));
-                lastRecordPos %= (uint)(BUFFER_SIZE / (CHANNELS * 2));
+                lastRecordPos %= BUFFER_SIZE / (CHANNELS * 2);
 
                 CapturedFrames++;
 
@@ -304,14 +304,14 @@ namespace BabyStepsMultiplayerClient.Audio
             for (int i = 0; i < data.Length; i += 2)
             {
                 // Reconstruct 16-bit sample
-                short sample = (short)(data[i] | (data[i + 1] << 8));
+                short sample = (short)(data[i] | data[i + 1] << 8);
 
                 // Apply volume
                 sample = (short)(sample * volume);
 
                 // Write back
                 data[i] = (byte)(sample & 0xFF);
-                data[i + 1] = (byte)((sample >> 8) & 0xFF);
+                data[i + 1] = (byte)(sample >> 8 & 0xFF);
             }
         }
 

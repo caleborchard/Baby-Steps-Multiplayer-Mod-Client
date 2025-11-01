@@ -1,15 +1,20 @@
 ﻿using System;
 using UnityEngine;
 
-namespace BabyStepsMultiplayerClient.UI
+namespace BabyStepsMultiplayerClient.UI.Elements
 {
     public class ChatTabUI
     {
         private string message = "";
         private Rect textFieldRect;
+        private GUIStyle textFieldStyle;
 
         public void DrawUI()
         {
+            if (textFieldStyle == null)
+                textFieldStyle = new GUIStyle(StyleManager.Styles.MiddleLeftTextField);
+            textFieldStyle.fontSize = Mathf.RoundToInt(Screen.height * 0.02f);
+
             // Do this before everything else to prevent inputs not being detected sometimes
             HandleChatInput();
 
@@ -22,12 +27,8 @@ namespace BabyStepsMultiplayerClient.UI
 
             GUILayout.BeginArea(textFieldRect);
             GUI.SetNextControlName("ChatInput");
-            GUIStyle style = new GUIStyle(GUI.skin.textField)
-            {
-                fontSize = Mathf.RoundToInt(Screen.height * 0.02f),
-                alignment = TextAnchor.MiddleLeft
-            };
-            message = GUILayout.TextField(message, 150, style, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+
+            message = GUILayout.TextField(message, 150, textFieldStyle, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
             GUILayout.EndArea();
 
             // Keep focus on the text box

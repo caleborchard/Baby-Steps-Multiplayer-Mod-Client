@@ -1,7 +1,6 @@
 ﻿using BabyStepsMultiplayerClient.Components;
 using BabyStepsMultiplayerClient.Extensions;
 using BabyStepsMultiplayerClient.Networking;
-using BabyStepsMultiplayerClient.Audio;
 using Il2Cpp;
 using Il2CppNWH.DWP2.WaterObjects;
 using MelonLoader;
@@ -10,6 +9,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using BabyStepsMultiplayerClient.Audio;
 
 namespace BabyStepsMultiplayerClient.Player
 {
@@ -80,8 +80,6 @@ namespace BabyStepsMultiplayerClient.Player
                 { "leg_stretch.r", (new Vector3(0f, 0.15f, 0), 0.075f, 0.455f, 1) },
                 { "foot.r", (new Vector3(0, 0.1f, -0.02f), 0.06f, 0.3f, 1) },
             };
-
-        BBSMicrophoneCapture mic;
 
         public void Initialize(int numClones)
         {
@@ -185,13 +183,10 @@ namespace BabyStepsMultiplayerClient.Player
             CreateParticleCrushers();
             CreateFootData();
 
+#if DEBUG
             audioSource = new BBSAudioSource(headBone);
             audioSource.Initialize();
-
-            mic = new BBSMicrophoneCapture();
-            mic.Initialize(0);
-            mic.SetVolume(1f);
-            mic.StartRecording();
+#endif
         }
 
         private static System.Collections.IEnumerator DelayedGazableFillin(Gazable _gazable)
@@ -219,7 +214,11 @@ namespace BabyStepsMultiplayerClient.Player
             ResetSuitColor();
             SetDisplayName("Nate");
 
-            audioSource.Dispose();
+#if DEBUG
+            if (audioSource != null)
+                audioSource.Dispose();
+            audioSource = null;
+#endif
 
             distanceFromPlayer = 0f;
             firstBoneInterpRan = false;
@@ -257,14 +256,16 @@ namespace BabyStepsMultiplayerClient.Player
                 }
             }
 
-            audioSource.Update();
-
-            byte[] frame = mic.GetAudioFrame();
-            if (frame != null)
+#if DEBUG
+            if (audioSource != null)
             {
-                byte[] stereo = mic.ConvertToStereo(frame);
-                audioSource.WriteAudioData(stereo);
+                audioSource.Update();
+
+                // Test Mic Capture
+                if (LocalPlayer.Instance != null)
+                    LocalPlayer.Instance.WriteMicrophoneToAudioSource(audioSource);
             }
+#endif
         }
 
         public void SetDisplayName(string name)
@@ -311,6 +312,7 @@ namespace BabyStepsMultiplayerClient.Player
 
         private System.Collections.IEnumerator EnableCollisionCoroutine()
         {
+            while (!firstBoneInterpRan) yield return null;
             while (distanceFromPlayer <= 0.6f) yield return null;
 
             if (boneColliders != null)

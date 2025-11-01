@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<ProjectName>BabyStepsMultiplayerClient</ProjectName>
-		<Version>1.1.5</Version>
+		<Version>1.2.0</Version>
 		
 		<Authors>Caleb Orchard</Authors>
 		<Description>A MelonLoader mod for Baby Steps that adds multiplayer to the game.</Description>
@@ -31,6 +31,7 @@
 		<PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
 		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+		<ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
 		
 		<Configurations>Retail - Debug;Retail - Release;Demo - Debug;Demo - Release</Configurations>
 		
@@ -46,6 +47,10 @@
 	<PropertyGroup Condition="'$(Configuration)' == 'Demo - Debug' Or '$(Configuration)' == 'Demo - Release'">
 		<GameDir>$(RetailGameDir) Demo</GameDir>
 		<AssemblyName>$(ProjectName)_Demo</AssemblyName>
+	</PropertyGroup>
+	
+	<PropertyGroup Condition="'$(Configuration)' == 'Demo - Debug' Or '$(Configuration)' == 'Retail - Debug'">
+		<DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
 	</PropertyGroup>
 	
 	<PropertyGroup>

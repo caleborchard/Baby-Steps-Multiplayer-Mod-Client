@@ -39,7 +39,7 @@ namespace BabyStepsMultiplayerClient.Player
         public void Destroy()
         {
             if (baseObject != null)
-                GameObject.Destroy(baseObject);
+                UnityEngine.Object.Destroy(baseObject);
         }
 
         public void LateUpdate()
