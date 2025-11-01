@@ -31,9 +31,7 @@ namespace BabyStepsMultiplayerClient
 
         private static bool _firstOpen = false;
 
-        public override void OnInitializeMelon() { }
-        [Obsolete]
-        public override void OnApplicationStart() 
+        public override void OnLateInitializeMelon()
         {
             MOD_NAME = Info.Name;
             CLIENT_VERSION = Info.Version;
@@ -47,7 +45,7 @@ namespace BabyStepsMultiplayerClient
 
             logger.Msg("Initialized!");
 
-            VersionCheck.CheckForUpdateAsync();
+            VersionCheck.CheckForUpdate();
         }
 
         public override void OnGUI()
