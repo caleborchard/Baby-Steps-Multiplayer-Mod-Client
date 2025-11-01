@@ -10,9 +10,10 @@ namespace BabyStepsMultiplayerClient.UI
         public bool IsOpen;
         public bool IsDraggable = true;
 
-        public bool ShouldDrawScrollBar = true;
         public bool ShouldDrawBox = true;
+        public bool ShouldDrawScrollBar = true;
         public bool ShouldDrawContentBacker = true;
+
         public (bool, bool) ShouldAutoExpandSize = (false, false);
 
         public string Label;
