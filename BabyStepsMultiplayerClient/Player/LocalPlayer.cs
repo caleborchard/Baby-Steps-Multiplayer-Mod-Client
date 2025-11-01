@@ -1,9 +1,11 @@
-﻿using BabyStepsMultiplayerClient.Extensions;
+﻿using BabyStepsMultiplayerClient.Audio;
+using BabyStepsMultiplayerClient.Extensions;
 using BabyStepsMultiplayerClient.Networking;
 using Il2Cpp;
 using Il2CppCinemachine;
+using MelonLoader;
 using UnityEngine;
-using BabyStepsMultiplayerClient.Audio;
+using static Il2CppTMPro.SpriteAssetUtilities.TexturePacker_JsonArray;
 
 namespace BabyStepsMultiplayerClient.Player
 {
@@ -28,9 +30,7 @@ namespace BabyStepsMultiplayerClient.Player
         private const int bytesPerBone = 29;
         private const int bonesPerPacket = (NetworkManager.maxPacketSize - 4) / bytesPerBone;
 
-#if DEBUG
         private BBSMicrophoneCapture mic;
-#endif
 
         public override void Initialize()
         {
@@ -52,12 +52,10 @@ namespace BabyStepsMultiplayerClient.Player
             SetupBonesAndMaterials();
             ApplySuitColor();
 
-#if DEBUG
             mic = new BBSMicrophoneCapture();
             mic.Initialize(0);
             mic.SetVolume(1f);
             mic.StartRecording();
-#endif
 
             Core.DebugMsg("LocalPlayer Initialized");
         }
@@ -67,62 +65,33 @@ namespace BabyStepsMultiplayerClient.Player
             SetSuitColor(Color.white);
             ResetSuitColor();
 
-#if DEBUG
-            if (mic != null)
-                mic.Dispose();
+            if (mic != null) mic.Dispose();
             mic = null;
-#endif
         }
-
-#if DEBUG
         private void UpdateMicrophone()
         {
-            if (mic == null)
-                return;
+            if (mic == null) return;
 
             // Only Record when Connected to Server
-            if ((Core.networkManager == null)
-                || Core.networkManager.server == null)
+            if ((Core.networkManager == null) || Core.networkManager.server == null)
             {
-                if (mic.IsRecording())
-                    mic.StopRecording();
+                if (mic.IsRecording()) mic.StopRecording();
             }
             else
             {
-                if (!mic.IsRecording())
-                    mic.StopRecording();
+                if (!mic.IsRecording()) mic.StopRecording();
             }
         }
-
-        public void WriteMicrophoneToAudioSource(BBSAudioSource audioSource)
-        {
-            if ((audioSource == null)
-                || (mic == null)
-                || !mic.IsInitialized()
-                || !mic.IsRecording()) 
-                return;
-
-            byte[] frame = mic.GetAudioFrame();
-            if (frame != null)
-            {
-                byte[] stereo = mic.ConvertToStereo(frame);
-                audioSource.WriteAudioData(stereo);
-            }
-        }
-#endif
 
         public GameObject GetCameraObject()
         {
-            if (cinemachineBrain == null)
-                return null;
+            if (cinemachineBrain == null) return null;
 
             var virtualCam = cinemachineBrain.ActiveVirtualCamera;
-            if (virtualCam == null) 
-                return null;
+            if (virtualCam == null) return null;
 
             var virtualCamObj = virtualCam.VirtualCameraGameObject;
-            if (virtualCamObj == null)
-                return null;
+            if (virtualCamObj == null) return null;
 
             return virtualCamObj;
         }
@@ -130,8 +99,7 @@ namespace BabyStepsMultiplayerClient.Player
         public void ApplySuitColor()
         {
             Color newColor = ModSettings.player.SuitColor.Value;
-            if (newColor.a != 1f)
-                newColor.a = 1f;
+            if (newColor.a != 1f) newColor.a = 1f;
             SetSuitColor(newColor);
         }
         public override void SetSuitColor(Color color)
@@ -145,18 +113,8 @@ namespace BabyStepsMultiplayerClient.Player
 
         public void CleanCompletely()
         {
-            if (playerMovement == null)
-                return;
+            if (playerMovement == null) return;
             playerMovement.CleanPlayerCompletely();
-        }
-
-        public void RestoreHat(Hat hat)
-        {
-            if (hat == null)
-                return;
-            if (playerMovement == null)
-                return;
-            playerMovement.StartCoroutine(RestoreHatDelayed(hat));
         }
         private System.Collections.IEnumerator RestoreHatDelayed(Hat hat)
         {
@@ -173,20 +131,15 @@ namespace BabyStepsMultiplayerClient.Player
 
         public override void Update()
         {
-#if DEBUG
             UpdateMicrophone();
-#endif
 
-            if (Core.networkManager.server == null)
-                return;
-            if (playerMovement == null)
-                return;
+            if (Core.networkManager.server == null) return;
+            if (playerMovement == null) return;
 
             if (!_sentInitialState)
             {
                 Hat hat = playerMovement.currentHat;
-                if (hat != null)
-                    Core.networkManager.SendDonHat(hat);
+                if (hat != null) Core.networkManager.SendDonHat(hat);
                 lastHat = hat;
 
                 Grabable rightItem = playerMovement.handItems[0];
@@ -274,16 +227,15 @@ namespace BabyStepsMultiplayerClient.Player
             lastBoneSendTime = Time.realtimeSinceStartup;
 
             var bonesToSend = TransformNet.ToNet(boneChildren);
-            Core.networkManager.SendBones(bonesToSend, 0);
-            /*
-            for (int i = 0; i < bonesToSend.Length; i += bonesPerPacket)
+
+            byte[] audioFrame;
+            if (mic.IsInitialized() && mic.IsRecording())
             {
-                int count = Math.Min(bonesPerPacket, bonesToSend.Length - i);
-                TransformNet[] chunk = new TransformNet[count];
-                Array.Copy(bonesToSend, i, chunk, 0, count);
-                Core.networkManager.SendBones(chunk, i);
+                 audioFrame = mic.GetOpusPacket();
             }
-            */
+            else audioFrame = new byte[0];
+
+            Core.networkManager.SendBones(bonesToSend, 0);
         }
     }
 }

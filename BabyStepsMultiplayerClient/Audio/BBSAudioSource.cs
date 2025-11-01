@@ -1,7 +1,9 @@
-﻿using System;
+﻿using Il2CppFMOD;
 using MelonLoader;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
-using Il2CppFMOD;
+using Concentus.Structs;
 using FMOD = Il2CppFMOD;
 
 namespace BabyStepsMultiplayerClient.Audio
@@ -14,44 +16,54 @@ namespace BabyStepsMultiplayerClient.Audio
         private Channel channel;
 
         private const int SAMPLE_RATE = 48000;
-        private const int CHANNELS = 2;
-        private const int BUFFER_SIZE = 48000 * 2; // 1 second buffer
+        private const int CHANNELS = 2; // Stereo
+        private const int FRAME_SIZE = 960;
 
-        private byte[] audioBuffer;
+        private const int BUFFER_SIZE = SAMPLE_RATE * CHANNELS * 2 * 200 / 1000;
+
         private int writePosition = 0;
         private bool isInitialized = false;
-        private bool needsResync = false;
 
-        // Placeholder variables for test tone
-        private float testPhase = 0f;
-        private float testFrequency = 440f;
-        private const float TEST_FREQ_MIN = 220f;
-        private const float TEST_FREQ_MAX = 880f;
-        private float testFreqDirection = 1f;
+        // Opus decoder
+        private OpusDecoder opusDecoder;
+        private short[] decodedSamples; // Mono samples from decoder
+        private byte[] stereoBuffer; // Converted to stereo PCM16
+
+        // Jitter buffer for Opus-encoded network packets
+        private Queue<byte[]> jitterBuffer = new Queue<byte[]>();
+        private const int MIN_JITTER_FRAMES = 2; // 40ms minimum buffer
+        private const int MAX_JITTER_FRAMES = 6; // 120ms maximum buffer
+        private bool isPlaying = false;
+
+        // Stats
+        public int UnderrunCount { get; private set; }
+        public int OverrunCount { get; private set; }
+        public int DecodeErrors { get; private set; }
+        public float CurrentLatencyMs { get; private set; }
 
         public BBSAudioSource(Transform transform)
         {
             this.transform = transform;
-            audioBuffer = new byte[BUFFER_SIZE];
         }
 
         public void Initialize()
         {
             try
             {
-                // Get FMOD system instance
                 fmodSystem = Il2CppBabySteps.Core.Audio.Services.Player.system;
 
-                // Create sound info for streaming PCM
+                opusDecoder = new OpusDecoder(SAMPLE_RATE, 1);
+                decodedSamples = new short[FRAME_SIZE]; // Mono samples
+                stereoBuffer = new byte[FRAME_SIZE * 2 * 2]; // Stereo bytes
+
                 CREATESOUNDEXINFO exinfo = new CREATESOUNDEXINFO();
                 exinfo.cbsize = System.Runtime.InteropServices.Marshal.SizeOf(typeof(CREATESOUNDEXINFO));
                 exinfo.length = BUFFER_SIZE;
                 exinfo.numchannels = CHANNELS;
                 exinfo.defaultfrequency = SAMPLE_RATE;
                 exinfo.format = SOUND_FORMAT.PCM16;
-                exinfo.decodebuffersize = SAMPLE_RATE / 10; // 100ms decode buffer
+                exinfo.decodebuffersize = FRAME_SIZE;
 
-                // Create the sound
                 RESULT result = fmodSystem.createSound(
                     string.Empty,
                     MODE.OPENUSER | MODE._3D | MODE.LOOP_NORMAL,
@@ -65,20 +77,17 @@ namespace BabyStepsMultiplayerClient.Audio
                     return;
                 }
 
-                // Set 3D settings
                 sound.set3DMinMaxDistance(1f, 100f);
 
-                // Get CoreSystem master channel group
                 result = fmodSystem.getMasterChannelGroup(out var masterChannelGroup);
-
                 if (result != RESULT.OK)
                 {
                     MelonLogger.Error($"Failed to get master channel group: {result}");
                     return;
                 }
 
-                // Play the sound
-                result = fmodSystem.playSound(sound, masterChannelGroup, false, out channel);
+                // Wait for jitter buffer to fill, start paused
+                result = fmodSystem.playSound(sound, masterChannelGroup, true, out channel);
 
                 if (result != RESULT.OK)
                 {
@@ -86,11 +95,10 @@ namespace BabyStepsMultiplayerClient.Audio
                     return;
                 }
 
-                // Configure channel for 3D
                 channel.setMode(MODE._3D);
 
                 isInitialized = true;
-                MelonLogger.Msg("BBSAudioSource initialized successfully");
+                MelonLogger.Msg("BBSAudioSource initialized successfully with Opus decoder");
             }
             catch (Exception e)
             {
@@ -104,31 +112,16 @@ namespace BabyStepsMultiplayerClient.Audio
 
             try
             {
-                // Update 3D position
                 Vector3 pos = transform.position;
-                Vector3 vel = Vector3.zero; // You can calculate velocity if needed
+                Vector3 vel = Vector3.zero;
 
-                VECTOR fmodPos = new VECTOR
-                {
-                    x = pos.x,
-                    y = pos.y,
-                    z = pos.z
-                };
-
-                VECTOR fmodVel = new VECTOR
-                {
-                    x = vel.x,
-                    y = vel.y,
-                    z = vel.z
-                };
+                VECTOR fmodPos = new VECTOR { x = pos.x, y = pos.y, z = pos.z };
+                VECTOR fmodVel = new VECTOR { x = vel.x, y = vel.y, z = vel.z };
 
                 channel.set3DAttributes(ref fmodPos, ref fmodVel);
 
-                // Check if we need to resync the buffer
-                SyncBufferIfNeeded();
-
-                // Placeholder: Generate test tone with changing pitch
-                //GenerateTestTone();
+                ProcessJitterBuffer();
+                UpdateLatencyStats();
             }
             catch (Exception e)
             {
@@ -136,132 +129,139 @@ namespace BabyStepsMultiplayerClient.Audio
             }
         }
 
-        // Placeholder function: Generates a sine wave test tone with changing pitch
-        private void GenerateTestTone()
+        private void ProcessJitterBuffer()
         {
-            try
+            // Wait for minimum buffer to start playing
+            if (!isPlaying && jitterBuffer.Count >= MIN_JITTER_FRAMES)
             {
-                // Modulate frequency over time
-                testFrequency += testFreqDirection * 100f * Time.deltaTime;
-                if (testFrequency >= TEST_FREQ_MAX)
-                {
-                    testFrequency = TEST_FREQ_MAX;
-                    testFreqDirection = -1f;
-                }
-                else if (testFrequency <= TEST_FREQ_MIN)
-                {
-                    testFrequency = TEST_FREQ_MIN;
-                    testFreqDirection = 1f;
-                }
-
-                // Generate samples for this frame
-                int samplesToGenerate = (int)(SAMPLE_RATE * Time.deltaTime);
-                byte[] frameBuffer = new byte[samplesToGenerate * CHANNELS * 2]; // 2 bytes per sample (16-bit)
-
-                for (int i = 0; i < samplesToGenerate; i++)
-                {
-                    // Generate sine wave sample
-                    short sample = (short)(Mathf.Sin(testPhase) * 0.3f * short.MaxValue);
-                    testPhase += 2f * Mathf.PI * testFrequency / SAMPLE_RATE;
-
-                    if (testPhase > 2f * Mathf.PI) testPhase -= 2f * Mathf.PI;
-
-                    // Write to both channels (stereo)
-                    for (int c = 0; c < CHANNELS; c++)
-                    {
-                        int idx = (i * CHANNELS + c) * 2;
-                        frameBuffer[idx] = (byte)(sample & 0xFF);
-                        frameBuffer[idx + 1] = (byte)(sample >> 8 & 0xFF);
-                    }
-                }
-
-                // Write to FMOD sound
-                WriteAudioData(frameBuffer);
+                channel.setPaused(false);
+                isPlaying = true;
+                //MelonLogger.Msg($"Started playback with {jitterBuffer.Count} frames buffered");
             }
-            catch (Exception e)
+
+            // Stop if buffer is empty to prevent clicking sounds, "underrun"
+            if (isPlaying && jitterBuffer.Count == 0)
             {
-                MelonLogger.Error($"Error generating test tone: {e}");
+                channel.setPaused(true);
+                isPlaying = false;
+                UnderrunCount++;
+                //MelonLogger.Warning("Audio underrun - pausing playback");
+            }
+
+            // Write available frames to FMOD
+            while (jitterBuffer.Count > 0 && CanWriteFrame())
+            {
+                byte[] opusPacket = jitterBuffer.Dequeue();
+                DecodeAndWriteFrame(opusPacket);
+            }
+
+            // Drop frames if buffer is too full, very unlikely
+            if (jitterBuffer.Count > MAX_JITTER_FRAMES)
+            {
+                int framesToDrop = jitterBuffer.Count - MAX_JITTER_FRAMES;
+                for (int i = 0; i < framesToDrop; i++)
+                {
+                    jitterBuffer.Dequeue();
+                }
+                OverrunCount++;
+                //MelonLogger.Warning($"Dropped {framesToDrop} frames due to overrun");
             }
         }
 
-        // Sync buffer to prevent static when coming back into range
-        private void SyncBufferIfNeeded()
+        private void DecodeAndWriteFrame(byte[] opusPacket)
+        {
+            if (opusPacket.Length < 2) return;
+
+            try
+            {
+                int decodedLength = opusDecoder.Decode(opusPacket, 0, opusPacket.Length, decodedSamples, 0, FRAME_SIZE);
+
+                if (decodedLength != FRAME_SIZE)
+                {
+                    MelonLogger.Warning($"Unexpected decoded length: {decodedLength} (expected {FRAME_SIZE})");
+                }
+
+                ConvertMonoToStereo(decodedSamples, stereoBuffer, decodedLength);
+                WriteAudioDataInternal(stereoBuffer);
+            }
+            catch (Exception e)
+            {
+                DecodeErrors++;
+                MelonLogger.Error($"Error decoding Opus frame: {e}");
+
+                // Write silence on decode error to maintain timing
+                Array.Clear(stereoBuffer, 0, stereoBuffer.Length);
+                WriteAudioDataInternal(stereoBuffer);
+            }
+        }
+
+        private void ConvertMonoToStereo(short[] monoSamples, byte[] stereoBytes, int sampleCount)
+        {
+            int byteIndex = 0;
+            for (int i = 0; i < sampleCount; i++)
+            {
+                short sample = monoSamples[i];
+                byte low = (byte)(sample & 0xFF);
+                byte high = (byte)((sample >> 8) & 0xFF);
+
+                // Left
+                stereoBytes[byteIndex++] = low;
+                stereoBytes[byteIndex++] = high;
+
+                // Right (duplicate)
+                stereoBytes[byteIndex++] = low;
+                stereoBytes[byteIndex++] = high;
+            }
+        }
+
+        private bool CanWriteFrame()
+        {
+            if (!channel.hasHandle() || !sound.hasHandle()) return false;
+
+            try
+            {
+                uint playbackPos = 0;
+                channel.getPosition(out playbackPos, TIMEUNIT.PCMBYTES);
+
+                int distance = writePosition - (int)playbackPos;
+                if (distance < 0) distance += BUFFER_SIZE;
+
+                // Only write if we have space (keep buffer under 120ms)
+                int maxBufferBytes = SAMPLE_RATE * CHANNELS * 2 * 120 / 1000;
+                return distance < maxBufferBytes;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private void UpdateLatencyStats()
         {
             try
             {
                 if (!channel.hasHandle() || !sound.hasHandle()) return;
 
-                // Get current playback position
                 uint playbackPos = 0;
                 channel.getPosition(out playbackPos, TIMEUNIT.PCMBYTES);
 
-                // Calculate the distance between write and playback positions
                 int distance = writePosition - (int)playbackPos;
                 if (distance < 0) distance += BUFFER_SIZE;
 
-                // If we're too close (less than 200ms ahead) or too far (more than 800ms ahead), resync
-                int minBuffer = SAMPLE_RATE * CHANNELS * 2 / 5; // 200ms
-                int maxBuffer = SAMPLE_RATE * CHANNELS * 2 * 4 / 5; // 800ms
-
-                if (distance < minBuffer || distance > maxBuffer)
-                {
-                    // Resync: position write head 300ms ahead of playback
-                    int targetBuffer = SAMPLE_RATE * CHANNELS * 2 * 3 / 10; // 300ms
-                    writePosition = ((int)playbackPos + targetBuffer) % BUFFER_SIZE;
-
-                    // Clear the area we're about to write to prevent old data from playing
-                    ClearBuffer(writePosition, targetBuffer / 2);
-                }
+                // Milliseconds
+                int samples = distance / (CHANNELS * 2);
+                CurrentLatencyMs = (float)samples / SAMPLE_RATE * 1000f;
             }
-            catch (Exception e)
-            {
-                MelonLogger.Error($"Error syncing buffer: {e}");
-            }
+            catch { }
         }
 
-        // Clear a section of the buffer
-        private void ClearBuffer(int startPos, int length)
+        public void QueueOpusPacket(byte[] opusPacket) // Method to be called on data receive
         {
-            try
-            {
-                if (!sound.hasHandle()) return;
-
-                IntPtr ptr1, ptr2;
-                uint len1, len2;
-
-                RESULT result = sound.@lock(
-                    (uint)startPos,
-                    (uint)length,
-                    out ptr1, out ptr2,
-                    out len1, out len2
-                );
-
-                if (result == RESULT.OK)
-                {
-                    // Zero out the buffer sections
-                    if (len1 > 0)
-                    {
-                        byte[] zeros = new byte[len1];
-                        System.Runtime.InteropServices.Marshal.Copy(zeros, 0, ptr1, (int)len1);
-                    }
-
-                    if (len2 > 0)
-                    {
-                        byte[] zeros = new byte[len2];
-                        System.Runtime.InteropServices.Marshal.Copy(zeros, 0, ptr2, (int)len2);
-                    }
-
-                    sound.unlock(ptr1, ptr2, len1, len2);
-                }
-            }
-            catch (Exception e)
-            {
-                MelonLogger.Error($"Error clearing buffer: {e}");
-            }
+            if (!isInitialized || opusPacket == null || opusPacket.Length == 0) return;
+            jitterBuffer.Enqueue(opusPacket);
         }
 
-        // Public method to write PCM audio data
-        public void WriteAudioData(byte[] data)
+        private void WriteAudioDataInternal(byte[] data)
         {
             if (!isInitialized || sound.hasHandle() == false) return;
 
@@ -282,16 +282,12 @@ namespace BabyStepsMultiplayerClient.Audio
 
                 if (result == RESULT.OK)
                 {
-                    // Copy data to FMOD buffer
-                    if (len1 > 0)
-                        System.Runtime.InteropServices.Marshal.Copy(data, 0, ptr1, (int)len1);
+                    if (len1 > 0) System.Runtime.InteropServices.Marshal.Copy(data, 0, ptr1, (int)len1);
 
-                    if (len2 > 0)
-                        System.Runtime.InteropServices.Marshal.Copy(data, (int)len1, ptr2, (int)len2);
+                    if (len2 > 0) System.Runtime.InteropServices.Marshal.Copy(data, (int)len1, ptr2, (int)len2);
 
                     sound.unlock(ptr1, ptr2, len1, len2);
 
-                    // Update write position
                     writePosition = (writePosition + data.Length) % (int)length;
                 }
             }
@@ -301,14 +297,26 @@ namespace BabyStepsMultiplayerClient.Audio
             }
         }
 
-        // Cleanup
+        public void ClearBuffer()
+        {
+            jitterBuffer.Clear();
+            if (isPlaying)
+            {
+                channel.setPaused(true);
+                isPlaying = false;
+            }
+        }
+
         public void Dispose()
         {
             try
             {
-                if (channel.hasHandle()) channel.stop();
+                jitterBuffer.Clear();
 
+                if (channel.hasHandle()) channel.stop();
                 if (sound.hasHandle()) sound.release();
+
+                opusDecoder = null;
 
                 isInitialized = false;
             }
