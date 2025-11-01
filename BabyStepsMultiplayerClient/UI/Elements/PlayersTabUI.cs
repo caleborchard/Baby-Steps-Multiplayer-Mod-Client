@@ -12,6 +12,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
                   new(((Screen.width / 2f) - defaultSize.x), 20), 
                   defaultSize, false)
         {
+            IsDraggable = false;
             ShouldDrawScrollBar = false;
             ShouldAutoResizeHeight = true;
             MinResizeHeight = defaultSize.y;
