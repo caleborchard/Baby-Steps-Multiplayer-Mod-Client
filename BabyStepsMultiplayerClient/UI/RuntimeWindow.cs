@@ -1,5 +1,4 @@
-﻿using MelonLoader;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace BabyStepsMultiplayerClient.UI
 {
@@ -168,10 +167,11 @@ namespace BabyStepsMultiplayerClient.UI
                 if (Event.current.type == EventType.MouseUp)
                 {
                     _hasClicked = false;
+                    if (_isDragging)
+                        Event.current.Use();
                     _isDragging = false;
-                    Event.current.Use();
                 }
-                if (Event.current.type == EventType.MouseDown)
+                if (_isDragging && (Event.current.type == EventType.MouseDown))
                     Event.current.Use();
             }
             else
