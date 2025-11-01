@@ -6,7 +6,6 @@ using MelonLoader;
 using System.Collections.Concurrent;
 using System.Text;
 using UnityEngine;
-using static Il2CppSystem.Xml.XmlWellFormedWriter.AttributeValueCache;
 
 namespace BabyStepsMultiplayerClient.Networking
 {
@@ -18,8 +17,7 @@ namespace BabyStepsMultiplayerClient.Networking
         private ClientListener listener;
         private byte uuid;
         public ConcurrentQueue<Action> mainThreadActions = new();
-        public ConcurrentQueue<Action> AwakeRuns = new();
-        private float awakeRunTimer = 0f;
+        public ConcurrentQueue<byte[]> pendingPackets = new();
         private ConcurrentDictionary<byte, ushort> lastSeenSequences = new();
         private ushort localSequenceNumber = 0;
         private object boneSendCoroutineHandle;
@@ -30,7 +28,6 @@ namespace BabyStepsMultiplayerClient.Networking
 
         // --- Player Tracking ---
         public ConcurrentDictionary<byte, RemotePlayer> players = new();
-        private ConcurrentDictionary<byte, List<byte[]>> pendingPlayerUpdatePackets = new();
         private int numClones = 1;
 
         private bool IsNewer(ushort current, ushort previous)
@@ -76,13 +73,11 @@ namespace BabyStepsMultiplayerClient.Networking
             client = null;
             server = null;
             localSequenceNumber = 0;
-            awakeRunTimer = 0;
             uuid = 0;
             numClones = 0;
 
-            AwakeRuns.Clear();
+            pendingPackets.Clear();
             mainThreadActions.Clear();
-            pendingPlayerUpdatePackets.Clear();
             lastSeenSequences.Clear();
 
             if (boneSendCoroutineHandle != null)
@@ -104,23 +99,26 @@ namespace BabyStepsMultiplayerClient.Networking
 
         public void Update()
         {
-            if (client == null) return;
+            if (client == null)
+                return;
 
-            awakeRunTimer += Time.deltaTime;
-
-            if (!AwakeRuns.IsEmpty && awakeRunTimer >= 0.1f)
+            if (Core.HasLoadedGame())
             {
-                if (AwakeRuns.TryDequeue(out var action))
+                if (LocalPlayer.Instance == null)
+                {
+                    LocalPlayer.Instance = new();
+                    LocalPlayer.Instance.Initialize();
+                }
+
+                while (pendingPackets.TryDequeue(out byte[] packet))
                     try
                     {
-                        action.Invoke();
+                        HandleServerMessage(packet);
                     }
                     catch (Exception ex)
                     {
                         Core.logger.Error(ex.ToString());
                     }
-
-                awakeRunTimer = 0f;
             }
             
             while (mainThreadActions.TryDequeue(out var action))
@@ -135,7 +133,8 @@ namespace BabyStepsMultiplayerClient.Networking
 
             try
             {
-                if (!client.UnsyncedEvents) client.PollEvents();
+                if (!client.UnsyncedEvents) 
+                    client.PollEvents();
             }
             catch (Exception ex)
             {
@@ -438,6 +437,13 @@ namespace BabyStepsMultiplayerClient.Networking
                 if (data.Length < 1) return;
                 byte opcode = data[0];
 
+                if (!Core.HasLoadedGame()
+                    && (opcode > 1))
+                {
+                    pendingPackets.Enqueue(data);
+                    return;
+                }
+
                 switch (opcode)
                 {
                     case 1: // UUID
@@ -471,10 +477,6 @@ namespace BabyStepsMultiplayerClient.Networking
 
                             players[newUUID] = nate;
 
-                            if (pendingPlayerUpdatePackets.TryGetValue(newUUID, out List<byte[]> pendingPackets))
-                                foreach (byte[] packet in pendingPackets)
-                                    HandleServerMessage(packet);
-
                             break;
                         }
 
@@ -489,21 +491,18 @@ namespace BabyStepsMultiplayerClient.Networking
                                 Core.uiManager.notificationsUI.AddMessage($"{player.displayName} has disconnected");
                                 player.Dispose();
                             }
-                            else
-                                Core.logger.Warning($"No such player {disconnectedUUID} to disconnect.");
+                            //else
+                            //    Core.logger.Warning($"No such player {disconnectedUUID} to disconnect.");
                             break;
                         }
 
                     case 4: // Appearance update
                         {
                             Core.DebugMsg("Player appearance packet received");
+
                             byte playerUUID = data[1];
-                            if (players.TryGetValue(playerUUID, out var targetPlayer)) ApplyAppearanceUpdate(targetPlayer, data);
-                            else
-                            {
-                                if (!pendingPlayerUpdatePackets.TryGetValue(playerUUID, out var list)) pendingPlayerUpdatePackets[playerUUID] = list = new List<byte[]>();
-                                list.Add(data);
-                            }
+                            if (players.TryGetValue(playerUUID, out var targetPlayer)) 
+                                ApplyAppearanceUpdate(targetPlayer, data);
 
                             break;
                         }
@@ -598,11 +597,6 @@ namespace BabyStepsMultiplayerClient.Networking
                                 ApplyAccessoryDon(player, data);
                                 ApplyCollisionToggle(player, player.netCollisionsEnabled);
                             }
-                            else
-                            {
-                                if (!pendingPlayerUpdatePackets.TryGetValue(playerUUID, out var list)) pendingPlayerUpdatePackets[playerUUID] = list = new List<byte[]>();
-                                list.Add(data);
-                            }
 
                             break;
                         }
@@ -642,12 +636,8 @@ namespace BabyStepsMultiplayerClient.Networking
 
                             byte playerUUID = data[1];
                             bool jiminyState = Convert.ToBoolean(data[2]);
-                            if (players.TryGetValue(playerUUID, out var player)) ApplyJiminyRibbonStateChange(player, jiminyState);
-                            else
-                            {
-                                if (!pendingPlayerUpdatePackets.TryGetValue(playerUUID, out var list)) pendingPlayerUpdatePackets[playerUUID] = list = new List<byte[]>();
-                                list.Add(data);
-                            }
+                            if (players.TryGetValue(playerUUID, out var player)) 
+                                ApplyJiminyRibbonStateChange(player, jiminyState);
 
                             break;
                         }
@@ -663,11 +653,6 @@ namespace BabyStepsMultiplayerClient.Networking
                                 ApplyCollisionToggle(player, collisionsEnabled);
                                 Core.uiManager.notificationsUI.AddMessage($"{player.displayName} has {(collisionsEnabled ? "enabled" : "disabled")} collisions");
                             }
-                            else
-                            {
-                                if (!pendingPlayerUpdatePackets.TryGetValue(playerUUID, out var list)) pendingPlayerUpdatePackets[playerUUID] = list = new List<byte[]>();
-                                list.Add(data);
-                            }
 
                             break;
                         }
@@ -677,8 +662,8 @@ namespace BabyStepsMultiplayerClient.Networking
 
                             byte playerUUID = data[1];
                             string message = Encoding.UTF8.GetString(data.Skip(2).ToArray());
-
-                            Core.uiManager.notificationsUI.AddMessage($"{players[playerUUID].displayName}: {message}");
+                            if (players.TryGetValue(playerUUID, out var player))
+                                Core.uiManager.notificationsUI.AddMessage($"{player.displayName}: {message}");
 
                             break;
                         }

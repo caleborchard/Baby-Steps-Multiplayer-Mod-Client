@@ -10,15 +10,8 @@ namespace BabyStepsMultiplayerClient.Networking
     {
         public void OnPeerConnected(NetPeer peer)
         {
-            if (LocalPlayer.Instance == null)
-            {
-                LocalPlayer.Instance = new();
-                LocalPlayer.Instance.Initialize();
-            }
-
             Core.networkManager.server = peer;
             Core.networkManager.SendPlayerInformation();
-
             Core.uiManager.notificationsUI.AddMessage("Connected to server");
         }
 
@@ -26,7 +19,6 @@ namespace BabyStepsMultiplayerClient.Networking
         {
             Core.networkManager.server = null;
             Core.networkManager.Disconnect();
-
             Resources.UnloadUnusedAssets();
         }
 

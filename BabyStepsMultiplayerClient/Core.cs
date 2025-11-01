@@ -2,6 +2,7 @@
 using BabyStepsMultiplayerClient.Networking;
 using BabyStepsMultiplayerClient.Player;
 using BabyStepsMultiplayerClient.UI;
+using Il2Cpp;
 using Il2CppInterop.Runtime.Injection;
 using MelonLoader;
 using UnityEngine;
@@ -91,6 +92,13 @@ namespace BabyStepsMultiplayerClient
 
         public override void OnApplicationQuit()
             => networkManager.Disconnect();
+
+        public static bool HasLoadedGame()
+        {
+            if (Menu.me == null)
+                return false;
+            return Menu.me.gameInProgress;
+        }
 
         public static void DebugMsg(string msg)
         {
