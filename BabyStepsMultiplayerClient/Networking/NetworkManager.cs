@@ -145,7 +145,11 @@ namespace BabyStepsMultiplayerClient.Networking
         }
 
         private void ApplyJiminyRibbonStateChange(RemotePlayer player, bool jiminyState)
-            => player.jiminyRibbon.active = jiminyState;
+        {
+            if (player.jiminyRibbon == null)
+                return;
+            player.jiminyRibbon.active = jiminyState;
+        }
 
         internal void ApplyCollisionToggle(RemotePlayer player, bool collisionsEnabled)
         {
@@ -446,7 +450,8 @@ namespace BabyStepsMultiplayerClient.Networking
                             if (players.ContainsKey(newUUID))
                                 return;
 
-                            if (!Core.HasLoadedGame())
+                            if (!Core.HasLoadedGame()
+                                || (LocalPlayer.Instance == null))
                             {
                                 pendingPlayerJoins.Enqueue(newUUID, data);
                                 return;
