@@ -97,7 +97,7 @@ namespace BabyStepsMultiplayerClient.UI
                 // Window ScrollBar
                 if (ShouldDrawScrollBar
                     && (_contentHeight > _windowContentRect.height))
-                    _scrollPos.y = GUI.VerticalScrollbar(_scrollBarRect, _scrollPos.y, _scrollBarRect.height, 0, _contentHeight);
+                    _scrollPos.y = GUI.VerticalScrollbar(_scrollBarRect, _scrollPos.y, _scrollBarRect.height, 0, _contentHeight, StyleManager.Styles.VerticalScrollBar);
                 else
                     _scrollPos.y = 0;
 
