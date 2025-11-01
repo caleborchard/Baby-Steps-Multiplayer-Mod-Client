@@ -10,7 +10,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
         public RuntimeFoldout playerCustomizationFoldout = new RuntimeFoldout("Player Customization", false);
 
         public ServerConnectUI()
-            : base($"{Core.MOD_NAME} v{Core.CLIENT_VERSION}", 0, new(30, 30), new(250, 400), false)
+            : base($"Server Join Panel v{Core.CLIENT_VERSION}", 0, new(30, 30), new(250, 400), false)
         {
             ShouldDrawContentBacker = false;
         }
