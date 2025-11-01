@@ -12,9 +12,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
         public ServerConnectUI()
             : base($"{Core.MOD_NAME} v{Core.CLIENT_VERSION}", 0, new(30, 30), new(250, 400), false)
         {
-            IsDraggable = true;
-            ShouldDrawOptions = true;
-            ShouldDrawScrollBar = true;
+            ShouldDrawContentBacker = false;
         }
 
         internal override void DrawContent()
@@ -22,10 +20,6 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             serverInfoFoldout.Draw(HandleServerInfo);
             GUILayout.Space(10);
             playerCustomizationFoldout.Draw(HandlePlayerCustomization);
-        }
-
-        internal override void DrawOptions()
-        {
         }
 
         private void HandleServerInfo()

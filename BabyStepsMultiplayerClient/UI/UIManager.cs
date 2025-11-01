@@ -16,6 +16,8 @@ namespace BabyStepsMultiplayerClient.UI
 
         public UIManager()
         {
+            StyleManager.Fonts.Prepare();
+
             serverConnectUI = new ServerConnectUI();
             serverConnectUI.LoadConfig();
 
@@ -26,7 +28,6 @@ namespace BabyStepsMultiplayerClient.UI
 
         public void Draw()
         {
-            StyleManager.Fonts.Prepare();
             StyleManager.Styles.Prepare();
 
             notificationsUI.DrawUI();

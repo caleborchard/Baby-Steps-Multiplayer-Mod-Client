@@ -8,21 +8,15 @@ namespace BabyStepsMultiplayerClient.UI
         public float ScrollbarWidth = 16f;
 
         public bool IsOpen;
-        public bool IsDraggable;
+        public bool IsDraggable = true;
 
-        public bool ShouldDrawOptions;
-        public bool ShouldDrawScrollBar;
-
-        public bool ShouldAlwaysDrawScrollBar;
-
+        public bool ShouldDrawScrollBar = true;
         public bool ShouldDrawBox = true;
-        public bool ShouldDrawContentBacker;
-        public bool ShouldDrawOptionsBacker;
+        public bool ShouldDrawContentBacker = true;
 
         public string Label;
 
         private float _contentHeight;
-        private float _optionsHeight;
 
         private Rect _windowRect = new();
         private Vector2 _scrollPos;
@@ -97,25 +91,19 @@ namespace BabyStepsMultiplayerClient.UI
                 GUILayout.EndArea();
                 GUI.EndGroup();
 
-                // Window Options
-                if (ShouldDrawOptions)
-                {
-
-                }
-
                 // End Window
                 GUI.EndGroup();
 
                 // Window ScrollBar
                 if (ShouldDrawScrollBar
-                    && (ShouldAlwaysDrawScrollBar || (_contentHeight > windowContentRect.height)))
+                    && (_contentHeight > windowContentRect.height))
                     _scrollPos.y = GUI.VerticalScrollbar(scrollBarRect, _scrollPos.y, scrollBarRect.height, 0, _contentHeight, StyleManager.Styles.VerticalScrollBar);
             }
+
             return IsOpen;
         }
 
         internal virtual void DrawContent() { }
-        internal virtual void DrawOptions() { }
 
         private void GetRects(
             out Rect windowHeaderRect,
@@ -137,14 +125,12 @@ namespace BabyStepsMultiplayerClient.UI
                 windowHeaderRect.y + windowHeaderRect.height,
                 windowHeaderRect.width - 20,
                 _windowRect.height - (windowHeaderRect.height + 10));
-            if (ShouldDrawOptions)
-                windowContentRect.height -= _optionsHeight;
 
             // Window ScrollView Area
             windowScrollViewRect = new Rect(windowContentRect);
             windowScrollViewRect.position = Vector2.zero;
             windowScrollViewRect.height = _contentHeight;
-            if (ShouldDrawScrollBar && (ShouldAlwaysDrawScrollBar || (_contentHeight > windowContentRect.height)))
+            if (ShouldDrawScrollBar && (_contentHeight > windowContentRect.height))
                 windowScrollViewRect.width -= ScrollbarWidth;
 
             // Window ScrollView Scroll
