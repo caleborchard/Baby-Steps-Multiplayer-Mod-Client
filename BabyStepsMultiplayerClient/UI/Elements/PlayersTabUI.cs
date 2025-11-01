@@ -5,7 +5,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
 {
     public class PlayersTabUI : RuntimeWindow
     {
-        private static Vector2 defaultSize = new Vector2(300, 100);
+        private static Vector2 defaultSize = new Vector2(300, 10);
 
         public PlayersTabUI()
             : base("Connected Players", 2, 
@@ -14,6 +14,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
         {
             ShouldDrawScrollBar = false;
             ShouldAutoResizeHeight = true;
+            MinResizeHeight = defaultSize.y;
             MaxResizeHeight = Screen.height - 20;
         }
 

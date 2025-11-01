@@ -14,6 +14,8 @@ namespace BabyStepsMultiplayerClient.UI
         public bool ShouldDrawContentBacker = true;
 
         public bool ShouldAutoResizeHeight;
+
+        public float MinResizeHeight = 10;
         public float MaxResizeHeight;
 
         public string Label;
@@ -127,9 +129,11 @@ namespace BabyStepsMultiplayerClient.UI
                 if (ShouldAutoResizeHeight)
                 {
                     Vector2 newSize = Size;
-                    float newHeight = newSize.y + _contentHeight + 10;
-                    if (newHeight > MaxResizeHeight)
+                    float newHeight = _windowHeaderRect.height + _windowScrollRect.height + 10;
+                    if ((MaxResizeHeight > 0) && (newHeight > MaxResizeHeight))
                         newHeight = MaxResizeHeight;
+                    if (newHeight < MinResizeHeight)
+                        newHeight = MinResizeHeight;
                     newSize.y = newHeight;
                     Size = newSize;
                 }
