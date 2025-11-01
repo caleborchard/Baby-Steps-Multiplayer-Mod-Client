@@ -22,6 +22,10 @@ namespace BabyStepsMultiplayerClient.UI
         private Rect _windowRect = new();
         private Vector2 _scrollPos;
 
+        private bool _hasClicked;
+        private bool _isDragging;
+        private Vector2 _dragOffset;
+
         public Vector2 Position
         {
             get => _windowRect.position;
@@ -101,6 +105,10 @@ namespace BabyStepsMultiplayerClient.UI
 
                 // End Window
                 GUI.EndGroup();
+
+                // Do Window Drag
+                if (IsDraggable)
+                    HandleDrag(windowHeaderRect);
             }
 
             return IsOpen;
@@ -119,14 +127,14 @@ namespace BabyStepsMultiplayerClient.UI
             windowHeaderRect = new Rect(
                 _windowRect.x,
                 _windowRect.y,
-                _windowRect.width,
-                25);
+                _windowRect.width + 8,
+                30);
 
             // Window Content Area
             windowContentRect = new Rect(
                 windowHeaderRect.x + 10,
                 windowHeaderRect.y + windowHeaderRect.height,
-                windowHeaderRect.width - 20,
+                windowHeaderRect.width - 28,
                 _windowRect.height - (windowHeaderRect.height + 10));
             if (ShouldDrawScrollBar && (_contentHeight > windowContentRect.height))
                 windowContentRect.width += 5;
@@ -149,6 +157,41 @@ namespace BabyStepsMultiplayerClient.UI
                 0,
                 ScrollbarWidth,
                 windowContentRect.height);
+        }
+
+        private void HandleDrag(Rect windowHeaderRect)
+        {
+            Vector2 mousePos = Event.current.mousePosition;
+            if (_hasClicked)
+            {
+                if (Event.current.type == EventType.MouseUp)
+                {
+                    _hasClicked = false;
+                    _isDragging = false;
+                    Event.current.Use();
+                }
+                if (Event.current.type == EventType.MouseDown)
+                    Event.current.Use();
+            }
+            else
+            {
+                if (Event.current.type == EventType.MouseDown)
+                {
+                    _hasClicked = true;
+                    if (windowHeaderRect.Contains(Event.current.mousePosition))
+                    {
+                        _isDragging = true;
+                        _dragOffset = mousePos - Position;
+                        Event.current.Use();
+                    }
+                }
+            }
+
+            if (_isDragging && (Event.current.type == EventType.MouseDrag))
+            {
+                Position = mousePos - _dragOffset;
+                Event.current.Use();
+            }
         }
     }
 }
