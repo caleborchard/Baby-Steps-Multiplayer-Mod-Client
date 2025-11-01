@@ -23,6 +23,12 @@ namespace BabyStepsMultiplayerClient.UI
         private Rect _windowRect = new();
         private Vector2 _scrollPos;
 
+        private Rect _windowHeaderRect = new();
+        private Rect _windowContentRect = new();
+        private Rect _windowScrollViewRect = new();
+        private Rect _windowScrollRect = new();
+        private Rect _scrollBarRect = new();
+
         private bool _hasClicked;
         private bool _isDragging;
         private Vector2 _dragOffset;
@@ -48,7 +54,7 @@ namespace BabyStepsMultiplayerClient.UI
             this.Label = label;
             this.Position = defaultPos;
             this.Size = defaultSize;
-            this._contentHeight = this.Size.y;
+            this._contentHeight = defaultSize.y;
             this.IsOpen = defaultState;
         }
 
@@ -61,13 +67,8 @@ namespace BabyStepsMultiplayerClient.UI
             // Draw contents if shown
             if (IsOpen)
             {
-                // Get Render Rects
-                GetRects(
-                    out Rect windowHeaderRect,
-                    out Rect windowContentRect,
-                    out Rect windowScrollViewRect,
-                    out Rect windowScrollRect,
-                    out Rect scrollBarRect);
+                // Calculate Render Bounds
+                RecalculateBounds();
 
                 // Window
                 if (Label == null)
@@ -76,21 +77,21 @@ namespace BabyStepsMultiplayerClient.UI
                     GUI.Box(_windowRect, Label, StyleManager.Styles.Box);
 
                 // Window Inner Box Group
-                GUI.BeginGroup(windowContentRect);
+                GUI.BeginGroup(_windowContentRect);
 
                 // Window ScrollBar
                 if (ShouldDrawScrollBar
-                    && (_contentHeight > windowContentRect.height))
-                    _scrollPos.y = GUI.VerticalScrollbar(scrollBarRect, _scrollPos.y, scrollBarRect.height, 0, _contentHeight, StyleManager.Styles.VerticalScrollBar);
+                    && (_contentHeight > _windowContentRect.height))
+                    _scrollPos.y = GUI.VerticalScrollbar(_scrollBarRect, _scrollPos.y, _scrollBarRect.height, 0, _contentHeight);
                 else
                     _scrollPos.y = 0;
 
                 // Window ScrollView
                 if (ShouldDrawContentBacker)
-                    GUI.BeginGroup(windowScrollRect, StyleManager.Styles.Box);
+                    GUI.BeginGroup(_windowScrollRect, StyleManager.Styles.Box);
                 else
-                    GUI.BeginGroup(windowScrollRect);
-                GUILayout.BeginArea(windowScrollViewRect);
+                    GUI.BeginGroup(_windowScrollRect);
+                GUILayout.BeginArea(_windowScrollViewRect);
 
                 // Draw Window Content
                 DrawContent();
@@ -109,71 +110,67 @@ namespace BabyStepsMultiplayerClient.UI
                 // End Window
                 GUI.EndGroup();
 
-                // Do Window Drag
-                if (IsDraggable)
-                    HandleDrag(windowHeaderRect);
-
                 // Do Window Resize
                 if (ShouldAutoResizeHeight)
                 {
-                    _windowRect.height = windowHeaderRect.height + _contentHeight + 10;
-                    if (_windowRect.height > MaxResizeHeight)
-                        _windowRect.height = MaxResizeHeight;
+                    Vector2 currentSize = Size;
+                    float newHeight = currentSize.y + _contentHeight + 10;
+                    if (newHeight > MaxResizeHeight)
+                        newHeight = MaxResizeHeight;
+                    currentSize.y = newHeight;
+                    Size = currentSize;
                 }
             }
+
+            // Do Window Drag
+            HandleDrag();
 
             return IsOpen;
         }
 
         internal virtual void DrawContent() { }
 
-        private void GetRects(
-            out Rect windowHeaderRect,
-            out Rect windowContentRect,
-            out Rect windowScrollViewRect,
-            out Rect windowScrollRect,
-            out Rect scrollBarRect)
+        private void RecalculateBounds()
         {
             // Window Header Area
-            windowHeaderRect = new Rect(
-                _windowRect.x,
-                _windowRect.y,
-                _windowRect.width + 8,
-                30);
+            _windowHeaderRect.x = _windowRect.x;
+            _windowHeaderRect.y = _windowRect.y;
+            _windowHeaderRect.width = _windowRect.width + 8;
+            _windowHeaderRect.height = 30f;
 
             // Window Content Area
-            windowContentRect = new Rect(
-                windowHeaderRect.x + 10,
-                windowHeaderRect.y + windowHeaderRect.height,
-                windowHeaderRect.width - 28,
-                _windowRect.height - (windowHeaderRect.height + 10));
-            if (ShouldDrawScrollBar && (_contentHeight > windowContentRect.height))
-                windowContentRect.width += 5;
+            _windowContentRect.x = _windowHeaderRect.x + 10;
+            _windowContentRect.y = _windowHeaderRect.y + _windowHeaderRect.height;
+            _windowContentRect.width = _windowHeaderRect.width - 28;
+            _windowContentRect.height = _windowRect.height - (_windowHeaderRect.height + 10);
+            if (ShouldDrawScrollBar && (_contentHeight > _windowContentRect.height))
+                _windowContentRect.width += 5;
 
             // Window ScrollView Area
-            windowScrollViewRect = new Rect(windowContentRect);
-            windowScrollViewRect.position = Vector2.zero;
-            windowScrollViewRect.height = _contentHeight;
-            if (ShouldDrawScrollBar && (_contentHeight > windowContentRect.height))
-                windowScrollViewRect.width -= ScrollbarWidth + 5;
+            _windowScrollViewRect.width = _windowContentRect.width;
+            _windowScrollViewRect.height = _contentHeight;
+            if (ShouldDrawScrollBar && (_contentHeight > _windowContentRect.height))
+                _windowScrollViewRect.width -= ScrollbarWidth + 5;
 
             // Window ScrollView Scroll
-            windowScrollRect = new Rect(windowScrollViewRect);
-            windowScrollRect.y = -_scrollPos.y;
-            windowScrollRect.height = _contentHeight;
+            _windowScrollRect.x = _windowScrollViewRect.x;
+            _windowScrollRect.y = -_scrollPos.y;
+            _windowScrollRect.width = _windowScrollViewRect.width;
+            _windowScrollRect.height = _contentHeight;
 
             // ScrollBar
-            scrollBarRect = new Rect(
-                (windowScrollViewRect.width + 5),
-                0,
-                ScrollbarWidth,
-                windowContentRect.height);
+            _scrollBarRect.x = (_windowScrollViewRect.width + 5);
+            _scrollBarRect.width = ScrollbarWidth;
+            _scrollBarRect.height = _windowContentRect.height;;
         }
 
-        private void HandleDrag(Rect windowHeaderRect)
+        private void HandleDrag()
         {
             Vector2 mousePos = Input.mousePosition;
             mousePos.y = -mousePos.y;
+
+            if (!IsOpen || !IsDraggable)
+                _isDragging = false;
 
             if (_hasClicked)
             {
@@ -189,7 +186,9 @@ namespace BabyStepsMultiplayerClient.UI
                 {
                     _hasClicked = true;
 
-                    if (windowHeaderRect.Contains(Event.current.mousePosition))
+                    if (IsOpen
+                        && IsDraggable
+                        && _windowHeaderRect.Contains(Event.current.mousePosition))
                     {
                         _isDragging = true;
                         _dragOffset = mousePos - Position;
