@@ -17,24 +17,28 @@ namespace BabyStepsMultiplayerClient.UI.Elements
 
         internal override void DrawContent()
         {
-            GUI.enabled = Core.networkManager.client == null;
-            if (GUILayout.Button("Connect", StyleManager.Styles.Button) && Core.networkManager.client == null)
-            {
-                Core.logger.Msg($"{ModSettings.player.Nickname.Value}, {ModSettings.connection.Address.Value}:{ModSettings.connection.Port.Value}");
-                SaveConfig();
-                Core.networkManager.Connect(ModSettings.connection.Address.Value,
-                    ModSettings.connection.Port.Value,
-                    ModSettings.connection.Password.Value);
-            }
-            GUI.enabled = true;
+            bool isConnected = Core.networkManager.client != null;
+            string buttonText = isConnected ? "Disconnect" : "Connect";
 
-            GUI.enabled = !(Core.networkManager.client == null);
-            if (GUILayout.Button("Disconnect", StyleManager.Styles.Button) && Core.networkManager.client != null)
+            if (GUILayout.Button(buttonText, StyleManager.Styles.Button))
             {
-                Core.networkManager.Disconnect();
+                if (isConnected)
+                {
+                    Core.networkManager.Disconnect();
+                }
+                else
+                {
+                    Core.logger.Msg($"{ModSettings.player.Nickname.Value}, {ModSettings.connection.Address.Value}:{ModSettings.connection.Port.Value}");
+                    SaveConfig();
+                    Core.networkManager.Connect(
+                        ModSettings.connection.Address.Value,
+                        ModSettings.connection.Port.Value,
+                        ModSettings.connection.Password.Value
+                    );
+                }
             }
+
             GUILayout.Space(10);
-            GUI.enabled = true;
 
             serverInfoFoldout.Draw(HandleServerInfo);
             GUILayout.Space(10);
