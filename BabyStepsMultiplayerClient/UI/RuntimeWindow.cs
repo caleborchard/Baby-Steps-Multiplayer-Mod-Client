@@ -71,6 +71,13 @@ namespace BabyStepsMultiplayerClient.UI
                     GUI.Box(_windowRect, Label, StyleManager.Styles.Box);
                 GUI.BeginGroup(windowContentRect);
 
+                // Window ScrollBar
+                if (ShouldDrawScrollBar
+                    && (_contentHeight > windowContentRect.height))
+                    _scrollPos.y = GUI.VerticalScrollbar(scrollBarRect, _scrollPos.y, scrollBarRect.height, 0, _contentHeight, StyleManager.Styles.VerticalScrollBar);
+                else
+                    _scrollPos.y = 0;
+
                 // Window ScrollView
                 if (ShouldDrawContentBacker)
                     GUI.BeginGroup(windowScrollRect, StyleManager.Styles.Box);
@@ -94,13 +101,6 @@ namespace BabyStepsMultiplayerClient.UI
 
                 // End Window
                 GUI.EndGroup();
-
-                // Window ScrollBar
-                if (ShouldDrawScrollBar
-                    && (_contentHeight > windowContentRect.height))
-                    _scrollPos.y = GUI.VerticalScrollbar(scrollBarRect, _scrollPos.y, scrollBarRect.height, 0, _contentHeight, StyleManager.Styles.VerticalScrollBar);
-                else
-                    _scrollPos.y = 0;
             }
 
             return IsOpen;
@@ -128,13 +128,15 @@ namespace BabyStepsMultiplayerClient.UI
                 windowHeaderRect.y + windowHeaderRect.height,
                 windowHeaderRect.width - 20,
                 _windowRect.height - (windowHeaderRect.height + 10));
+            if (ShouldDrawScrollBar && (_contentHeight > windowContentRect.height))
+                windowContentRect.width += 5;
 
             // Window ScrollView Area
             windowScrollViewRect = new Rect(windowContentRect);
             windowScrollViewRect.position = Vector2.zero;
             windowScrollViewRect.height = _contentHeight;
             if (ShouldDrawScrollBar && (_contentHeight > windowContentRect.height))
-                windowScrollViewRect.width -= ScrollbarWidth;
+                windowScrollViewRect.width -= ScrollbarWidth + 5;
 
             // Window ScrollView Scroll
             windowScrollRect = new Rect(windowScrollViewRect);
@@ -143,8 +145,8 @@ namespace BabyStepsMultiplayerClient.UI
 
             // ScrollBar
             scrollBarRect = new Rect(
-                ((_windowRect.x + _windowRect.width) - 5) - ScrollbarWidth,
-                windowContentRect.y,
+                (windowScrollViewRect.width + 5),
+                0,
                 ScrollbarWidth,
                 windowContentRect.height);
         }
