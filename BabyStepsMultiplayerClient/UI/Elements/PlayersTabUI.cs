@@ -22,7 +22,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
         internal override void DrawContent()
         {
             Vector2 newPos = Position;
-            newPos.x = (Screen.width / 2f) - Size.x;
+            newPos.x = (Screen.width / 2f) - (Size.x / 2);
             Position = newPos;
 
             MaxResizeHeight = ((Screen.height - newPos.y) - 20);
