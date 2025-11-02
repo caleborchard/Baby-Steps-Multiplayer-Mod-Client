@@ -222,19 +222,14 @@ namespace BabyStepsMultiplayerClient.Player
             if (playerMovement == null) return;
             if (boneChildren == null) return;
 
-            if (Time.realtimeSinceStartup - lastBoneSendTime < boneSendInterval) return;
+            byte[] audioFrame = mic.GetOpusPacket();
+            if (audioFrame != null && audioFrame.Length > 0)
+                Core.networkManager.SendAudioFrame(audioFrame);
 
+            if (Time.realtimeSinceStartup - lastBoneSendTime < boneSendInterval) return;
             lastBoneSendTime = Time.realtimeSinceStartup;
 
             var bonesToSend = TransformNet.ToNet(boneChildren);
-
-            byte[] audioFrame;
-            if (mic.IsInitialized() && mic.IsRecording())
-            {
-                 audioFrame = mic.GetOpusPacket();
-            }
-            else audioFrame = new byte[0];
-
             Core.networkManager.SendBones(bonesToSend, 0);
         }
     }

@@ -2,6 +2,7 @@
 using Il2Cpp;
 using LiteNetLib;
 using LiteNetLib.Utils;
+using MelonLoader;
 using System.Collections.Concurrent;
 using System.Text;
 using UnityEngine;
@@ -423,6 +424,17 @@ namespace BabyStepsMultiplayerClient.Networking
             Send(writer, DeliveryMethod.ReliableOrdered);
         }
 
+        public void SendAudioFrame(byte[] encodedData)
+        {
+            List<byte> writer = new(maxPacketSize)
+            {
+                (byte)eOpCode.AudioFrame
+            };
+            writer.AddRange(encodedData);
+
+            Send(writer, DeliveryMethod.Unreliable);
+        }
+
         public void HandleServerMessage(byte[] data)
         {
             try
@@ -681,6 +693,18 @@ namespace BabyStepsMultiplayerClient.Networking
                                 Core.uiManager.notificationsUI.AddMessage($"{player.displayName}: {message}");
                             else
                                 pendingPlayerUpdates.Enqueue(playerUUID, data);
+
+                            break;
+                        }
+                    case 12:
+                        {
+                            byte playerUUID = data[1];
+
+                            if(players.TryGetValue(playerUUID, out var player))
+                            {
+                                byte[] audioFrame = data[2..];
+                                player.audioSource.QueueOpusPacket(audioFrame);
+                            }
 
                             break;
                         }

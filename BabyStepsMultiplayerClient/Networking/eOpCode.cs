@@ -7,6 +7,7 @@
         PlayerInformation = 0x02, // Update color information (used for nickname too now)
 
         ChatMessage = 0x08,
+        AudioFrame = 0x09,
 
         // World
         GenericWorldEvent = 0x03, // Generic World Event
