@@ -21,8 +21,10 @@ namespace BabyStepsMultiplayerClient.Networking
         private PlayerPacketQueue<byte, byte[]> pendingPlayerJoins = new();
         private PlayerPacketQueue<byte, byte[]> pendingPlayerUpdates = new();
 
-        private ConcurrentDictionary<byte, ushort> lastSeenSequences = new();
-        private ushort localSequenceNumber = 0;
+        private ConcurrentDictionary<byte, ushort> lastSeenBoneSequences = new();
+        private ConcurrentDictionary<byte, ushort> lastSeenAudioFrameSequences = new();
+        private ushort localBoneSequenceNumber = 0;
+        private ushort localAudioFrameSequenceNumber = 0;
         public bool isRunningNetParticle = false;
 
         // --- Material & Bone Info ---
@@ -74,7 +76,8 @@ namespace BabyStepsMultiplayerClient.Networking
             client?.Stop();
             client = null;
             server = null;
-            localSequenceNumber = 0;
+            localBoneSequenceNumber = 0;
+            localAudioFrameSequenceNumber = 0;
             uuid = 0;
             numClones = 0;
 
@@ -82,7 +85,8 @@ namespace BabyStepsMultiplayerClient.Networking
             pendingPlayerUpdates.Clear();
 
             mainThreadActions.Clear();
-            lastSeenSequences.Clear();
+            lastSeenBoneSequences.Clear();
+            lastSeenAudioFrameSequences.Clear();
 
             foreach (var player in players)
                 player.Value.Dispose();
@@ -290,12 +294,10 @@ namespace BabyStepsMultiplayerClient.Networking
                 (byte)eOpCode.BonePositionUpdate,
                 (byte)kickoffPoint
             };
-            writer.AddRange(BitConverter.GetBytes(localSequenceNumber));
+            writer.AddRange(BitConverter.GetBytes(localBoneSequenceNumber++));
             writer.AddRange(TransformNet.Serialize(bones));
 
             Send(writer, DeliveryMethod.Unreliable);
-
-            localSequenceNumber++;
         }
 
         private void SendAddAccessory(byte itemType,
@@ -430,6 +432,9 @@ namespace BabyStepsMultiplayerClient.Networking
             {
                 (byte)eOpCode.AudioFrame
             };
+
+            writer.AddRange(BitConverter.GetBytes(localAudioFrameSequenceNumber++));
+
             writer.AddRange(encodedData);
 
             Send(writer, DeliveryMethod.Unreliable);
@@ -494,7 +499,8 @@ namespace BabyStepsMultiplayerClient.Networking
                             if (players.TryGetValue(disconnectedUUID, out var player))
                             {
                                 players.Remove(disconnectedUUID, out _);
-                                lastSeenSequences.Remove(disconnectedUUID, out _);
+                                lastSeenBoneSequences.Remove(disconnectedUUID, out _);
+                                lastSeenAudioFrameSequences.Remove(disconnectedUUID, out _);
                                 Core.uiManager.notificationsUI.AddMessage($"{player.displayName} has disconnected");
                                 player.Dispose();
                             }
@@ -529,10 +535,9 @@ namespace BabyStepsMultiplayerClient.Networking
                                 ushort seq = BitConverter.ToUInt16(data, 3);
                                 byte[] rawBoneData = data.Skip(5).ToArray();
 
-                                if (!lastSeenSequences.TryGetValue(boneUUID, out ushort lastSeq)
-                                    || IsNewer(seq, lastSeq))
+                                if (!lastSeenBoneSequences.TryGetValue(boneUUID, out ushort lastSeq) || IsNewer(seq, lastSeq))
                                 {
-                                    lastSeenSequences[boneUUID] = seq;
+                                    lastSeenBoneSequences[boneUUID] = seq;
 
                                     byte[] boneData = rawBoneData;
                                     var bones = TransformNet.Deserialize(boneData);
@@ -545,7 +550,7 @@ namespace BabyStepsMultiplayerClient.Networking
                             break;
                         }
 
-                    case 6: // Generic World Event
+                    case 6: // Generic World Event. Old and unused, redo this before enabling again
                         {
                             Core.DebugMsg("GWE packet received");
 
@@ -553,7 +558,7 @@ namespace BabyStepsMultiplayerClient.Networking
                             ushort seq = BitConverter.ToUInt16(data, 2);
                             byte[] rawEventData = data.Skip(4).ToArray();
 
-                            if (!lastSeenSequences.TryGetValue(eventUUID, out ushort lastSeq) || IsNewer(seq, lastSeq))
+                            if (!lastSeenBoneSequences.TryGetValue(eventUUID, out ushort lastSeq) || IsNewer(seq, lastSeq))
                             {
                                 byte eID = rawEventData[0];
                                 switch (eID)
@@ -683,7 +688,7 @@ namespace BabyStepsMultiplayerClient.Networking
 
                             break;
                         }
-                    case 11:
+                    case 11: // Text Chat Messages
                         {
                             Core.DebugMsg("Chat message received");
 
@@ -696,14 +701,20 @@ namespace BabyStepsMultiplayerClient.Networking
 
                             break;
                         }
-                    case 12:
+                    case 12: // Proximity Chat Audio Frames
                         {
                             byte playerUUID = data[1];
 
                             if(players.TryGetValue(playerUUID, out var player))
                             {
-                                byte[] audioFrame = data[2..];
-                                player.audioSource.QueueOpusPacket(audioFrame);
+                                ushort seq = BitConverter.ToUInt16(data, 2);
+                                if (!lastSeenAudioFrameSequences.TryGetValue(playerUUID, out ushort lastSeq) || IsNewer(seq, lastSeq))
+                                {
+                                    lastSeenAudioFrameSequences[playerUUID] = seq;
+
+                                    byte[] audioFrame = data[4..];
+                                    player.audioSource.QueueOpusPacket(audioFrame);
+                                }
                             }
 
                             break;

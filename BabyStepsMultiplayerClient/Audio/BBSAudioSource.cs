@@ -24,6 +24,10 @@ namespace BabyStepsMultiplayerClient.Audio
         private int writePosition = 0;
         private bool isInitialized = false;
 
+        // For velocity calculations
+        private Vector3 previousPosition;
+        private float previousTime;
+
         // Opus decoder
         private OpusDecoder opusDecoder;
         private short[] decodedSamples; // Mono samples from decoder
@@ -77,7 +81,7 @@ namespace BabyStepsMultiplayerClient.Audio
                     return;
                 }
 
-                sound.set3DMinMaxDistance(1f, 100f);
+                sound.set3DMinMaxDistance(2f, 100f);
 
                 result = fmodSystem.getMasterChannelGroup(out var masterChannelGroup);
                 if (result != RESULT.OK)
@@ -95,7 +99,11 @@ namespace BabyStepsMultiplayerClient.Audio
                     return;
                 }
 
-                channel.setMode(MODE._3D);
+                channel.setMode(MODE._3D); //_LINEARROLOFF
+                channel.setVolume(1.5f);
+
+                previousPosition = transform.position;
+                previousTime = Time.realtimeSinceStartup;
 
                 isInitialized = true;
                 MelonLogger.Msg("BBSAudioSource initialized successfully with Opus decoder");
@@ -113,12 +121,19 @@ namespace BabyStepsMultiplayerClient.Audio
             try
             {
                 Vector3 pos = transform.position;
+
+                float currentTime = Time.realtimeSinceStartup;
+                float deltaTime = currentTime - previousTime;
                 Vector3 vel = Vector3.zero;
+                if (deltaTime > 0f) vel = (pos - previousPosition) / deltaTime;
 
                 VECTOR fmodPos = new VECTOR { x = pos.x, y = pos.y, z = pos.z };
                 VECTOR fmodVel = new VECTOR { x = vel.x, y = vel.y, z = vel.z };
 
                 channel.set3DAttributes(ref fmodPos, ref fmodVel);
+
+                previousPosition = pos;
+                previousTime = currentTime;
 
                 ProcessJitterBuffer();
                 UpdateLatencyStats();
