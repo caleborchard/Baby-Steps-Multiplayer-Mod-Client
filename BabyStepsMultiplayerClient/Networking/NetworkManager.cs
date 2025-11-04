@@ -1,4 +1,5 @@
-﻿using BabyStepsMultiplayerClient.Player;
+﻿using BabyStepsMultiplayerClient.Audio;
+using BabyStepsMultiplayerClient.Player;
 using Il2Cpp;
 using LiteNetLib;
 using LiteNetLib.Utils;
@@ -6,6 +7,7 @@ using MelonLoader;
 using System.Collections.Concurrent;
 using System.Text;
 using UnityEngine;
+using static Il2CppRootMotion.FinalIK.FBBIKHeadEffector;
 
 namespace BabyStepsMultiplayerClient.Networking
 {
@@ -484,6 +486,9 @@ namespace BabyStepsMultiplayerClient.Networking
                             nate.SetActive(true);
                             nate.RemoveHat(); // Redundancy, already called when player is first added to recycler
                             nate.ResetBonesToBind();
+
+                            nate.audioSource = new BBSAudioSource(nate.headBone);
+                            nate.audioSource.Initialize();
 
                             players[newUUID] = nate;
 
