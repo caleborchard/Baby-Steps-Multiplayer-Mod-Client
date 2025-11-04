@@ -487,8 +487,7 @@ namespace BabyStepsMultiplayerClient.Networking
                             nate.RemoveHat(); // Redundancy, already called when player is first added to recycler
                             nate.ResetBonesToBind();
 
-                            nate.audioSource = new BBSAudioSource(nate.headBone);
-                            nate.audioSource.Initialize();
+                            nate.InitializeAudioSource();
 
                             players[newUUID] = nate;
 

@@ -114,7 +114,7 @@ namespace BabyStepsMultiplayerClient.Player
             // Base Initialization
             Initialize();
 
-            if (skinnedMeshRenderer != null) 
+            if (skinnedMeshRenderer != null)
                 meshMaterials = skinnedMeshRenderer.materials;
 
             SetupBonesAndMaterials();
@@ -182,9 +182,6 @@ namespace BabyStepsMultiplayerClient.Player
             SetupBones();
             CreateParticleCrushers();
             CreateFootData();
-
-            audioSource = new BBSAudioSource(headBone);
-            audioSource.Initialize();
         }
 
         private static System.Collections.IEnumerator DelayedGazableFillin(Gazable _gazable)
@@ -193,6 +190,35 @@ namespace BabyStepsMultiplayerClient.Player
             _gazable.wontMove = false;
             _gazable.sqrRad = 5f; // Maybe position the Gazable object slightly behind the head?
                                   // The problem is that when someone is walking behind you your player looks down to try to look backwards at them.
+        }
+
+        public void InitializeAudioSource()
+        {
+            if (headBone == null)
+            {
+                Core.DebugMsg("Cannot initialize audio source: headBone is null");
+                return;
+            }
+
+            if (audioSource != null)
+            {
+                audioSource.Dispose();
+                audioSource = null;
+            }
+
+            audioSource = new BBSAudioSource(headBone);
+            audioSource.Initialize();
+        }
+
+        private bool EnsureAudioSourceValid()
+        {
+            if (audioSource == null)
+            {
+                Core.DebugMsg("Audio source is null, attempting to reinitialize");
+                InitializeAudioSource();
+            }
+
+            return audioSource != null;
         }
 
         public override void Dispose()
@@ -212,8 +238,11 @@ namespace BabyStepsMultiplayerClient.Player
             ResetSuitColor();
             SetDisplayName("Nate");
 
-            if (audioSource != null) audioSource.Dispose();
-            audioSource = null;
+            if (audioSource != null)
+            {
+                audioSource.Dispose();
+                audioSource = null;
+            }
 
             distanceFromPlayer = 0f;
             firstBoneInterpRan = false;
@@ -251,7 +280,7 @@ namespace BabyStepsMultiplayerClient.Player
                 }
             }
 
-            if (audioSource != null) audioSource.Update();
+            if (EnsureAudioSourceValid()) audioSource.Update();
         }
 
         public void SetDisplayName(string name)
