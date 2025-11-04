@@ -112,6 +112,7 @@ namespace BabyStepsMultiplayerClient.Networking
                 {
                     LocalPlayer.Instance = new();
                     LocalPlayer.Instance.Initialize();
+                    return;
                 }
 
                 pendingPlayerJoins.Process(HandleServerMessage);
