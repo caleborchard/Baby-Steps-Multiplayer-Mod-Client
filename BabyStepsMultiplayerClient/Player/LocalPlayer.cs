@@ -79,7 +79,7 @@ namespace BabyStepsMultiplayerClient.Player
             }
             else
             {
-                if (!mic.IsRecording()) mic.StopRecording();
+                if (!mic.IsRecording()) mic.StartRecording();
             }
         }
 

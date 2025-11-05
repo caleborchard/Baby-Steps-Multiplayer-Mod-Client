@@ -72,8 +72,7 @@ namespace BabyStepsMultiplayerClient.Networking
 
         public void Disconnect()
         {
-            if (client == null)
-                return;
+            if (client == null) return;
 
             client?.Stop();
             client = null;
@@ -90,12 +89,10 @@ namespace BabyStepsMultiplayerClient.Networking
             lastSeenBoneSequences.Clear();
             lastSeenAudioFrameSequences.Clear();
 
-            foreach (var player in players)
-                player.Value.Dispose();
+            foreach (var player in players) player.Value.Dispose();
             players.Clear();
 
-            if (LocalPlayer.Instance != null)
-                LocalPlayer.Instance.Dispose();
+            if (LocalPlayer.Instance != null) LocalPlayer.Instance.Dispose();
             LocalPlayer.Instance = null;
 
             Core.uiManager.notificationsUI.AddMessage("Disconnected from server");
@@ -103,8 +100,7 @@ namespace BabyStepsMultiplayerClient.Networking
 
         public void Update()
         {
-            if (client == null)
-                return;
+            if (client == null) return;
 
             if (Core.HasLoadedGame())
             {
