@@ -45,6 +45,10 @@ namespace BabyStepsMultiplayerClient.Audio
         public int DecodeErrors { get; private set; }
         public float CurrentLatencyMs { get; private set; }
 
+        // Amplitude tracking for player mouths
+        private float currentAmplitude = 0f;
+        private const float AMPLITUDE_SMOOTHING = 0.15f;
+
         public BBSAudioSource(Transform transform)
         {
             this.transform = transform;
@@ -196,6 +200,8 @@ namespace BabyStepsMultiplayerClient.Audio
                     MelonLogger.Warning($"Unexpected decoded length: {decodedLength} (expected {FRAME_SIZE})");
                 }
 
+                CalculateAmplitude(decodedSamples, decodedLength);
+
                 ConvertMonoToStereo(decodedSamples, stereoBuffer, decodedLength);
                 WriteAudioDataInternal(stereoBuffer);
             }
@@ -312,6 +318,40 @@ namespace BabyStepsMultiplayerClient.Audio
             }
         }
 
+        private void CalculateAmplitude(short[] samples, int sampleCount)
+        {
+            if (samples == null || sampleCount == 0)
+            {
+                currentAmplitude = Mathf.Lerp(currentAmplitude, 0f, AMPLITUDE_SMOOTHING);
+                return;
+            }
+
+            // Root Mean Square for better amplitude representation
+            float sum = 0f;
+            for (int i = 0; i < sampleCount; i++)
+            {
+                float normalized = samples[i] / 32768f; // -1 to 1
+                sum += normalized * normalized;
+            }
+
+            float rms = Mathf.Sqrt(sum / sampleCount);
+
+            // Prevents jittery mouth movement
+            currentAmplitude = Mathf.Lerp(currentAmplitude, rms, AMPLITUDE_SMOOTHING);
+        }
+
+        public float GetAmplitude()
+        {
+            if (!isInitialized || !isPlaying)
+            {
+                return 0f;
+            }
+
+            // Scale and clamp the amplitude to a reasonable range for mouth movement
+            float scaled = currentAmplitude * 25f;
+            return Mathf.Clamp01(scaled);
+        }
+
         public void ClearBuffer()
         {
             jitterBuffer.Clear();
@@ -320,6 +360,7 @@ namespace BabyStepsMultiplayerClient.Audio
                 channel.setPaused(true);
                 isPlaying = false;
             }
+            currentAmplitude = 0f;
         }
 
         public void Dispose()
@@ -332,6 +373,7 @@ namespace BabyStepsMultiplayerClient.Audio
                 if (sound.hasHandle()) sound.release();
 
                 opusDecoder = null;
+                currentAmplitude = 0f;
 
                 isInitialized = false;
             }

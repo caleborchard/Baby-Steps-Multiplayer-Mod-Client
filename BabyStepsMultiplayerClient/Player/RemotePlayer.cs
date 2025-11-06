@@ -29,6 +29,9 @@ namespace BabyStepsMultiplayerClient.Player
         public Hat hat;
         public Collider[] hatColliders;
 
+        public Transform jawMaster;
+        public Transform mchJawMaster;
+
         public BBSAudioSource audioSource;
 
         public (Grabable, Grabable) heldItems;
@@ -171,6 +174,13 @@ namespace BabyStepsMultiplayerClient.Player
             {
                 gazable = headBone.gameObject.AddComponent<Gazable>();
                 MelonCoroutines.Start(DelayedGazableFillin(gazable));
+
+                Transform orgFace = headBone.Find("ORG-face");
+                if (orgFace != null)
+                {
+                    jawMaster = orgFace.Find("jaw_master");
+                    mchJawMaster = orgFace.Find("MCH-jaw_master");
+                }
             }
 
             if (nateGlasses != null)
@@ -276,11 +286,22 @@ namespace BabyStepsMultiplayerClient.Player
                 if (camera != null)
                 {
                     float distance = Vector3.Distance(camera.transform.position, rootBone.transform.position);
-                    FadeByDistance(distance);
+                    bool shouldEnableColliders = ModSettings.player.Collisions.Value && netCollisionsEnabled;
+
+                    if (shouldEnableColliders) FadeByDistance(distance);
+                    else SetOpacity(0.75f);
                 }
             }
 
-            if (EnsureAudioSourceValid()) audioSource.Update();
+            if (EnsureAudioSourceValid())
+            {
+                audioSource.Update();
+
+                float amplitude = audioSource.GetAmplitude();
+                float normalizedAmplitude = Mathf.Clamp01(amplitude);
+                SetMouthOpen(normalizedAmplitude);
+            }
+            else SetMouthOpen(0f); // Try to avoid this if you can find a better way to reliably reset the mouth
         }
 
         public void SetDisplayName(string name)
@@ -300,6 +321,22 @@ namespace BabyStepsMultiplayerClient.Player
                 color.a = opacity;
                 nameTag.SetColor(color);
             }
+        }
+
+        private const float closedX = 36.65f;
+        private const float openX = 5f;
+        private const float lipOpenX = 15f;
+        public void SetMouthOpen(float openAmount)
+        {
+            if (jawMaster == null || mchJawMaster == null) return;
+
+            openAmount = Mathf.Clamp01(openAmount);
+
+            float jawX = Mathf.Lerp(closedX, openX, openAmount);
+            float lipX = Mathf.Lerp(closedX, lipOpenX, openAmount);
+
+            jawMaster.localEulerAngles = new Vector3(jawX, 180f, 180f);
+            mchJawMaster.localEulerAngles = new Vector3(lipX, 180f, 180f);
         }
 
         public void SetActive(bool active)
@@ -500,8 +537,7 @@ namespace BabyStepsMultiplayerClient.Player
             string boneName = bone.name;
             if (!LocalPlayer.Instance.boneMudMeshes.TryGetValue(boneName, out Transform mesh)) return;
 
-            if (boneMudMeshes == null)
-                boneMudMeshes = new();
+            if (boneMudMeshes == null) boneMudMeshes = new();
 
             GameObject mudMesh = UnityEngine.Object.Instantiate(mesh.gameObject);
             mudMesh.transform.SetParent(bone);
