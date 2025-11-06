@@ -31,9 +31,12 @@ namespace BabyStepsMultiplayerClient.Player
         private const int bonesPerPacket = (NetworkManager.maxPacketSize - 4) / bytesPerBone;
 
         private BBSMicrophoneCapture mic;
-        private bool micEnabled = false;
+        private bool micEnabled = true;
         private float micVolume = 1f;
         public int micDevice = 0;
+
+        private bool pushToTalkEnabled = false;
+        private KeyCode pushToTalkKey = KeyCode.V;
 
         public override void Initialize()
         {
@@ -106,6 +109,11 @@ namespace BabyStepsMultiplayerClient.Player
         }
         public bool IsMicrophoneEnabled() { return micEnabled; }
         public float GetMicrophoneVolume() { return micVolume; }
+
+        public void SetPushToTalkEnabled(bool state) { pushToTalkEnabled = state; }
+        public bool IsPushToTalkEnabled() { return pushToTalkEnabled; }
+        public void SetPushToTalkKey(KeyCode key) { pushToTalkKey = key; }
+        public KeyCode GetPushToTalkKey() { return pushToTalkKey; }
 
         public GameObject GetCameraObject()
         {
@@ -248,10 +256,16 @@ namespace BabyStepsMultiplayerClient.Player
 
             if (micEnabled && mic != null && mic.IsRecording())
             {
-                byte[] audioFrame = mic.GetOpusPacket();
-                if (audioFrame != null && audioFrame.Length > 0)
+                bool shouldTransmit = true;
+                if (pushToTalkEnabled) shouldTransmit = Input.GetKey(pushToTalkKey);
+
+                if (shouldTransmit)
                 {
-                    Core.networkManager.SendAudioFrame(audioFrame);
+                    byte[] audioFrame = mic.GetOpusPacket();
+                    if (audioFrame != null && audioFrame.Length > 0)
+                    {
+                        Core.networkManager.SendAudioFrame(audioFrame);
+                    }
                 }
             }
 

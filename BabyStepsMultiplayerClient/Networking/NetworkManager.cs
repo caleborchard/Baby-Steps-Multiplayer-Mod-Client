@@ -140,9 +140,6 @@ namespace BabyStepsMultiplayerClient.Networking
             if (client == null) return;
             if (players == null) return;
 
-            if (Input.GetKeyDown(KeyCode.H)) LocalPlayer.Instance.SetMicrophoneEnabled(true);
-            else if (Input.GetKeyDown(KeyCode.J)) LocalPlayer.Instance.SetMicrophoneEnabled(false);
-
             foreach (var player in players.Values)
                 {
                     if (player == null) continue;
