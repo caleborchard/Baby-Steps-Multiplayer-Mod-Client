@@ -696,9 +696,13 @@ namespace BabyStepsMultiplayerClient.Networking
                             byte playerUUID = data[1];
                             string message = Encoding.UTF8.GetString(data.Skip(2).ToArray());
                             if (players.TryGetValue(playerUUID, out var player))
-                                Core.uiManager.notificationsUI.AddMessage($"{player.displayName}: {message}");
-                            else
-                                pendingPlayerUpdates.Enqueue(playerUUID, data);
+                            {
+                                int wordCount = message.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Length;
+                                float duration = Mathf.Max(3f, 3f + wordCount - 5) * 0.5f;
+
+                                Core.uiManager.notificationsUI.AddMessage($"{player.displayName}: {message}", duration);
+                            }
+                            else pendingPlayerUpdates.Enqueue(playerUUID, data);
 
                             break;
                         }
