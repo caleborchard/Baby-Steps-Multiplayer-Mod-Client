@@ -140,12 +140,15 @@ namespace BabyStepsMultiplayerClient.Networking
             if (client == null) return;
             if (players == null) return;
 
-            foreach (var player in players.Values)
-            {
-                if (player == null) continue;
+            if (Input.GetKeyDown(KeyCode.H)) LocalPlayer.Instance.SetMicrophoneEnabled(true);
+            else if (Input.GetKeyDown(KeyCode.J)) LocalPlayer.Instance.SetMicrophoneEnabled(false);
 
-                player.LateUpdate();
-            }
+            foreach (var player in players.Values)
+                {
+                    if (player == null) continue;
+
+                    player.LateUpdate();
+                }
         }
 
         private void ApplyJiminyRibbonStateChange(RemotePlayer player, bool jiminyState)

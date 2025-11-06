@@ -31,6 +31,9 @@ namespace BabyStepsMultiplayerClient.Player
         private const int bonesPerPacket = (NetworkManager.maxPacketSize - 4) / bytesPerBone;
 
         private BBSMicrophoneCapture mic;
+        private bool micEnabled = false;
+        private float micVolume = 1f;
+        public int micDevice = 0;
 
         public override void Initialize()
         {
@@ -53,9 +56,9 @@ namespace BabyStepsMultiplayerClient.Player
             ApplySuitColor();
 
             mic = new BBSMicrophoneCapture();
-            mic.Initialize(0);
-            mic.SetVolume(1f);
-            mic.StartRecording();
+            mic.Initialize(micDevice);
+            mic.SetVolume(micVolume);
+            if (micEnabled) mic.StartRecording();
 
             Core.DebugMsg("LocalPlayer Initialized");
         }
@@ -68,9 +71,10 @@ namespace BabyStepsMultiplayerClient.Player
             if (mic != null) mic.Dispose();
             mic = null;
         }
+
         private void UpdateMicrophone()
         {
-            if (mic == null) return;
+            if (mic == null || !micEnabled) return;
 
             // Only Record when Connected to Server
             if ((Core.networkManager == null) || Core.networkManager.server == null)
@@ -82,6 +86,26 @@ namespace BabyStepsMultiplayerClient.Player
                 if (!mic.IsRecording()) mic.StartRecording();
             }
         }
+        public void SetMicrophoneEnabled(bool state)
+        {
+            micEnabled = state;
+            if (state)
+            {
+                if (!mic.IsInitialized()) { mic.Initialize(micDevice); mic.SetVolume(micVolume); mic.StartRecording(); }
+                else mic.StartRecording();
+            }
+            else
+            {
+                if (mic.IsInitialized()) mic.StopRecording(); 
+            }
+        }
+        public void SetMicrophoneVolume(float volume)
+        {
+            micVolume = volume;
+            if (mic != null) mic.SetVolume(volume);
+        }
+        public bool IsMicrophoneEnabled() { return micEnabled; }
+        public float GetMicrophoneVolume() { return micVolume; }
 
         public GameObject GetCameraObject()
         {
@@ -222,9 +246,14 @@ namespace BabyStepsMultiplayerClient.Player
             if (playerMovement == null) return;
             if (boneChildren == null) return;
 
-            byte[] audioFrame = mic.GetOpusPacket();
-            if (audioFrame != null && audioFrame.Length > 0)
-                Core.networkManager.SendAudioFrame(audioFrame);
+            if (micEnabled && mic != null && mic.IsRecording())
+            {
+                byte[] audioFrame = mic.GetOpusPacket();
+                if (audioFrame != null && audioFrame.Length > 0)
+                {
+                    Core.networkManager.SendAudioFrame(audioFrame);
+                }
+            }
 
             if (Time.realtimeSinceStartup - lastBoneSendTime < boneSendInterval) return;
             lastBoneSendTime = Time.realtimeSinceStartup;
