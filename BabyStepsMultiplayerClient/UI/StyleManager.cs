@@ -25,6 +25,7 @@ namespace BabyStepsMultiplayerClient.UI
 
             internal static GUIStyle Box { get; private set; }
             internal static GUIStyle Button { get; private set; }
+            internal static GUIStyle ButtonLeftCenteredText { get; private set; }
             internal static GUIStyle VerticalScrollBar { get; private set; }
 
             internal static GUIStyle HorizontalSlider { get; private set; }
@@ -61,6 +62,13 @@ namespace BabyStepsMultiplayerClient.UI
                     Button = new GUIStyle(GUI.skin.button)
                     {
                         font = Fonts.Arial
+                    };
+
+                if (ButtonLeftCenteredText == null)
+                    ButtonLeftCenteredText = new GUIStyle(GUI.skin.button)
+                    {
+                        font = Fonts.Arial,
+                        alignment = TextAnchor.MiddleLeft
                     };
 
                 if (HorizontalSlider == null)

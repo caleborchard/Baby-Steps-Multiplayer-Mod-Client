@@ -30,10 +30,10 @@ namespace BabyStepsMultiplayerClient.Player
         private const int bytesPerBone = 29;
         private const int bonesPerPacket = (NetworkManager.maxPacketSize - 4) / bytesPerBone;
 
-        private BBSMicrophoneCapture mic;
-        private bool micEnabled = true;
+        public BBSMicrophoneCapture mic;
+        private bool micEnabled = false;
         private float micVolume = 1f;
-        public int micDevice = 0;
+        private int micDevice = 0;
 
         private bool pushToTalkEnabled = false;
         private KeyCode pushToTalkKey = KeyCode.V;
@@ -114,7 +114,20 @@ namespace BabyStepsMultiplayerClient.Player
         public bool IsPushToTalkEnabled() { return pushToTalkEnabled; }
         public void SetPushToTalkKey(KeyCode key) { pushToTalkKey = key; }
         public KeyCode GetPushToTalkKey() { return pushToTalkKey; }
-
+        public void SetMicrophoneDevice(int deviceIndex)
+        {
+            micDevice = deviceIndex;
+            if (mic != null && mic.IsInitialized())
+            {
+                bool wasRecording = mic.IsRecording();
+                mic.Dispose();
+                mic = new BBSMicrophoneCapture();
+                mic.Initialize(micDevice);
+                mic.SetVolume(micVolume);
+                if (wasRecording) mic.StartRecording();
+            }
+        }
+        public int GetMicrophoneDevice() { return micDevice; }
         public GameObject GetCameraObject()
         {
             if (cinemachineBrain == null) return null;

@@ -7,7 +7,10 @@ namespace BabyStepsMultiplayerClient.UI.Elements
     public class ServerConnectUI : RuntimeWindow
     {
         public RuntimeFoldout serverInfoFoldout = new RuntimeFoldout("Server Information", false);
+
         public RuntimeFoldout audioSettingsFoldout = new RuntimeFoldout("Audio Settings", false);
+        public RuntimeFoldout microphoneDevicesFoldout = new RuntimeFoldout("Microphone Devices", false);
+
         public RuntimeFoldout playerCustomizationFoldout = new RuntimeFoldout("Player Customization", true);
 
         public ServerConnectUI()
@@ -64,9 +67,42 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             GUILayout.Space(5);
         }
 
+        private int selectedMicrophoneIndex = 0;
+        private string[] availableDevices = new string[0];
         private void HandleAudioSettings()
         {
-            GUILayout.Label("Audio Settings will go here.", StyleManager.Styles.Label);
+            GUI.enabled = LocalPlayer.Instance != null;
+
+            string buttonText = (LocalPlayer.Instance?.IsMicrophoneEnabled() ?? false ? "Disable" : "Enable") + " Microphone";
+
+            if (GUILayout.Button(buttonText, StyleManager.Styles.Button))
+            {
+                LocalPlayer.Instance.SetMicrophoneEnabled(!LocalPlayer.Instance.IsMicrophoneEnabled());
+            }
+
+            microphoneDevicesFoldout.Draw(HandleMicrophoneDevices);
+
+            GUI.enabled = true;
+        }
+        private void HandleMicrophoneDevices()
+        {
+            if (LocalPlayer.Instance != null && LocalPlayer.Instance.mic != null)
+            {
+                if (availableDevices.Length < 1) availableDevices = LocalPlayer.Instance.mic.GetAvailableDevices();
+
+                if (availableDevices.Length > 0)
+                {
+                    selectedMicrophoneIndex = Mathf.Clamp(selectedMicrophoneIndex, 0, availableDevices.Length - 1);
+
+                    int newIndex = GUILayout.SelectionGrid(selectedMicrophoneIndex, availableDevices, 1, StyleManager.Styles.ButtonLeftCenteredText);
+
+                    if (newIndex != selectedMicrophoneIndex)
+                    {
+                        selectedMicrophoneIndex = newIndex;
+                        LocalPlayer.Instance.SetMicrophoneDevice(selectedMicrophoneIndex);
+                    }
+                }
+            }
         }
 
         private void HandlePlayerCustomization()
