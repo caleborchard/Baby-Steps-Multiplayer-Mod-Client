@@ -7,6 +7,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
     public class ServerConnectUI : RuntimeWindow
     {
         public RuntimeFoldout serverInfoFoldout = new RuntimeFoldout("Server Information", false);
+        public RuntimeFoldout audioSettingsFoldout = new RuntimeFoldout("Audio Settings", false);
         public RuntimeFoldout playerCustomizationFoldout = new RuntimeFoldout("Player Customization", true);
 
         public ServerConnectUI()
@@ -42,6 +43,8 @@ namespace BabyStepsMultiplayerClient.UI.Elements
 
             serverInfoFoldout.Draw(HandleServerInfo);
             GUILayout.Space(10);
+            audioSettingsFoldout.Draw(HandleAudioSettings);
+            GUILayout.Space(10);
             playerCustomizationFoldout.Draw(HandlePlayerCustomization);
         }
 
@@ -59,6 +62,11 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             ModSettings.connection.Password.Value = GUILayout.PasswordField(ModSettings.connection.Password.Value, '*', 32, StyleManager.Styles.TextField);
 
             GUILayout.Space(5);
+        }
+
+        private void HandleAudioSettings()
+        {
+            GUILayout.Label("Audio Settings will go here.", StyleManager.Styles.Label);
         }
 
         private void HandlePlayerCustomization()

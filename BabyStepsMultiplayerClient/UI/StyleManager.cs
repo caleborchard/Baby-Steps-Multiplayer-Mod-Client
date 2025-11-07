@@ -30,6 +30,8 @@ namespace BabyStepsMultiplayerClient.UI
             internal static GUIStyle HorizontalSlider { get; private set; }
             internal static GUIStyle HorizontalSliderThumb { get; private set; }
 
+            internal static GUIStyle RuntimeFoldoutButton { get; private set; }
+
 
             internal static void Prepare()
             {
@@ -90,6 +92,12 @@ namespace BabyStepsMultiplayerClient.UI
 
                 if (MiddleLeftTextField == null)
                     MiddleLeftTextField = new GUIStyle(TextField)
+                    {
+                        alignment = TextAnchor.MiddleLeft
+                    };
+
+                if (RuntimeFoldoutButton == null)
+                    RuntimeFoldoutButton = new GUIStyle(GUI.skin.label)
                     {
                         alignment = TextAnchor.MiddleLeft
                     };
