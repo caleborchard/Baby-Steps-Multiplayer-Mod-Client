@@ -9,6 +9,7 @@ namespace BabyStepsMultiplayerClient.Config
         internal MelonPreferences_Entry<int> SelectedMicrophoneIndex;
         internal MelonPreferences_Entry<bool> PushToTalk;
         internal MelonPreferences_Entry<string> PushToTalkKey;
+        internal MelonPreferences_Entry<bool> Deafened;
 
         public override string ID
             => "Audio";
@@ -39,6 +40,11 @@ namespace BabyStepsMultiplayerClient.Config
                 "Push to Talk Key",
                 "Key to press for push-to-talk",
                 "V");
+
+            Deafened = CreatePref("Deafened",
+                "Deafened",
+                "Mute all incoming voice chat",
+                false);
         }
     }
 }

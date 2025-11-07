@@ -708,6 +708,8 @@ namespace BabyStepsMultiplayerClient.Networking
                         }
                     case 12: // Proximity Chat Audio Frames
                         {
+                            if (ModSettings.audio.Deafened.Value) break;
+
                             byte playerUUID = data[1];
 
                             if(players.TryGetValue(playerUUID, out var player))

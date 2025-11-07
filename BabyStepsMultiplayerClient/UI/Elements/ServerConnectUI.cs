@@ -102,6 +102,14 @@ namespace BabyStepsMultiplayerClient.UI.Elements
 
             GUILayout.Space(5);
 
+            // Deafen Toggle
+            if (GUILayout.Button((ModSettings.audio.Deafened.Value ? "Undeafen" : "Deafen"), StyleManager.Styles.Button))
+            {
+                ModSettings.audio.Deafened.Value = !ModSettings.audio.Deafened.Value;
+            }
+
+            GUILayout.Space(5);
+
             // Push to Talk Toggle
             if (GUILayout.Button((ModSettings.audio.PushToTalk.Value ? "Disable" : "Enable") + " Push to Talk", StyleManager.Styles.Button))
             {
