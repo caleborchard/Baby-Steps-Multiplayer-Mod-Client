@@ -13,6 +13,9 @@ namespace BabyStepsMultiplayerClient.UI.Elements
 
         public RuntimeFoldout playerCustomizationFoldout = new RuntimeFoldout("Player Customization", true);
 
+        private string[] availableDevices = new string[0];
+        private bool isWaitingForKey = false;
+
         public ServerConnectUI()
             : base($"Server Join Panel v{Core.CLIENT_VERSION}", 0, new(30, 30), new(250, 400), false)
         {
@@ -21,6 +24,24 @@ namespace BabyStepsMultiplayerClient.UI.Elements
 
         internal override void DrawContent()
         {
+            // Handle key input for push-to-talk keybind (must be before GUI rendering)
+            if (isWaitingForKey)
+            {
+                foreach (KeyCode keyCode in System.Enum.GetValues(typeof(KeyCode)))
+                {
+                    if (Input.GetKeyDown(keyCode) && keyCode != KeyCode.None && keyCode != KeyCode.Mouse0)
+                    {
+                        ModSettings.audio.PushToTalkKey.Value = keyCode.ToString();
+                        if (LocalPlayer.Instance != null)
+                        {
+                            LocalPlayer.Instance.SetPushToTalkKey(keyCode);
+                        }
+                        isWaitingForKey = false;
+                        break;
+                    }
+                }
+            }
+
             bool isConnected = Core.networkManager.client != null;
             string buttonText = isConnected ? "Disconnect" : "Connect";
 
@@ -67,23 +88,68 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             GUILayout.Space(5);
         }
 
-        private int selectedMicrophoneIndex = 0;
-        private string[] availableDevices = new string[0];
         private void HandleAudioSettings()
         {
             GUI.enabled = LocalPlayer.Instance != null;
 
-            string buttonText = (LocalPlayer.Instance?.IsMicrophoneEnabled() ?? false ? "Disable" : "Enable") + " Microphone";
+            string buttonText = (ModSettings.audio.MicrophoneEnabled.Value ? "Disable" : "Enable") + " Microphone";
 
             if (GUILayout.Button(buttonText, StyleManager.Styles.Button))
             {
-                LocalPlayer.Instance.SetMicrophoneEnabled(!LocalPlayer.Instance.IsMicrophoneEnabled());
+                ModSettings.audio.MicrophoneEnabled.Value = !ModSettings.audio.MicrophoneEnabled.Value;
+                LocalPlayer.Instance?.SetMicrophoneEnabled(ModSettings.audio.MicrophoneEnabled.Value);
             }
+
+            GUILayout.Space(5);
+
+            // Push to Talk Toggle
+            if (GUILayout.Button((ModSettings.audio.PushToTalk.Value ? "Disable" : "Enable") + " Push to Talk", StyleManager.Styles.Button))
+            {
+                ModSettings.audio.PushToTalk.Value = !ModSettings.audio.PushToTalk.Value;
+                LocalPlayer.Instance?.SetPushToTalkEnabled(ModSettings.audio.PushToTalk.Value);
+            }
+
+            GUILayout.Space(5);
+
+            // Push to Talk Key Binding
+            GUI.enabled = LocalPlayer.Instance != null && ModSettings.audio.PushToTalk.Value;
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Push to Talk Key:", StyleManager.Styles.Label);
+
+            string keyButtonText = isWaitingForKey ? "Press any key..." : ModSettings.audio.PushToTalkKey.Value;
+            if (GUILayout.Button(keyButtonText, StyleManager.Styles.Button, GUILayout.Width(120)))
+            {
+                isWaitingForKey = true;
+            }
+            GUILayout.EndHorizontal();
+
+            GUILayout.Space(5);
+            GUI.enabled = LocalPlayer.Instance != null;
+
+            // Microphone Gain Slider
+            GUILayout.Label($"Microphone Gain: {ModSettings.audio.MicrophoneGain.Value:F2}x", StyleManager.Styles.Label);
+            float newGain = GUILayout.HorizontalSlider(
+                ModSettings.audio.MicrophoneGain.Value,
+                0f,
+                3f,
+                StyleManager.Styles.HorizontalSlider,
+                StyleManager.Styles.HorizontalSliderThumb
+            );
+
+            if (newGain != ModSettings.audio.MicrophoneGain.Value)
+            {
+                ModSettings.audio.MicrophoneGain.Value = newGain;
+                LocalPlayer.Instance?.mic.SetGain(newGain);
+            }
+
+            GUILayout.Space(5);
 
             microphoneDevicesFoldout.Draw(HandleMicrophoneDevices);
 
             GUI.enabled = true;
         }
+
         private void HandleMicrophoneDevices()
         {
             if (LocalPlayer.Instance != null && LocalPlayer.Instance.mic != null)
@@ -92,14 +158,23 @@ namespace BabyStepsMultiplayerClient.UI.Elements
 
                 if (availableDevices.Length > 0)
                 {
-                    selectedMicrophoneIndex = Mathf.Clamp(selectedMicrophoneIndex, 0, availableDevices.Length - 1);
+                    ModSettings.audio.SelectedMicrophoneIndex.Value = Mathf.Clamp(
+                        ModSettings.audio.SelectedMicrophoneIndex.Value,
+                        0,
+                        availableDevices.Length - 1
+                    );
 
-                    int newIndex = GUILayout.SelectionGrid(selectedMicrophoneIndex, availableDevices, 1, StyleManager.Styles.ButtonLeftCenteredText);
+                    int newIndex = GUILayout.SelectionGrid(
+                        ModSettings.audio.SelectedMicrophoneIndex.Value,
+                        availableDevices,
+                        1,
+                        StyleManager.Styles.ButtonLeftCenteredText
+                    );
 
-                    if (newIndex != selectedMicrophoneIndex)
+                    if (newIndex != ModSettings.audio.SelectedMicrophoneIndex.Value)
                     {
-                        selectedMicrophoneIndex = newIndex;
-                        LocalPlayer.Instance.SetMicrophoneDevice(selectedMicrophoneIndex);
+                        ModSettings.audio.SelectedMicrophoneIndex.Value = newIndex;
+                        LocalPlayer.Instance.SetMicrophoneDevice(ModSettings.audio.SelectedMicrophoneIndex.Value);
                     }
                 }
             }

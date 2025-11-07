@@ -32,7 +32,6 @@ namespace BabyStepsMultiplayerClient.Player
 
         public BBSMicrophoneCapture mic;
         private bool micEnabled = false;
-        private float micVolume = 1f;
         private int micDevice = 0;
 
         private bool pushToTalkEnabled = false;
@@ -60,7 +59,6 @@ namespace BabyStepsMultiplayerClient.Player
 
             mic = new BBSMicrophoneCapture();
             mic.Initialize(micDevice);
-            mic.SetVolume(micVolume);
             if (micEnabled) mic.StartRecording();
 
             Core.DebugMsg("LocalPlayer Initialized");
@@ -94,7 +92,7 @@ namespace BabyStepsMultiplayerClient.Player
             micEnabled = state;
             if (state)
             {
-                if (!mic.IsInitialized()) { mic.Initialize(micDevice); mic.SetVolume(micVolume); mic.StartRecording(); }
+                if (!mic.IsInitialized()) { mic.Initialize(micDevice); mic.StartRecording(); }
                 else mic.StartRecording();
             }
             else
@@ -102,14 +100,7 @@ namespace BabyStepsMultiplayerClient.Player
                 if (mic.IsInitialized()) mic.StopRecording(); 
             }
         }
-        public void SetMicrophoneVolume(float volume)
-        {
-            micVolume = volume;
-            if (mic != null) mic.SetVolume(volume);
-        }
         public bool IsMicrophoneEnabled() { return micEnabled; }
-        public float GetMicrophoneVolume() { return micVolume; }
-
         public void SetPushToTalkEnabled(bool state) { pushToTalkEnabled = state; }
         public bool IsPushToTalkEnabled() { return pushToTalkEnabled; }
         public void SetPushToTalkKey(KeyCode key) { pushToTalkKey = key; }
@@ -123,7 +114,6 @@ namespace BabyStepsMultiplayerClient.Player
                 mic.Dispose();
                 mic = new BBSMicrophoneCapture();
                 mic.Initialize(micDevice);
-                mic.SetVolume(micVolume);
                 if (wasRecording) mic.StartRecording();
             }
         }

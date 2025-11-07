@@ -23,7 +23,7 @@ namespace BabyStepsMultiplayerClient.Audio
         private const int BUFFER_SIZE = SAMPLE_RATE * CHANNELS * 2 * 100 / 1000;
 
         private uint lastRecordPos = 0;
-        private float volume = 1.0f;
+        private float gain = 1.0f; // Adjustable gain (1.0 = unity gain, 2.0 = +6dB, 0.5 = -6dB)
 
         private OpusEncoder opusEncoder;
         private short[] sampleBuffer;
@@ -31,15 +31,10 @@ namespace BabyStepsMultiplayerClient.Audio
 
         private byte[] frameBuffer; // Pre-allocated for GC
 
-        // Voice Activity Detection
-        private const float VAD_THRESHOLD = 0.01f; // Adjust based on testing
-        private bool voiceDetected = false;
-
         // Stats
         public int DroppedFrames { get; private set; }
         public int CapturedFrames { get; private set; }
         public int EncodeErrors { get; private set; }
-        public bool VoiceDetected => voiceDetected;
 
         public BBSMicrophoneCapture()
         {
@@ -188,12 +183,27 @@ namespace BabyStepsMultiplayerClient.Audio
             }
         }
 
-        public void SetVolume(float newVolume)
+        // Set gain (1.0 = unity, 2.0 = double amplitude/+6dB, 0.5 = half amplitude/-6dB)
+        public void SetGain(float newGain)
         {
-            volume = Mathf.Clamp01(newVolume);
+            gain = Mathf.Max(0.0f, newGain); // Allow any positive value, no upper limit
         }
 
-        public float GetVolume() => volume;
+        // Get current gain value
+        public float GetGain() => gain;
+
+        // Convert gain to decibels for display purposes
+        public float GetGainDB()
+        {
+            if (gain <= 0) return float.NegativeInfinity;
+            return 20.0f * Mathf.Log10(gain);
+        }
+
+        // Set gain from decibel value
+        public void SetGainDB(float dB)
+        {
+            gain = Mathf.Pow(10.0f, dB / 20.0f);
+        }
 
         public byte[] GetOpusPacket() // Main method to be called each frame
         {
@@ -204,7 +214,7 @@ namespace BabyStepsMultiplayerClient.Audio
             {
                 ConvertBytesToSamples(monoFrame, sampleBuffer);
 
-                int encodedLength = opusEncoder.Encode(sampleBuffer, 0, FRAME_SIZE,opusPacketBuffer, 0, opusPacketBuffer.Length);
+                int encodedLength = opusEncoder.Encode(sampleBuffer, 0, FRAME_SIZE, opusPacketBuffer, 0, opusPacketBuffer.Length);
 
                 if (encodedLength < 0)
                 {
@@ -292,13 +302,11 @@ namespace BabyStepsMultiplayerClient.Audio
 
                 recordSound.unlock(ptr1, ptr2, len1, len2);
 
-                if (volume != 1.0f)
+                // Apply gain if not unity
+                if (gain != 1.0f)
                 {
-                    ApplyVolume(frameBuffer);
+                    ApplyGain(frameBuffer);
                 }
-
-                // Simple VAD check
-                voiceDetected = DetectVoiceActivity(frameBuffer);
 
                 // Update position
                 lastRecordPos = (uint)((lastRecordPosBytes + frameSizeBytes) / (CHANNELS * 2));
@@ -323,33 +331,26 @@ namespace BabyStepsMultiplayerClient.Audio
             }
         }
 
-        private void ApplyVolume(byte[] data)
+        private void ApplyGain(byte[] data)
         {
             for (int i = 0; i < data.Length; i += 2)
             {
                 short sample = (short)(data[i] | (data[i + 1] << 8));
-                sample = (short)(sample * volume);
+
+                // Apply gain with clipping protection
+                int amplified = (int)(sample * gain);
+
+                // Clamp to prevent overflow
+                if (amplified > short.MaxValue)
+                    sample = short.MaxValue;
+                else if (amplified < short.MinValue)
+                    sample = short.MinValue;
+                else
+                    sample = (short)amplified;
+
                 data[i] = (byte)(sample & 0xFF);
                 data[i + 1] = (byte)((sample >> 8) & 0xFF);
             }
-        }
-
-        private bool DetectVoiceActivity(byte[] data)
-        {
-            if (data == null || data.Length == 0) return false;
-
-            float energy = 0f;
-            int sampleCount = data.Length / 2;
-
-            for (int i = 0; i < data.Length; i += 2)
-            {
-                short sample = (short)(data[i] | (data[i + 1] << 8));
-                float normalized = sample / 32768f;
-                energy += normalized * normalized;
-            }
-
-            energy /= sampleCount;
-            return energy > VAD_THRESHOLD;
         }
 
         public bool IsRecording() => isRecording;
