@@ -120,7 +120,7 @@ namespace BabyStepsMultiplayerClient.Audio
                 }
 
                 isInitialized = true;
-                MelonLogger.Msg($"BBSMicrophoneCapture initialized on device {deviceIndex} with Opus encoder");
+                Core.DebugMsg($"BBSMicrophoneCapture initialized on device {deviceIndex} with Opus encoder");
                 return true;
             }
             catch (Exception e)
@@ -140,7 +140,7 @@ namespace BabyStepsMultiplayerClient.Audio
 
             if (isRecording)
             {
-                MelonLogger.Warning("Already recording");
+                Core.DebugMsg("Warning: Already recording");
                 return true;
             }
 
@@ -160,7 +160,7 @@ namespace BabyStepsMultiplayerClient.Audio
                 CapturedFrames = 0;
                 EncodeErrors = 0;
 
-                MelonLogger.Msg("Recording started");
+                Core.DebugMsg("Recording started");
                 return true;
             }
             catch (Exception e)
@@ -179,7 +179,7 @@ namespace BabyStepsMultiplayerClient.Audio
                 fmodSystem.recordStop(selectedDeviceIndex);
                 isRecording = false;
                 lastFramePeak = 0f;
-                MelonLogger.Msg("Recording stopped");
+                Core.DebugMsg("Recording stopped");
             }
             catch (Exception e)
             {
@@ -435,7 +435,7 @@ namespace BabyStepsMultiplayerClient.Audio
                 opusEncoder = null;
 
                 isInitialized = false;
-                MelonLogger.Msg("BBSMicrophoneCapture disposed");
+                Core.DebugMsg("BBSMicrophoneCapture disposed");
             }
             catch (Exception e)
             {
