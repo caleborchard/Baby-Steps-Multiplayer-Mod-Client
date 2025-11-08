@@ -263,6 +263,10 @@ namespace BabyStepsMultiplayerClient.Player
             {
                 SetMicrophoneEnabled(ModSettings.audio.MicrophoneEnabled.Value);
             }
+            if (GetMicrophoneDevice() != ModSettings.audio.SelectedMicrophoneIndex.Value)
+            {
+                SetMicrophoneDevice(ModSettings.audio.SelectedMicrophoneIndex.Value);
+            }
 
             if (micEnabled && mic != null && mic.IsRecording())
             {
