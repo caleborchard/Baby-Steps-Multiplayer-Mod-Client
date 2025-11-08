@@ -31,6 +31,9 @@ namespace BabyStepsMultiplayerClient.Audio
 
         private byte[] frameBuffer; // Pre-allocated for GC
 
+        // Peak level tracking
+        private float lastFramePeak = 0f;
+
         // Stats
         public int DroppedFrames { get; private set; }
         public int CapturedFrames { get; private set; }
@@ -175,6 +178,7 @@ namespace BabyStepsMultiplayerClient.Audio
             {
                 fmodSystem.recordStop(selectedDeviceIndex);
                 isRecording = false;
+                lastFramePeak = 0f;
                 MelonLogger.Msg("Recording stopped");
             }
             catch (Exception e)
@@ -203,6 +207,12 @@ namespace BabyStepsMultiplayerClient.Audio
         public void SetGainDB(float dB)
         {
             gain = Mathf.Pow(10.0f, dB / 20.0f);
+        }
+
+        // Get the peak level from the last captured frame (0.0 to 1.0)
+        public float GetLastFramePeak()
+        {
+            return lastFramePeak;
         }
 
         public byte[] GetOpusPacket() // Main method to be called each frame
@@ -308,6 +318,9 @@ namespace BabyStepsMultiplayerClient.Audio
                     ApplyGain(frameBuffer);
                 }
 
+                // Calculate peak level from the frame (after gain is applied)
+                CalculateFramePeak(frameBuffer);
+
                 // Update position
                 lastRecordPos = (uint)((lastRecordPosBytes + frameSizeBytes) / (CHANNELS * 2));
                 lastRecordPos %= (uint)(BUFFER_SIZE / (CHANNELS * 2));
@@ -321,6 +334,22 @@ namespace BabyStepsMultiplayerClient.Audio
                 MelonLogger.Error($"Error capturing audio frame: {e}");
                 return null;
             }
+        }
+
+        private void CalculateFramePeak(byte[] data)
+        {
+            float maxSample = 0f;
+
+            for (int i = 0; i < data.Length; i += 2)
+            {
+                short sample = (short)(data[i] | (data[i + 1] << 8));
+                float normalized = Mathf.Abs(sample / 32768f);
+
+                if (normalized > maxSample)
+                    maxSample = normalized;
+            }
+
+            lastFramePeak = maxSample;
         }
 
         private void ConvertBytesToSamples(byte[] bytes, short[] samples)

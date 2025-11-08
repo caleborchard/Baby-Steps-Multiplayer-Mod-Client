@@ -257,6 +257,13 @@ namespace BabyStepsMultiplayerClient.Player
             if (playerMovement == null) return;
             if (boneChildren == null) return;
 
+            // This is kind of hacky, find a better way to ensure the LocalPlayer enable state is equal to the config value on load
+            // Cause that's only ever when this is needed
+            if (IsMicrophoneEnabled() != ModSettings.audio.MicrophoneEnabled.Value)
+            {
+                SetMicrophoneEnabled(ModSettings.audio.MicrophoneEnabled.Value);
+            }
+
             if (micEnabled && mic != null && mic.IsRecording())
             {
                 bool shouldTransmit = true;

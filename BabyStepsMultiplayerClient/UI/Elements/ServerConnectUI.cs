@@ -16,6 +16,10 @@ namespace BabyStepsMultiplayerClient.UI.Elements
         private string[] availableDevices = new string[0];
         private bool isWaitingForKey = false;
 
+        // Peak meter variables
+        private float currentPeak = 0f;
+        private float peakDecayRate = 0.95f; // How fast the peak falls
+
         public ServerConnectUI()
             : base($"Server Join Panel v{Core.CLIENT_VERSION}", 0, new(30, 30), new(250, 400), false)
         {
@@ -153,9 +157,99 @@ namespace BabyStepsMultiplayerClient.UI.Elements
 
             GUILayout.Space(5);
 
+            DrawPeakMeter();
+
+            GUILayout.Space(5);
+
             microphoneDevicesFoldout.Draw(HandleMicrophoneDevices);
 
             GUI.enabled = true;
+        }
+
+        private void DrawPeakMeter()
+        {
+            bool hasActiveRecording = LocalPlayer.Instance != null &&
+                                     LocalPlayer.Instance.mic != null &&
+                                     LocalPlayer.Instance.mic.IsRecording();
+
+            if (hasActiveRecording)
+            {
+                UpdatePeakLevel();
+            }
+            else
+            {
+                currentPeak = 0f;
+            }
+
+            // Meter
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Level:", StyleManager.Styles.Label, GUILayout.Width(45));
+
+            Rect meterRect = GUILayoutUtility.GetRect(180, 20, GUILayout.ExpandWidth(false));
+
+            // Background
+            GUI.color = new Color(0.2f, 0.2f, 0.2f, 1f);
+            GUI.DrawTexture(meterRect, Texture2D.whiteTexture);
+            GUI.color = Color.white;
+
+            float peakDB = 20f * Mathf.Log10(Mathf.Max(currentPeak, 0.0001f));
+            // Map -40dB to 0dB as 0 to 1 (narrower range looks better)
+            float normalizedPeak = Mathf.Clamp01((peakDB + 40f) / 40f);
+
+            if (normalizedPeak > 0.01f)
+            {
+                Rect fillRect = new Rect(meterRect.x, meterRect.y, meterRect.width * normalizedPeak, meterRect.height);
+
+                Color meterColor;
+                if (normalizedPeak < 0.5f) // Green zone (-40 to -20 dB)
+                {
+                    meterColor = Color.green;
+                }
+                else if (normalizedPeak < 0.775f) // Yellow zone (-20 to -9 dB)
+                {
+                    float yellowBlend = (normalizedPeak - 0.5f) / (0.775f - 0.5f);
+                    meterColor = Color.Lerp(Color.green, Color.yellow, yellowBlend);
+                }
+                else // Red zone (-9 to 0 dB)
+                {
+                    float redBlend = (normalizedPeak - 0.775f) / (1.0f - 0.775f);
+                    meterColor = Color.Lerp(Color.yellow, Color.red, redBlend);
+                }
+
+                GUI.color = meterColor;
+                GUI.DrawTexture(fillRect, Texture2D.whiteTexture);
+                GUI.color = Color.white;
+            }
+
+            // Draw tick marks for reference
+            DrawTickMark(meterRect, 0.5f);   // -20dB
+            DrawTickMark(meterRect, 0.775f); // -9dB
+
+            GUILayout.EndHorizontal();
+
+            string dbText = peakDB > -40f ? $"{peakDB:F1} dB" : "-∞ dB";
+            GUILayout.Label(dbText, StyleManager.Styles.Label);
+        }
+
+        private void DrawTickMark(Rect meterRect, float position)
+        {
+            float xPos = meterRect.x + meterRect.width * position;
+            Rect tickRect = new Rect(xPos - 1, meterRect.y, 2, meterRect.height);
+            GUI.color = new Color(0.5f, 0.5f, 0.5f, 0.8f);
+            GUI.DrawTexture(tickRect, Texture2D.whiteTexture);
+            GUI.color = Color.white;
+        }
+
+        private void UpdatePeakLevel()
+        {
+            currentPeak *= peakDecayRate;
+
+            var mic = LocalPlayer.Instance?.mic;
+            if (mic == null || !mic.IsRecording()) return;
+
+            float newPeak = mic.GetLastFramePeak();
+
+            if (newPeak > currentPeak) currentPeak = newPeak;
         }
 
         private void HandleMicrophoneDevices()
