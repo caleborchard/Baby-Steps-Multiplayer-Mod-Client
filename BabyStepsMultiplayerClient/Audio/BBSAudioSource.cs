@@ -85,7 +85,7 @@ namespace BabyStepsMultiplayerClient.Audio
                     return;
                 }
 
-                sound.set3DMinMaxDistance(2f, 100f);
+                sound.set3DMinMaxDistance(5f, 70f);
 
                 result = fmodSystem.getMasterChannelGroup(out var masterChannelGroup);
                 if (result != RESULT.OK)
