@@ -50,7 +50,8 @@ Cutscenes are triggered independently on each client and do not affect other pla
 - Mud and vegetation interaction
 - Position smoothing to compensate for lag
 - Server passwords
-- Togglable collisions  
+- Togglable collisions
+- Proximity Voice Chat
 
 ---
 
@@ -66,5 +67,6 @@ Cutscenes are triggered independently on each client and do not affect other pla
 ## 🔗 Links
 - [Baby Steps: Multiplayer Mod Server](https://github.com/caleborchard/Baby-Steps-Multiplayer-Mod-Server)
 - [Baby Steps](https://www.babystepsgame.com/)
-- [LiteNetLib](https://github.com/RevenantX/LiteNetLib)  
+- [LiteNetLib](https://github.com/RevenantX/LiteNetLib)
+- [Concentus](https://github.com/lostromb/concentus)
 - [MelonLoader](https://melonwiki.xyz/)  
