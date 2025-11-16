@@ -311,7 +311,9 @@ namespace BabyStepsMultiplayerClient.UI.Elements
 
                 foreach (var player in Core.networkManager.players)
                 {
-                    if (ModSettings.player.Collisions.Value && player.Value.netCollisionsEnabled) player.Value.EnableCollision();
+                    bool shouldEnableColliders = ModSettings.player.Collisions.Value && player.Value.netCollisionsEnabled;
+
+                    if (shouldEnableColliders) player.Value.EnableCollision();
                     else player.Value.DisableCollision();
                 }
             }
@@ -322,6 +324,14 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             if (GUILayout.Button((ModSettings.player.CutscenePlayerVisibility.Value ? "Enable" : "Disable") + " Player Cutscene Visibility", StyleManager.Styles.Button))
             {
                 ModSettings.player.CutscenePlayerVisibility.Value = !ModSettings.player.CutscenePlayerVisibility.Value;
+            }
+            GUILayout.Space(5);
+            GUI.enabled = true;
+
+            GUI.enabled = !(Core.networkManager.client == null);
+            if (GUILayout.Button((ModSettings.player.ShowNametags.Value ? "Disable" : "Enable") + " Nametag Visibility", StyleManager.Styles.Button))
+            {
+                ModSettings.player.ShowNametags.Value = !ModSettings.player.ShowNametags.Value;
             }
             GUILayout.Space(5);
             GUI.enabled = true;

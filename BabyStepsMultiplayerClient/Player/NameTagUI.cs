@@ -44,8 +44,7 @@ namespace BabyStepsMultiplayerClient.Player
 
         public void LateUpdate()
         {
-            if (baseObject == null)
-                return;
+            if (baseObject == null) return;
 
             if (LocalPlayer.Instance != null)
             {

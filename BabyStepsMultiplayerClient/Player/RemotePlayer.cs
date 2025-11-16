@@ -331,7 +331,11 @@ namespace BabyStepsMultiplayerClient.Player
             if (nameTag != null)
             {
                 Color color = nameTag.GetColor();
-                color.a = opacity;
+                float alpha = 0f;
+
+                if (ModSettings.player.ShowNametags.Value) alpha = opacity;
+
+                color.a = alpha;
                 nameTag.SetColor(color);
             }
         }

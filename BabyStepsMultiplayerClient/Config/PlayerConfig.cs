@@ -9,6 +9,7 @@ namespace BabyStepsMultiplayerClient.Config
         internal MelonPreferences_Entry<Color> SuitColor;
         internal MelonPreferences_Entry<bool> Collisions;
         internal MelonPreferences_Entry<bool> CutscenePlayerVisibility;
+        internal MelonPreferences_Entry<bool> ShowNametags;
 
         public override string ID
             => "Player";
@@ -34,6 +35,11 @@ namespace BabyStepsMultiplayerClient.Config
                 "Cutscene Player Visibility",
                 "Show Other Players During Cutscenes",
                 false);
+
+            ShowNametags = CreatePref("ShowNametags",
+                "Show Nametags",
+                "Show Nametags Above Other Players",
+                true);
         }
     }
 }
