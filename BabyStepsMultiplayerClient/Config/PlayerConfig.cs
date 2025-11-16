@@ -8,6 +8,7 @@ namespace BabyStepsMultiplayerClient.Config
         internal MelonPreferences_Entry<string> Nickname;
         internal MelonPreferences_Entry<Color> SuitColor;
         internal MelonPreferences_Entry<bool> Collisions;
+        internal MelonPreferences_Entry<bool> CutscenePlayerVisibility;
 
         public override string ID
             => "Player";
@@ -28,6 +29,11 @@ namespace BabyStepsMultiplayerClient.Config
                 "Player Collisions",
                 "Collisions with Other Players",
                 true);
+
+            CutscenePlayerVisibility = CreatePref("CutscenePlayerVisibility",
+                "Cutscene Player Visibility",
+                "Show Other Players During Cutscenes",
+                false);
         }
     }
 }

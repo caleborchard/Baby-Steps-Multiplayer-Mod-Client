@@ -288,8 +288,9 @@ namespace BabyStepsMultiplayerClient.Player
                     float distance = Vector3.Distance(camera.transform.position, rootBone.transform.position);
                     bool shouldEnableColliders = ModSettings.player.Collisions.Value && netCollisionsEnabled;
 
-                    if (shouldEnableColliders) FadeByDistance(distance);
-                    else SetOpacity(0.75f);
+                    if (!shouldEnableColliders) SetOpacity(0.75f);
+                    else if (ModSettings.player.CutscenePlayerVisibility.Value && LocalPlayer.Instance.playerMovement.inCutscene) SetOpacity(0);
+                    else FadeByDistance(distance);
                 }
             }
 

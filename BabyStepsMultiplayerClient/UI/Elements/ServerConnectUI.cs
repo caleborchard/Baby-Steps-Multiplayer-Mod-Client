@@ -319,6 +319,14 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             GUI.enabled = true;
 
             GUI.enabled = !(Core.networkManager.client == null);
+            if (GUILayout.Button((ModSettings.player.CutscenePlayerVisibility.Value ? "Enable" : "Disable") + " Player Cutscene Visibility", StyleManager.Styles.Button))
+            {
+                ModSettings.player.CutscenePlayerVisibility.Value = !ModSettings.player.CutscenePlayerVisibility.Value;
+            }
+            GUILayout.Space(5);
+            GUI.enabled = true;
+
+            GUI.enabled = !(Core.networkManager.client == null);
             if (GUILayout.Button("Update Name & Appearance", StyleManager.Styles.Button) && Core.networkManager.client != null)
             {
                 SaveConfig();
