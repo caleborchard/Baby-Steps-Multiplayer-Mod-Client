@@ -11,6 +11,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
         public RuntimeFoldout audioSettingsFoldout = new RuntimeFoldout("Audio Settings", false);
         public RuntimeFoldout microphoneDevicesFoldout = new RuntimeFoldout("Microphone Devices", false);
 
+        public RuntimeFoldout generalSettingsFoldout = new RuntimeFoldout("General Settings", false);
         public RuntimeFoldout playerCustomizationFoldout = new RuntimeFoldout("Player Customization", true);
 
         private string[] availableDevices = new string[0];
@@ -72,6 +73,8 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             serverInfoFoldout.Draw(HandleServerInfo);
             GUILayout.Space(10);
             audioSettingsFoldout.Draw(HandleAudioSettings);
+            GUILayout.Space(10);
+            generalSettingsFoldout.Draw(HandleGeneralSettings);
             GUILayout.Space(10);
             playerCustomizationFoldout.Draw(HandlePlayerCustomization);
         }
@@ -172,14 +175,8 @@ namespace BabyStepsMultiplayerClient.UI.Elements
                                      LocalPlayer.Instance.mic != null &&
                                      LocalPlayer.Instance.mic.IsRecording();
 
-            if (hasActiveRecording)
-            {
-                UpdatePeakLevel();
-            }
-            else
-            {
-                currentPeak = 0f;
-            }
+            if (hasActiveRecording) UpdatePeakLevel();
+            else currentPeak = 0f;
 
             // Meter
             GUILayout.BeginHorizontal();
@@ -193,7 +190,6 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             GUI.color = Color.white;
 
             float peakDB = 20f * Mathf.Log10(Mathf.Max(currentPeak, 0.0001f));
-            //float normalizedPeak = Mathf.Clamp01((peakDB + 40f) / 40f);
             float normalizedPeak = Mathf.Clamp01((peakDB + 60f) / 60f);
 
             if (normalizedPeak > 0.01f)
@@ -201,22 +197,6 @@ namespace BabyStepsMultiplayerClient.UI.Elements
                 Rect fillRect = new Rect(meterRect.x, meterRect.y, meterRect.width * normalizedPeak, meterRect.height);
 
                 Color meterColor;
-                /*
-                if (normalizedPeak < 0.5f) // Green zone (-40 to -20 dB)
-                {
-                    meterColor = Color.green;
-                }
-                else if (normalizedPeak < 0.775f) // Yellow zone (-20 to -9 dB)
-                {
-                    float yellowBlend = (normalizedPeak - 0.5f) / (0.775f - 0.5f);
-                    meterColor = Color.Lerp(Color.green, Color.yellow, yellowBlend);
-                }
-                else // Red zone (-9 to 0 dB)
-                {
-                    float redBlend = (normalizedPeak - 0.775f) / (1.0f - 0.775f);
-                    meterColor = Color.Lerp(Color.yellow, Color.red, redBlend);
-                }
-                */
                 if (normalizedPeak < 0.666f) // Green zone (-60 to -20 dB)
                 {
                     meterColor = Color.green;
@@ -237,16 +217,12 @@ namespace BabyStepsMultiplayerClient.UI.Elements
                 GUI.color = Color.white;
             }
 
-            // Draw tick marks for reference (-20 dB, -9 dB)
-            //DrawTickMark(meterRect, 0.5f);
-            //DrawTickMark(meterRect, 0.775f);
             DrawTickMark(meterRect, 0.666f);
             DrawTickMark(meterRect, 0.85f);
 
             GUILayout.EndHorizontal();
 
-            //string dbText = peakDB > -40f ? $"{peakDB:F1} dB" : "-∞ dB";
-            string dbText = peakDB > -60f ? $"{peakDB:F1} dB" : "-∞ dB";
+            string dbText = peakDB > -60f ? $"{peakDB:F1} dB" : "-inf dB";
             GUILayout.Label(dbText, StyleManager.Styles.Label);
         }
 
@@ -301,7 +277,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             }
         }
 
-        private void HandlePlayerCustomization()
+        private void HandleGeneralSettings()
         {
             GUI.enabled = !(Core.networkManager.client == null);
             if (GUILayout.Button((ModSettings.player.Collisions.Value ? "Disable" : "Enable") + " Collisions", StyleManager.Styles.Button))
@@ -335,7 +311,10 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             }
             GUILayout.Space(5);
             GUI.enabled = true;
+        }
 
+        private void HandlePlayerCustomization()
+        {
             GUI.enabled = !(Core.networkManager.client == null);
             if (GUILayout.Button("Update Name & Appearance", StyleManager.Styles.Button) && Core.networkManager.client != null)
             {
