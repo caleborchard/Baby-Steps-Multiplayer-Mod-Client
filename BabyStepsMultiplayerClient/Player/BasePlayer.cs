@@ -169,7 +169,26 @@ namespace BabyStepsMultiplayerClient.Player
             }
 
             if (nateGlasses != null)
-                nateGlasses.materials[1].SetFloat("_DitherAlpha", opacity);
+            {
+                var materials = nateGlasses.materials;
+
+                // Material 0: GlassesLenses - Standard shader (uses color alpha)
+                // This doesn't work, proof of concept for future reference
+                /*
+                if (materials.Length > 0 && materials[0] != null)
+                {
+                    Color lensColor = materials[0].color;
+                    lensColor.a = opacity;
+                    materials[0].color = lensColor;
+                }
+                */
+
+                // Material 1: GlassesFrames - Better Lit shader (uses _DitherAlpha)
+                if (materials.Length > 1 && materials[1] != null && materials[1].HasProperty("_DitherAlpha"))
+                {
+                    materials[1].SetFloat("_DitherAlpha", opacity);
+                }
+            }
 
             if (eyeBallRenderers.Item1 != null
                 && eyeBallRenderers.Item1.material != null)
@@ -383,12 +402,10 @@ namespace BabyStepsMultiplayerClient.Player
                 }
             }
 
-            if (headBone != null
-                && nateGlasses == null)
+            if (headBone != null && nateGlasses == null)
             {
                 var gBone = headBone.FindChild("Nathan_Glasses");
-                if (gBone != null)
-                    nateGlasses = gBone.GetComponent<MeshRenderer>();
+                if (gBone != null) nateGlasses = gBone.GetComponent<MeshRenderer>();
             }
         }
     }

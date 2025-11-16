@@ -122,6 +122,18 @@ namespace BabyStepsMultiplayerClient.Player
 
             SetupBonesAndMaterials();
 
+            if (nateGlasses != null)
+            {
+                var materials = nateGlasses.materials;
+                for (int i = 0; i < materials.Length; i++)
+                {
+                    if (materials[i] != null && materials[i].HasProperty("_DitherAlpha"))
+                    {
+                        MaterialKeywordHelper(materials[i]);
+                    }
+                }
+            }
+
             if (jiminyRibbon != null)
                 jiminyRibbon.active = false;
 
