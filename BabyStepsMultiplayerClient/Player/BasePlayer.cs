@@ -42,6 +42,15 @@ namespace BabyStepsMultiplayerClient.Player
 
         public Material[] meshMaterials;
 
+        // Mouth control variables
+        public Transform jawMaster;
+        public Transform mchJawMaster;
+
+        // Constants for mouth animation
+        private const float CLOSED_JAW_X = 36.65f;
+        private const float OPEN_JAW_X = 5f;
+        private const float OPEN_LIP_X = 15f;
+
         public virtual void Initialize()
         {
             if (baseObject == null) return;
@@ -87,6 +96,36 @@ namespace BabyStepsMultiplayerClient.Player
                         jiminyRibbon = ribbonTransform.gameObject;
                 }
             }
+        }
+
+        protected void InitializeJawMasters()
+        {
+            if (headBone == null) return;
+
+            Transform orgFace = headBone.Find("ORG-face");
+            if (orgFace != null)
+            {
+                jawMaster = orgFace.Find("jaw_master");
+                mchJawMaster = orgFace.Find("MCH-jaw_master");
+            }
+        }
+
+        public void SetMouthOpen(float openAmount)
+        {
+            if (jawMaster == null || mchJawMaster == null) return;
+
+            openAmount = Mathf.Clamp01(openAmount);
+
+            float jawX = Mathf.Lerp(CLOSED_JAW_X, OPEN_JAW_X, openAmount);
+            float lipX = Mathf.Lerp(CLOSED_JAW_X, OPEN_LIP_X, openAmount);
+
+            jawMaster.localEulerAngles = new Vector3(jawX, 180f, 180f);
+            mchJawMaster.localEulerAngles = new Vector3(lipX, 180f, 180f);
+        }
+
+        public void CloseMouth()
+        {
+            SetMouthOpen(0f);
         }
 
         public virtual void Dispose() { }
@@ -407,6 +446,9 @@ namespace BabyStepsMultiplayerClient.Player
                 var gBone = headBone.FindChild("Nathan_Glasses");
                 if (gBone != null) nateGlasses = gBone.GetComponent<MeshRenderer>();
             }
+
+            // Initialize jaw masters after headBone is set
+            InitializeJawMasters();
         }
     }
 }

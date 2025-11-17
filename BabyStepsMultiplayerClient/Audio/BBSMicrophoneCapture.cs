@@ -34,6 +34,10 @@ namespace BabyStepsMultiplayerClient.Audio
         // Peak level tracking
         private float lastFramePeak = 0f;
 
+        // Amplitude tracking (similar to BBSAudioSource)
+        private float currentAmplitude = 0f;
+        private const float AMPLITUDE_SMOOTHING = 0.15f;
+
         // Stats
         public int DroppedFrames { get; private set; }
         public int CapturedFrames { get; private set; }
@@ -179,6 +183,7 @@ namespace BabyStepsMultiplayerClient.Audio
                 fmodSystem.recordStop(selectedDeviceIndex);
                 isRecording = false;
                 lastFramePeak = 0f;
+                currentAmplitude = 0f;
                 Core.DebugMsg("Recording stopped");
             }
             catch (Exception e)
@@ -215,6 +220,19 @@ namespace BabyStepsMultiplayerClient.Audio
             return lastFramePeak;
         }
 
+        public float GetAmplitude()
+        {
+            if (!isInitialized || !isRecording)
+            {
+                return 0f;
+            }
+
+            // Scale and clamp the amplitude to a reasonable range for mouth movement
+            // Using the same scaling factor as BBSAudioSource for consistency
+            float scaled = currentAmplitude * 25f;
+            return Mathf.Clamp01(scaled);
+        }
+
         public byte[] GetOpusPacket() // Main method to be called each frame
         {
             byte[] monoFrame = GetAudioFrameInternal();
@@ -223,6 +241,9 @@ namespace BabyStepsMultiplayerClient.Audio
             try
             {
                 ConvertBytesToSamples(monoFrame, sampleBuffer);
+
+                // Calculate amplitude from the samples (before encoding)
+                CalculateAmplitude(sampleBuffer, FRAME_SIZE);
 
                 int encodedLength = opusEncoder.Encode(sampleBuffer, 0, FRAME_SIZE, opusPacketBuffer, 0, opusPacketBuffer.Length);
 
@@ -352,6 +373,28 @@ namespace BabyStepsMultiplayerClient.Audio
             lastFramePeak = maxSample;
         }
 
+        private void CalculateAmplitude(short[] samples, int sampleCount)
+        {
+            if (samples == null || sampleCount == 0)
+            {
+                currentAmplitude = Mathf.Lerp(currentAmplitude, 0f, AMPLITUDE_SMOOTHING);
+                return;
+            }
+
+            // Root Mean Square for better amplitude representation
+            float sum = 0f;
+            for (int i = 0; i < sampleCount; i++)
+            {
+                float normalized = samples[i] / 32768f; // -1 to 1
+                sum += normalized * normalized;
+            }
+
+            float rms = Mathf.Sqrt(sum / sampleCount);
+
+            // Smooth the amplitude to prevent jittery mouth movement
+            currentAmplitude = Mathf.Lerp(currentAmplitude, rms, AMPLITUDE_SMOOTHING);
+        }
+
         private void ConvertBytesToSamples(byte[] bytes, short[] samples)
         {
             for (int i = 0; i < samples.Length; i++)
@@ -433,6 +476,7 @@ namespace BabyStepsMultiplayerClient.Audio
                 }
 
                 opusEncoder = null;
+                currentAmplitude = 0f;
 
                 isInitialized = false;
                 Core.DebugMsg("BBSMicrophoneCapture disposed");

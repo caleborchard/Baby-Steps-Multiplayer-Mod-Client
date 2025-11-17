@@ -61,6 +61,8 @@ namespace BabyStepsMultiplayerClient.Player
             mic.Initialize(micDevice);
             if (micEnabled) mic.StartRecording();
 
+            SetPushToTalkEnabled(ModSettings.audio.PushToTalk.Value);
+
             Core.DebugMsg("LocalPlayer Initialized");
         }
 
@@ -279,7 +281,11 @@ namespace BabyStepsMultiplayerClient.Player
                     if (audioFrame != null && audioFrame.Length > 0)
                     {
                         Core.networkManager.SendAudioFrame(audioFrame);
+
+                        float amplitude = mic.GetAmplitude();
+                        SetMouthOpen(amplitude);
                     }
+                    else CloseMouth();
                 }
             }
 
