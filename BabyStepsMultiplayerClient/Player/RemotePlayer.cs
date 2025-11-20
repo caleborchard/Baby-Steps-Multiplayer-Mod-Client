@@ -247,7 +247,9 @@ namespace BabyStepsMultiplayerClient.Player
             SetOpacity(0f);
             ResetPosition();
 
-            //ResetSuitColor(); // Having this enabled breaks stuff, investigate why later
+            // Having this enabled breaks stuff on recycle, investigate why later
+            //ResetSuitColor();
+
             SetDisplayName("Nate");
 
             if (audioSource != null)

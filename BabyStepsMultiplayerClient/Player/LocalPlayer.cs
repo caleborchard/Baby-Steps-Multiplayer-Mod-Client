@@ -33,6 +33,7 @@ namespace BabyStepsMultiplayerClient.Player
         public BBSMicrophoneCapture mic;
         private bool micEnabled = false;
         private int micDevice = 0;
+        public byte[] latestAudioFrame = null;
 
         private bool pushToTalkEnabled = false;
         private KeyCode pushToTalkKey = KeyCode.V;
@@ -57,6 +58,7 @@ namespace BabyStepsMultiplayerClient.Player
             SetupBonesAndMaterials();
             ApplySuitColor();
 
+            latestAudioFrame = new byte[0];
             mic = new BBSMicrophoneCapture();
             mic.Initialize(micDevice);
             if (micEnabled) mic.StartRecording();
@@ -265,10 +267,10 @@ namespace BabyStepsMultiplayerClient.Player
 
                 if (shouldTransmit)
                 {
-                    byte[] audioFrame = mic.GetOpusPacket();
-                    if (audioFrame != null && audioFrame.Length > 0)
+                    latestAudioFrame = mic.GetOpusPacket();
+                    if (latestAudioFrame != null && latestAudioFrame.Length > 0)
                     {
-                        Core.networkManager.SendAudioFrame(audioFrame);
+                        Core.networkManager.SendAudioFrame(latestAudioFrame);
 
                         float amplitude = mic.GetAmplitude();
                         SetMouthOpen(amplitude);
