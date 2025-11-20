@@ -153,18 +153,6 @@ namespace BabyStepsMultiplayerClient.Player
             if (playerMovement == null) return;
             playerMovement.CleanPlayerCompletely();
         }
-        private System.Collections.IEnumerator RestoreHatDelayed(Hat hat)
-        {
-            // Delay
-            yield return null;
-
-            if (hat != null
-                && playerMovement != null)
-            {
-                playerMovement.KnockOffHat();
-                playerMovement.WearHat(hat);
-            }
-        }
 
         public override void Update()
         {
