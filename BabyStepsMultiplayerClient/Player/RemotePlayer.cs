@@ -127,6 +127,9 @@ namespace BabyStepsMultiplayerClient.Player
                 MelonCoroutines.Start(DelayedSpecificComponentStrip<Il2Cpp.NateShaper>(bone));
             }
 
+            Transform mParent = baseMesh.Find("Nathan.001");
+            MelonCoroutines.Start(DelayedSpecificComponentStrip<Il2Cpp.StencilWriter>(mParent));
+
             if (nateGlasses != null)
             {
                 var materials = nateGlasses.materials;
