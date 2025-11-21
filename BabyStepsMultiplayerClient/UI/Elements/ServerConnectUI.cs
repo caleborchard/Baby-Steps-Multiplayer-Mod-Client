@@ -7,10 +7,8 @@ namespace BabyStepsMultiplayerClient.UI.Elements
     public class ServerConnectUI : RuntimeWindow
     {
         public RuntimeFoldout serverInfoFoldout = new RuntimeFoldout("Server Information", false);
-
         public RuntimeFoldout audioSettingsFoldout = new RuntimeFoldout("Audio Settings", false);
         public RuntimeFoldout microphoneDevicesFoldout = new RuntimeFoldout("Microphone Devices", false);
-
         public RuntimeFoldout generalSettingsFoldout = new RuntimeFoldout("General Settings", false);
         public RuntimeFoldout playerCustomizationFoldout = new RuntimeFoldout("Player Customization", true);
 
@@ -19,7 +17,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
 
         // Peak meter variables
         private float currentPeak = 0f;
-        private float peakDecayRate = 0.95f; // How fast the peak falls
+        private float peakDecayRate = 0.95f;
 
         public ServerConnectUI()
             : base($"Server Join Panel v{Core.CLIENT_VERSION}", 0, new(30, 30), new(250, 400), false)

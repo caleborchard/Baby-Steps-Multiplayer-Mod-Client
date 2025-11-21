@@ -1,9 +1,12 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace BabyStepsMultiplayerClient.UI.Elements
 {
     public class NotificationUI
     {
+        private const float REFERENCE_HEIGHT = 1080f;
+
         private const float fadeDuration = 1f; // Seconds to fade out
 
         private class Message
@@ -35,32 +38,44 @@ namespace BabyStepsMultiplayerClient.UI.Elements
 
         public void DrawUI()
         {
-            float now = GetTime();
+            float scale = Screen.height / REFERENCE_HEIGHT;
 
-            int yOffset = 10;
-            for (int i = messages.Count - 1; i >= 0; i--)
+            Matrix4x4 originalMatrix = GUI.matrix;
+            GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(scale, scale, 1f));
+
+            try
             {
-                var msg = messages[i];
+                float now = GetTime();
+                int yOffset = 10; // This is now 10 pixels at 1080p scale
 
-                if (msg.TimeAdded <= 0f)
-                    msg.TimeAdded = now;
+                float scaledScreenWidth = Screen.width / scale;
 
-                float age = now - msg.TimeAdded;
-                if (FadeMessage(msg.HoldDuration, age, out float alpha))
+                for (int i = messages.Count - 1; i >= 0; i--)
                 {
-                    messagesToRemove.Add(msg);
-                    continue;
+                    var msg = messages[i];
+
+                    if (msg.TimeAdded <= 0f)
+                        msg.TimeAdded = now;
+
+                    float age = now - msg.TimeAdded;
+                    if (FadeMessage(msg.HoldDuration, age, out float alpha))
+                    {
+                        messagesToRemove.Add(msg);
+                        continue;
+                    }
+
+                    GUI.color = new Color(msg.Color.r, msg.Color.g, msg.Color.b, alpha);
+
+                    GUI.Label(new Rect(10, yOffset, scaledScreenWidth - 20, 25), msg.Text, StyleManager.Styles.Label);
+
+                    yOffset += 20;
                 }
-
-                //Color oldColor = GUI.color;
-                //GUI.color = new Color(oldColor.r, oldColor.g, oldColor.b, alpha);
-                GUI.color = new Color(msg.Color.r, msg.Color.g, msg.Color.b, alpha);
-
-                GUI.Label(new Rect(10, yOffset, Screen.width, 25), msg.Text, StyleManager.Styles.Label);
-
-                yOffset += 20;
             }
-            GUI.color = Color.white;
+            finally
+            {
+                GUI.matrix = originalMatrix;
+                GUI.color = Color.white;
+            }
 
             if (messagesToRemove.Count > 0)
             {
@@ -75,8 +90,9 @@ namespace BabyStepsMultiplayerClient.UI.Elements
                 alpha = 1f;
             else
             {
-                float fadeOutAge = age - fadeDuration - HoldDuration;
-                alpha = Mathf.Clamp01(1f - fadeOutAge / fadeDuration);
+                float timeIntoFade = age - HoldDuration;
+                alpha = Mathf.Clamp01(1f - (timeIntoFade / fadeDuration));
+
                 if (alpha <= 0f)
                     return true;
             }
