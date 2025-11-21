@@ -51,6 +51,10 @@ namespace BabyStepsMultiplayerClient.Player
         private const float OPEN_JAW_X = 5f;
         private const float OPEN_LIP_X = 15f;
 
+        public Unity.LiveCapture.ARKitFaceCapture.FaceActor faceActor;
+        int idxJawOpen = -1;
+        int idxMouthClose = -1;
+
         public virtual void Initialize()
         {
             if (baseObject == null) return;
@@ -95,6 +99,12 @@ namespace BabyStepsMultiplayerClient.Player
                     if (ribbonTransform != null)
                         jiminyRibbon = ribbonTransform.gameObject;
                 }
+
+                if (faceActor == null)
+                {
+                    faceActor = baseObject.GetComponentInChildren<Unity.LiveCapture.ARKitFaceCapture.FaceActor>(true);
+                }
+
             }
         }
 
@@ -121,6 +131,10 @@ namespace BabyStepsMultiplayerClient.Player
 
             jawMaster.localEulerAngles = new Vector3(jawX, 180f, 180f);
             mchJawMaster.localEulerAngles = new Vector3(lipX, 180f, 180f);
+
+            // Experimental, does not do anything yet
+            //faceActor.m_BlendShapes.SetValue(Unity.LiveCapture.ARKitFaceCapture.FaceBlendShape.JawOpen, openAmount);
+            //faceActor.m_BlendShapes.SetValue(Unity.LiveCapture.ARKitFaceCapture.FaceBlendShape.MouthClose, 1f - openAmount);
         }
 
         public void CloseMouth()

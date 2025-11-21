@@ -1,7 +1,10 @@
-﻿using BabyStepsMultiplayerClient.Components;
+﻿using BabyStepsMultiplayerClient.Audio;
+using BabyStepsMultiplayerClient.Components;
 using BabyStepsMultiplayerClient.Extensions;
 using BabyStepsMultiplayerClient.Networking;
 using Il2Cpp;
+using Il2CppFluffyGroomingTool;
+using Il2CppInterop.Runtime;
 using Il2CppNWH.DWP2.WaterObjects;
 using MelonLoader;
 using System.Collections.Concurrent;
@@ -9,7 +12,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using BabyStepsMultiplayerClient.Audio;
 
 namespace BabyStepsMultiplayerClient.Player
 {
@@ -118,6 +120,12 @@ namespace BabyStepsMultiplayerClient.Player
                 meshMaterials = skinnedMeshRenderer.materials;
 
             SetupBonesAndMaterials();
+
+            // Check to see if there's a better place for this so we don't have to iterate over everything so many times.
+            foreach (Transform bone in boneChildren)
+            {
+                MelonCoroutines.Start(DelayedSpecificComponentStrip<Il2Cpp.NateShaper>(bone));
+            }
 
             if (nateGlasses != null)
             {
@@ -347,6 +355,22 @@ namespace BabyStepsMultiplayerClient.Player
                 foreach (var component in mesh.GetComponents<Component>())
                     if (component is not Transform)
                         UnityEngine.Object.Destroy(component);
+        }
+
+        private static System.Collections.IEnumerator DelayedSpecificComponentStrip<T>(Transform bone) where T : UnityEngine.Component
+        {
+            yield return null;
+            if (bone != null)
+            {
+                var components = bone.GetComponentsInChildren<T>(true);
+                if (components != null)
+                {
+                    foreach (var c in components)
+                    {
+                        if (c != null) UnityEngine.Object.Destroy(c);
+                    }
+                }
+            }
         }
 
         public void EnableCollision()
