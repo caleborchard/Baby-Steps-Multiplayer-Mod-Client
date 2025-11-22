@@ -34,7 +34,9 @@ namespace BabyStepsMultiplayerClient.Player
         private bool micEnabled = false;
         private int micDevice = 0;
         public byte[] latestAudioFrame = null;
-
+        private float _currentJawTarget = 0f;
+        private bool _isSpeaking = false;
+        private Camera.CameraCallback _onPreCullDelegate;
         private bool pushToTalkEnabled = false;
         private KeyCode pushToTalkKey = KeyCode.V;
 
@@ -65,16 +67,35 @@ namespace BabyStepsMultiplayerClient.Player
 
             SetPushToTalkEnabled(ModSettings.audio.PushToTalk.Value);
 
+            _onPreCullDelegate = new Action<Camera>(OnCameraPreCull);
+            Camera.onPreCull += _onPreCullDelegate;
+
             Core.DebugMsg("LocalPlayer Initialized");
         }
 
         public override void Dispose()
         {
+            if (_onPreCullDelegate != null)
+            {
+                Camera.onPreCull -= _onPreCullDelegate;
+                _onPreCullDelegate = null;
+            }
+
             SetSuitColor(Color.white);
             ResetSuitColor();
 
             if (mic != null) mic.Dispose();
             mic = null;
+        }
+
+        private void OnCameraPreCull(Camera cam)
+        {
+            if (_isSpeaking)
+            {
+                // Force the jaw to the calculated position
+                SetMouthOpen(_currentJawTarget);
+            }
+            // Doesn't force close here if not speaking, allowing the FaceActor to blink normally.
         }
 
         private void UpdateMicrophone()
@@ -249,16 +270,11 @@ namespace BabyStepsMultiplayerClient.Player
             if (playerMovement == null) return;
             if (boneChildren == null) return;
 
-            // This is kind of hacky, find a better way to ensure the LocalPlayer enable state is equal to the config value on load
-            // Cause that's only ever when this is needed
             if (IsMicrophoneEnabled() != ModSettings.audio.MicrophoneEnabled.Value)
-            {
                 SetMicrophoneEnabled(ModSettings.audio.MicrophoneEnabled.Value);
-            }
+
             if (GetMicrophoneDevice() != ModSettings.audio.SelectedMicrophoneIndex.Value)
-            {
                 SetMicrophoneDevice(ModSettings.audio.SelectedMicrophoneIndex.Value);
-            }
 
             if (micEnabled && mic != null && mic.IsRecording())
             {
@@ -272,12 +288,16 @@ namespace BabyStepsMultiplayerClient.Player
                     {
                         Core.networkManager.SendAudioFrame(latestAudioFrame);
 
-                        float amplitude = mic.GetAmplitude();
-                        SetMouthOpen(amplitude);
+                        _currentJawTarget = mic.GetAmplitude();
+                        _isSpeaking = true;
+
+                        SetMouthOpen(_currentJawTarget);
                     }
-                    else CloseMouth();
+                    else _isSpeaking = false;
                 }
+                else _isSpeaking = false;
             }
+            else _isSpeaking = false;
 
             if (Time.realtimeSinceStartup - lastBoneSendTime < boneSendInterval) return;
             lastBoneSendTime = Time.realtimeSinceStartup;
