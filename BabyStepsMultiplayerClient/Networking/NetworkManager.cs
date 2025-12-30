@@ -133,6 +133,8 @@ namespace BabyStepsMultiplayerClient.Networking
             {
                 Core.logger.Error(ex.ToString());
             }
+
+            WorldObjectSyncManager.Update();
         }
 
         public void LateUpdate()
@@ -455,7 +457,7 @@ namespace BabyStepsMultiplayerClient.Networking
                             uuid = data[1];
 
                             long uptimeMs = BitConverter.ToInt64(data, 2);
-                            MelonLogger.Msg(uptimeMs);
+                            WorldObjectSyncManager.SetServerTime(uptimeMs, estimatedRttMs: 0);
 
                             Core.logger.Msg($"Received UUID: {uuid}");
                             break;
