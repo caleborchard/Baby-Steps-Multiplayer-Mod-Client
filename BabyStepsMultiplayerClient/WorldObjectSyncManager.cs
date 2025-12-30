@@ -35,7 +35,7 @@ namespace BabyStepsMultiplayerClient
             serverSyncMsBase = compensatedServerTime;
             localTimer.Restart();
 
-            Core.logger.Msg($"Server time synced: {serverTimeMs}ms (compensated: +{estimatedRttMs / 2}ms)");
+            Core.DebugMsg($"Server time synced: {serverTimeMs}ms (compensated: +{estimatedRttMs / 2}ms)");
         }
         public static void Update()
         {

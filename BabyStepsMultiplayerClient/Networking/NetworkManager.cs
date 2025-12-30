@@ -5,6 +5,7 @@ using LiteNetLib;
 using LiteNetLib.Utils;
 using MelonLoader;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Text;
 using UnityEngine;
 using static Il2CppRootMotion.FinalIK.FBBIKHeadEffector;
@@ -35,6 +36,10 @@ namespace BabyStepsMultiplayerClient.Networking
         // --- Player Tracking ---
         public ConcurrentDictionary<byte, RemotePlayer> players = new();
         private int numClones = 1;
+
+        private static Stopwatch pingTimer = new Stopwatch();
+        private static long lastRttMs = 0;
+        private long uptimeMs = 0;
 
         private bool IsNewer(ushort current, ushort previous)
             => (ushort)(current - previous) < 32768;
@@ -441,6 +446,16 @@ namespace BabyStepsMultiplayerClient.Networking
             Send(writer, DeliveryMethod.Unreliable);
         }
 
+        public void SendPingRequest()
+        {
+            pingTimer.Restart();
+            List<byte> writer = new(maxPacketSize)
+            {
+                (byte)eOpCode.Ping
+            };
+            Send(writer, DeliveryMethod.ReliableOrdered);
+        }
+
         public void HandleServerMessage(byte[] data)
         {
             try
@@ -456,10 +471,11 @@ namespace BabyStepsMultiplayerClient.Networking
 
                             uuid = data[1];
 
-                            long uptimeMs = BitConverter.ToInt64(data, 2);
-                            WorldObjectSyncManager.SetServerTime(uptimeMs, estimatedRttMs: 0);
+                            uptimeMs = BitConverter.ToInt64(data, 2);
 
                             Core.logger.Msg($"Received UUID: {uuid}");
+
+                            SendPingRequest();
                             break;
                         }
 
@@ -729,6 +745,15 @@ namespace BabyStepsMultiplayerClient.Networking
                                     player.audioSource.QueueOpusPacket(audioFrame);
                                 }
                             }
+
+                            break;
+                        }
+                    case 13: // Ping Response Received
+                        {
+                            lastRttMs = pingTimer.ElapsedMilliseconds;
+                            Core.DebugMsg($"Ping response received. RTT: {lastRttMs} ms");
+
+                            WorldObjectSyncManager.SetServerTime(uptimeMs, lastRttMs);
 
                             break;
                         }

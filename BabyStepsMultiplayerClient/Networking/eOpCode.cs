@@ -19,5 +19,8 @@
 
         // User Settings
         ToggleCollisions = 0x07, // Collision Toggle Event
+
+        // Server Ping Request
+        Ping = 0x0A,
     }
 }
