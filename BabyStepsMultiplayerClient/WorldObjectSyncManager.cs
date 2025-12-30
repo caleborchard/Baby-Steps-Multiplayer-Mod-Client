@@ -64,16 +64,16 @@ namespace BabyStepsMultiplayerClient
         {
             if (cachedWaterWheels.Count == 0) return;
 
-            float targetRotation = serverSyncMs % 360f;
+            float targetRotation = (serverSyncMs * 0.01f) % 360f;
 
             foreach (var wheel in cachedWaterWheels)
             {
                 if (wheel == null || wheel.transform == null) continue;
-                Vector3 currentRotation = wheel.transform.eulerAngles;
-                wheel.transform.eulerAngles = new Vector3(
-                    targetRotation,
-                    currentRotation.y,
-                    currentRotation.z
+
+                wheel.transform.localEulerAngles = new Vector3(
+                    -targetRotation,
+                    0f,
+                    0f
                 );
             }
         }
