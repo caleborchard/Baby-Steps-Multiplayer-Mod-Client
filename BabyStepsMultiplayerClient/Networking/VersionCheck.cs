@@ -35,13 +35,17 @@ namespace BabyStepsMultiplayerClient.Networking
             {
                 var latestTag = GetLatestTag();
                 var assemblyVersion = GetAssemblyVersion();
-
                 if (Version.TryParse(latestTag, out var latestVersion))
                 {
                     if (assemblyVersion < latestVersion)
                     {
                         Core.uiManager.notificationsUI
                             .AddMessage("You are on an outdated client version! Please update to connect to the official server!", 10f, Color.red);
+                    }
+                    else if (assemblyVersion > latestVersion)
+                    {
+                        Core.uiManager.notificationsUI
+                            .AddMessage("Your client is a development build.", 3f, Color.blue);
                     }
                     else
                     {

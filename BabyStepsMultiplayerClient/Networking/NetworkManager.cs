@@ -453,6 +453,10 @@ namespace BabyStepsMultiplayerClient.Networking
                             Core.DebugMsg("Personal UUID packet received");
 
                             uuid = data[1];
+
+                            long uptimeMs = BitConverter.ToInt64(data, 2);
+                            MelonLogger.Msg(uptimeMs);
+
                             Core.logger.Msg($"Received UUID: {uuid}");
                             break;
                         }
