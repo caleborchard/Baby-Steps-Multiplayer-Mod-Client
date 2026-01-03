@@ -96,6 +96,9 @@ namespace BabyStepsMultiplayerClient.Networking
             if (LocalPlayer.Instance != null) LocalPlayer.Instance.Dispose();
             LocalPlayer.Instance = null;
 
+            WorldObjectSyncManager.ReleaseCachedWheels();
+            WorldObjectSyncManager.ClearCachedWheels();
+
             Core.uiManager.notificationsUI.AddMessage("Disconnected from server");
         }
 

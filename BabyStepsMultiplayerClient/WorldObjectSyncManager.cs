@@ -48,13 +48,6 @@ namespace BabyStepsMultiplayerClient
         {
             cachedWaterWheels.RemoveAll(w => w == null);
 
-            // Clean up invalid component cache entries
-            var keysToRemove = wheelComponents.Keys.Where(w => w == null).ToList();
-            foreach (var key in keysToRemove)
-            {
-                wheelComponents.Remove(key);
-            }
-
             var allWaterWheels = UnityEngine.Object.FindObjectsOfType<WaterWheel>();
             foreach (var wheel in allWaterWheels)
             {
@@ -117,7 +110,16 @@ namespace BabyStepsMultiplayerClient
                 }
             }
         }
-
+        public static void ReleaseCachedWheels()
+        {
+            foreach (var wheel in cachedWaterWheels)
+            {
+                if (wheel != null)
+                {
+                    wheel.enabled = true;
+                }
+            }
+        }
         public static void ClearCachedWheels()
         {
             cachedWaterWheels.Clear();
