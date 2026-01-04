@@ -97,11 +97,12 @@ namespace BabyStepsMultiplayerClient.Audio
                 opusEncoder = new OpusEncoder(SAMPLE_RATE, 1, OpusApplication.OPUS_APPLICATION_VOIP);
 
                 // Set encoder parameters for low latency
-                opusEncoder.Bitrate = 24000; // 24kbps is good enough quality for voice
-                opusEncoder.Complexity = 5; // 0-10, 5 is okay
+                opusEncoder.Bitrate = 12000; // Reduced from 24000 to 12kbps (half the bandwidth)
+                opusEncoder.Complexity = 3; // Reduced from 5 to 3 (faster encoding, lower CPU)
                 opusEncoder.SignalType = OpusSignal.OPUS_SIGNAL_VOICE;
                 opusEncoder.UseVBR = true; // Variable bitrate
                 opusEncoder.UseDTX = true; // Discontinuous transmission (shut up transmission on silence). Super nice that this is built in
+                opusEncoder.MaxBandwidth = OpusBandwidth.OPUS_BANDWIDTH_MEDIUMBAND; // Reduces bandwidth usage by limiting frequency range
 
                 CREATESOUNDEXINFO exinfo = new CREATESOUNDEXINFO();
                 exinfo.cbsize = System.Runtime.InteropServices.Marshal.SizeOf(typeof(CREATESOUNDEXINFO));

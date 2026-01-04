@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using Unity.Sentis.Layers;
 using UnityEngine;
 
-namespace BabyStepsMultiplayerClient
+namespace BabyStepsMultiplayerClient.Networking
 {
     public static class WorldObjectSyncManager
     {
@@ -96,7 +96,7 @@ namespace BabyStepsMultiplayerClient
                 Quaternion target = xRotation * baseWithoutX;
                 components.wheelRb.MoveRotation(target);
 
-                if (components.axelRb != null) //Goes too fast for some reason, but you never interact with it so whatever
+                if (components.axelRb != null) // Goes too fast for some reason, but you never interact with it so whatever
                 {
                     if (!wheelBaseRotation.TryGetValue(components.axelRb, out Quaternion axelBaseRot))
                     {
