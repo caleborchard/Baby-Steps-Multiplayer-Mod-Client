@@ -59,7 +59,6 @@ namespace BabyStepsMultiplayerClient
                 }
             }
         }
-
         private static void SyncWaterWheels()
         {
             if (cachedWaterWheels.Count == 0) return;
@@ -88,14 +87,16 @@ namespace BabyStepsMultiplayerClient
                 }
 
                 float direction = Mathf.Sign(wheel.speed);
-                float xAngle = -baseAngle * direction; // The negative is a hack, probably a mistake in how I handle euler stuff later
+                float xAngle = baseAngle * direction;
 
+                Quaternion xRotation = Quaternion.AngleAxis(xAngle, baseRot * Vector3.right);
                 Vector3 baseEuler = baseRot.eulerAngles;
-                baseEuler.x = xAngle;
-                Quaternion target = Quaternion.Euler(baseEuler);
+                Quaternion baseWithoutX = Quaternion.Euler(0, baseEuler.y, baseEuler.z);
+
+                Quaternion target = xRotation * baseWithoutX;
                 components.wheelRb.MoveRotation(target);
 
-                if (components.axelRb != null)
+                if (components.axelRb != null) //Goes too fast for some reason, but you never interact with it so whatever
                 {
                     if (!wheelBaseRotation.TryGetValue(components.axelRb, out Quaternion axelBaseRot))
                     {
@@ -104,8 +105,7 @@ namespace BabyStepsMultiplayerClient
                     }
 
                     Vector3 axelBaseEuler = axelBaseRot.eulerAngles;
-                    axelBaseEuler.x = xAngle;
-                    Quaternion axelTarget = Quaternion.Euler(axelBaseEuler);
+                    Quaternion axelTarget = Quaternion.Euler(xAngle, axelBaseEuler.y, axelBaseEuler.z);
                     components.axelRb.MoveRotation(axelTarget);
                 }
             }
