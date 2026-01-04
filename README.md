@@ -42,25 +42,24 @@ Cutscenes are triggered independently on each client and do not affect other pla
 ---
 
 ## ✨ Features
-- Custom player colors
-- Player collisions (can bump into each other) 
-- Independent cutscene triggering per client  
-- Hat replication  
-- Held item replication  
-- Mud and vegetation interaction
-- Position smoothing to compensate for lag
-- Server passwords
-- Togglable collisions
 - Proximity Voice Chat
+- Custom player colors
+- Toggleable player collisions
+- Optional player cutscene visibility
+- Hat and held item replication
+- Mud and vegetation interaction
+- Lag compensation
+- Server passwords
 
 ---
 
 ## 🛠️ Work in Progress / TODO
-- Improved UI  
-- Water particles  
-- Ground dust particles  
-- Player sound effects  
-- Dynamic suit muddying and wetness  
+- Sync more world objects
+- Player sound effects (Nate grunts, steps, thuds)
+- Suit muddying and wetness
+- Water and dust particles
+- Native UI implementation with controller support
+- Translation options
 
 ---
 
