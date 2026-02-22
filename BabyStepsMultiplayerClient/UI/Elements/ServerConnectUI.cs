@@ -109,11 +109,13 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             int currentLanguageIndex = System.Array.IndexOf(availableLanguages, LanguageManager.CurrentLanguage);
             if (currentLanguageIndex < 0) currentLanguageIndex = 0;
 
-            int newLanguageIndex = GUILayout.SelectionGrid(currentLanguageIndex, languageDisplayNames, 2, StyleManager.Styles.ButtonLeftCenteredText);
-            if (newLanguageIndex != currentLanguageIndex && newLanguageIndex >= 0 && newLanguageIndex < availableLanguages.Length)
+            for (int i = 0; i < languageDisplayNames.Length; i++)
             {
-                LanguageManager.SetLanguage(availableLanguages[newLanguageIndex]);
-                UpdateFoldoutLabels();
+                if (GUILayout.Button(languageDisplayNames[i], StyleManager.Styles.Button))
+                {
+                    LanguageManager.SetLanguage(availableLanguages[i]);
+                    UpdateFoldoutLabels();
+                }
             }
         }
 

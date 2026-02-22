@@ -21,7 +21,10 @@ namespace BabyStepsMultiplayerClient.Localization
                 { "English", new EnglishLanguage() },
                 { "Spanish", new SpanishLanguage() },
                 { "French", new FrenchLanguage() },
-                { "German", new GermanLanguage() }
+                { "German", new GermanLanguage() },
+                { "Korean", new KoreanLanguage() },
+                { "ChineseSimplified", new ChineseSimplifiedLanguage() },
+                { "ChineseTraditional", new ChineseTraditionalLanguage() },
             };
 
             LoadLanguageFromConfig();
