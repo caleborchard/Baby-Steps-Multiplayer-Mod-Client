@@ -146,6 +146,12 @@ namespace BabyStepsMultiplayerClient.Player
         public virtual void Update() { }
         public virtual void LateUpdate() { }
 
+        protected static Color GetRainbowColor(float time)
+        {
+            float hue = Mathf.Repeat(time * 0.2f, 1f);
+            return Color.HSVToRGB(hue, 1f, 1f);
+        }
+
         public Texture2D CloneSuitTexture()
         {
             if (suitMaterial == null)

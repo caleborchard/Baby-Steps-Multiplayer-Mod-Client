@@ -39,6 +39,10 @@ namespace BabyStepsMultiplayerClient.Player
         public (FootData, FootData) feetData;
 
         public string displayName = "Nate";
+        private bool rainbowSuitActive;
+        private Color baseSuitColor = Color.white;
+
+        public Color BaseSuitColor => baseSuitColor;
 
         private BoneSnapshot currentBoneGroup;
         private ConcurrentQueue<BoneSnapshot> snapshotBuffer = new();
@@ -273,6 +277,8 @@ namespace BabyStepsMultiplayerClient.Player
             firstBoneInterpRan = false;
             netCollisionsEnabled = false;
             firstAppearanceApplication = false;
+            rainbowSuitActive = false;
+            baseSuitColor = Color.white;
             snapshotBuffer.Clear();
 
             GlobalPool.Add(this);
@@ -291,6 +297,7 @@ namespace BabyStepsMultiplayerClient.Player
             if (nameTag != null) nameTag.LateUpdate();
 
             InterpolateBoneTransforms();
+            UpdateRainbowSuit();
 
             if ((rootBone != null) && (LocalPlayer.Instance != null))
             {
@@ -318,6 +325,31 @@ namespace BabyStepsMultiplayerClient.Player
                 SetMouthOpen(normalizedAmplitude);
             }
             else CloseMouth(); // Try to find a better way to reliably reset the mouth
+        }
+
+        public void UpdateBaseSuitColor(Color color)
+        {
+            baseSuitColor = color;
+            if (!rainbowSuitActive)
+                SetSuitColor(color);
+        }
+
+        public void SetRainbowSuitActive(bool active)
+        {
+            if (rainbowSuitActive == active)
+                return;
+
+            rainbowSuitActive = active;
+            if (!rainbowSuitActive)
+                SetSuitColor(baseSuitColor);
+        }
+
+        private void UpdateRainbowSuit()
+        {
+            if (!rainbowSuitActive)
+                return;
+
+            SetSuitColor(GetRainbowColor(Time.time));
         }
 
         public void SetDisplayName(string name)

@@ -24,6 +24,7 @@ namespace BabyStepsMultiplayerClient.Player
         public Hat lastHat;
 
         private bool _sentInitialState = false;
+        private bool rainbowSuitActive = false;
 
         private float lastBoneSendTime = 0f;
         private const float boneSendInterval = 0.033f;
@@ -272,6 +273,23 @@ namespace BabyStepsMultiplayerClient.Player
                     }
                 }
             }
+
+            UpdateRainbowSuit();
+        }
+
+        private void UpdateRainbowSuit()
+        {
+            bool shouldBeActive = Core.networkManager != null && Core.networkManager.IsEasterEggActive;
+
+            if (shouldBeActive != rainbowSuitActive)
+            {
+                rainbowSuitActive = shouldBeActive;
+                if (!rainbowSuitActive)
+                    ApplySuitColor();
+            }
+
+            if (rainbowSuitActive)
+                SetSuitColor(GetRainbowColor(Time.time));
         }
 
         public override void LateUpdate()

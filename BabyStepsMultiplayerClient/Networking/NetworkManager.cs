@@ -7,6 +7,9 @@ using LiteNetLib.Utils;
 using MelonLoader;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Linq;
+using System.Net;
+using System.Net.NetworkInformation;
 using System.Text;
 using UnityEngine;
 using static Il2CppRootMotion.FinalIK.FBBIKHeadEffector;
@@ -37,6 +40,10 @@ namespace BabyStepsMultiplayerClient.Networking
         // --- Player Tracking ---
         public ConcurrentDictionary<byte, RemotePlayer> players = new();
         private int numClones = 1;
+
+        private const string EasterEggMarker = "\u2063";
+        private IPAddress connectedServerAddress;
+        public bool IsEasterEggActive { get; private set; }
 
         private bool IsNewer(ushort current, ushort previous)
             => (ushort)(current - previous) < 32768;
@@ -79,6 +86,8 @@ namespace BabyStepsMultiplayerClient.Networking
             client?.Stop();
             client = null;
             server = null;
+            connectedServerAddress = null;
+            IsEasterEggActive = false;
             localBoneSequenceNumber = 0;
             localAudioFrameSequenceNumber = 0;
             uuid = 0;
@@ -177,18 +186,139 @@ namespace BabyStepsMultiplayerClient.Networking
             }
         }
 
+        public static bool HasEasterEggMarker(string name)
+            => !string.IsNullOrEmpty(name) && name.Contains(EasterEggMarker, StringComparison.Ordinal);
+
+        public static string StripEasterEggMarker(string name)
+            => string.IsNullOrEmpty(name) ? name : name.Replace(EasterEggMarker, string.Empty, StringComparison.Ordinal);
+
+        private static IPAddress ResolveServerAddress(string serverAddress)
+        {
+            if (string.IsNullOrWhiteSpace(serverAddress))
+                return null;
+
+            if (string.Equals(serverAddress, "localhost", StringComparison.OrdinalIgnoreCase))
+                return IPAddress.Loopback;
+
+            if (IPAddress.TryParse(serverAddress, out var parsedAddress))
+                return parsedAddress;
+
+            try
+            {
+                return Dns.GetHostAddresses(serverAddress).FirstOrDefault();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static bool IsLocalAddress(IPAddress address)
+        {
+            if (address == null)
+                return false;
+
+            if (IPAddress.IsLoopback(address))
+                return true;
+
+            try
+            {
+                foreach (var networkInterface in NetworkInterface.GetAllNetworkInterfaces())
+                {
+                    if (networkInterface.OperationalStatus != OperationalStatus.Up)
+                        continue;
+
+                    var ipProperties = networkInterface.GetIPProperties();
+                    foreach (var unicast in ipProperties.UnicastAddresses)
+                    {
+                        if (unicast.Address == null)
+                            continue;
+
+                        if (unicast.Address.Equals(address))
+                            return true;
+
+                        if (unicast.IPv4Mask != null
+                            && unicast.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork
+                            && address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                        {
+                            if (IsInSameSubnet(address, unicast.Address, unicast.IPv4Mask))
+                                return true;
+                        }
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+            return false;
+        }
+
+        private static bool IsInSameSubnet(IPAddress address, IPAddress subnetAddress, IPAddress subnetMask)
+        {
+            var addressBytes = address.GetAddressBytes();
+            var subnetBytes = subnetAddress.GetAddressBytes();
+            var maskBytes = subnetMask.GetAddressBytes();
+
+            if (addressBytes.Length != subnetBytes.Length || addressBytes.Length != maskBytes.Length)
+                return false;
+
+            for (int i = 0; i < addressBytes.Length; i++)
+            {
+                if ((addressBytes[i] & maskBytes[i]) != (subnetBytes[i] & maskBytes[i]))
+                    return false;
+            }
+
+            return true;
+        }
+
+        private void UpdateEasterEggState()
+        {
+            bool shouldBeActive = false;
+            string nickname = ModSettings.player.Nickname.Value;
+
+            var resolvedAddress = ResolveServerAddress(ModSettings.connection.Address.Value);
+            if (resolvedAddress != null)
+                connectedServerAddress = resolvedAddress;
+
+            if (!string.IsNullOrWhiteSpace(nickname)
+                && string.Equals(nickname, "Caleb", StringComparison.Ordinal)
+                && connectedServerAddress != null)
+            {
+                shouldBeActive = IsLocalAddress(connectedServerAddress);
+            }
+
+            IsEasterEggActive = shouldBeActive;
+        }
+
+        private string GetNicknameForSend()
+        {
+            UpdateEasterEggState();
+
+            string nickname = StripEasterEggMarker(ModSettings.player.Nickname.Value ?? string.Empty);
+            if (IsEasterEggActive)
+                nickname += EasterEggMarker;
+
+            return nickname;
+        }
+
         private void ApplyAppearanceUpdate(RemotePlayer player, byte[] data)
         {
             var lang = LanguageManager.GetCurrentLanguage();
             Color color = new Color(data[2] / 255f, data[3] / 255f, data[4] / 255f);
 
-            bool colorDifferent = player.GetSuitColor() != color;
-            if (colorDifferent) player.SetSuitColor(color);
+            bool colorDifferent = player.BaseSuitColor != color;
+            player.UpdateBaseSuitColor(color);
 
             int nicknameLength = data.Length - 5;
             if (nicknameLength > 0)
             {
-                string name = Encoding.UTF8.GetString(data, 5, nicknameLength);
+                string rawName = Encoding.UTF8.GetString(data, 5, nicknameLength);
+                bool hasEasterEggMarker = HasEasterEggMarker(rawName);
+                string name = StripEasterEggMarker(rawName);
+
+                player.SetRainbowSuitActive(hasEasterEggMarker);
+
                 if (!player.firstAppearanceApplication)
                 {
                     Core.uiManager.notificationsUI.AddMessage(string.Format(lang.HasConnected, name));
@@ -428,7 +558,7 @@ namespace BabyStepsMultiplayerClient.Networking
                 (byte)(ModSettings.player.SuitColor.Value.g * 255),
                 (byte)(ModSettings.player.SuitColor.Value.b * 255)
             };
-            writer.AddRange(Encoding.UTF8.GetBytes(ModSettings.player.Nickname.Value));
+            writer.AddRange(Encoding.UTF8.GetBytes(GetNicknameForSend()));
 
             Send(writer, DeliveryMethod.ReliableOrdered);
         }
