@@ -40,6 +40,10 @@ namespace BabyStepsMultiplayerClient.Player
         private bool pushToTalkEnabled = false;
         private KeyCode pushToTalkKey = KeyCode.V;
 
+        private LineOfSightManager lineOfSightManager;
+        private float lastGazableUpdateTime = 0f;
+        private const float gazableUpdateInterval = 0.1f; // Update every 100ms
+
         public override void Initialize()
         {
             Core.DebugMsg("Starting LocalPlayer Initialize function");
@@ -70,6 +74,11 @@ namespace BabyStepsMultiplayerClient.Player
             _onPreCullDelegate = new Action<Camera>(OnCameraPreCull);
             Camera.onPreCull += _onPreCullDelegate;
 
+            if (headBone != null)
+            {
+                lineOfSightManager = new LineOfSightManager(headBone);
+            }
+
             Core.DebugMsg("LocalPlayer Initialized");
         }
 
@@ -86,6 +95,8 @@ namespace BabyStepsMultiplayerClient.Player
 
             if (mic != null) mic.Dispose();
             mic = null;
+
+            lineOfSightManager = null;
         }
 
         private void OnCameraPreCull(Camera cam)
@@ -299,11 +310,42 @@ namespace BabyStepsMultiplayerClient.Player
             }
             else _isSpeaking = false;
 
+            // Update line of sight for Gazable components
+            UpdateLineOfSight();
+
             if (Time.realtimeSinceStartup - lastBoneSendTime < boneSendInterval) return;
             lastBoneSendTime = Time.realtimeSinceStartup;
 
             var bonesToSend = TransformNet.ToNet(boneChildren);
             Core.networkManager.SendBones(bonesToSend, 0);
         }
+
+        private void UpdateLineOfSight()
+        {
+            if (lineOfSightManager == null)
+                return;
+
+            // Throttle updates to avoid excessive checks
+            if (Time.realtimeSinceStartup - lastGazableUpdateTime < gazableUpdateInterval)
+                return;
+
+            lastGazableUpdateTime = Time.realtimeSinceStartup;
+
+            foreach (var remotePlayer in RemotePlayer.GlobalPool)
+            {
+                if (remotePlayer == null || remotePlayer.headBone == null || remotePlayer.gazable == null)
+                    continue;
+
+                Vector3 targetPosition = remotePlayer.headBone.position;
+                bool isVisible = lineOfSightManager.CanSee(targetPosition);
+
+                if (remotePlayer.gazable.enabled != isVisible)
+                {
+                    remotePlayer.gazable.enabled = isVisible;
+                }
+            }
+        }
+
+        public LineOfSightManager GetLineOfSightManager() => lineOfSightManager;
     }
 }
