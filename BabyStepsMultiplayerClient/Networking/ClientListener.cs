@@ -1,4 +1,5 @@
 ﻿using BabyStepsMultiplayerClient.Player;
+using BabyStepsMultiplayerClient.Localization;
 using LiteNetLib;
 using System.Net;
 using System.Net.Sockets;
@@ -12,7 +13,8 @@ namespace BabyStepsMultiplayerClient.Networking
         {
             Core.networkManager.server = peer;
             Core.networkManager.SendPlayerInformation();
-            Core.uiManager.notificationsUI.AddMessage("Connected to server");
+            var lang = LanguageManager.GetCurrentLanguage();
+            Core.uiManager.notificationsUI.AddMessage(lang.ConnectedToServer);
         }
 
         public void OnPeerDisconnected(NetPeer peer, DisconnectInfo info)

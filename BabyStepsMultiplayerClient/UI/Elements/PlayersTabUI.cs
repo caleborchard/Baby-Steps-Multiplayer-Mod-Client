@@ -1,5 +1,6 @@
 ﻿using BabyStepsMultiplayerClient.Player;
 using UnityEngine;
+using BabyStepsMultiplayerClient.Localization;
 
 namespace BabyStepsMultiplayerClient.UI.Elements
 {
@@ -8,7 +9,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
         private static Vector2 defaultSize = new Vector2(300, 10);
 
         public PlayersTabUI()
-            : base("Connected Players", 2,
+            : base(LanguageManager.GetCurrentLanguage().ConnectedPlayers, 2,
                   new((Screen.width / 2f) - (defaultSize.x / 2), 20),
                   defaultSize, false)
         {
@@ -21,6 +22,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
 
         internal override void DrawContent()
         {
+            var lang = LanguageManager.GetCurrentLanguage();
             float scale = Screen.height / 1080f;
             Vector2 newPos = Position;
             newPos.x = ((Screen.width / scale) / 2f) - (Size.x / 2);
@@ -32,12 +34,12 @@ namespace BabyStepsMultiplayerClient.UI.Elements
                 && (LocalPlayer.Instance.headBone != null))
                 localHeight = (int)(LocalPlayer.Instance.headBone.position.y - 120);
 
-            Label = $"Connected Players [Y:{localHeight}]";
+            Label = $"{lang.ConnectedPlayers} [Y:{localHeight}]";
 
             GUILayout.Space(1);
 
             if (Core.networkManager.players.Count == 0)
-                GUILayout.Label("No players connected.", StyleManager.Styles.MiddleCenterLabel);
+                GUILayout.Label(lang.NoPlayersConnected, StyleManager.Styles.MiddleCenterLabel);
             else
                 foreach (var kvp in Core.networkManager.players)
                 {

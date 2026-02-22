@@ -1,16 +1,18 @@
 ﻿using UnityEngine;
 using System.Text.RegularExpressions;
 using BabyStepsMultiplayerClient.Player;
+using BabyStepsMultiplayerClient.Localization;
 
 namespace BabyStepsMultiplayerClient.UI.Elements
 {
     public class ServerConnectUI : RuntimeWindow
     {
-        public RuntimeFoldout serverInfoFoldout = new RuntimeFoldout("Server Information", false);
-        public RuntimeFoldout audioSettingsFoldout = new RuntimeFoldout("Audio Settings", false);
-        public RuntimeFoldout microphoneDevicesFoldout = new RuntimeFoldout("Microphone Devices", false);
-        public RuntimeFoldout generalSettingsFoldout = new RuntimeFoldout("General Settings", false);
-        public RuntimeFoldout playerCustomizationFoldout = new RuntimeFoldout("Player Customization", true);
+        private RuntimeFoldout serverInfoFoldout;
+        private RuntimeFoldout audioSettingsFoldout;
+        private RuntimeFoldout microphoneDevicesFoldout;
+        private RuntimeFoldout generalSettingsFoldout;
+        private RuntimeFoldout playerCustomizationFoldout;
+        private RuntimeFoldout languageSettingsFoldout;
 
         private string[] availableDevices = new string[0];
         private bool isWaitingForKey = false;
@@ -23,10 +25,24 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             : base($"Server Join Panel v{Core.CLIENT_VERSION}", 0, new(30, 30), new(250, 400), false)
         {
             ShouldDrawContentBacker = false;
+            UpdateFoldoutLabels();
+        }
+
+        private void UpdateFoldoutLabels()
+        {
+            var lang = LanguageManager.GetCurrentLanguage();
+            serverInfoFoldout = new RuntimeFoldout(lang.ServerInformation, false);
+            audioSettingsFoldout = new RuntimeFoldout(lang.AudioSettings, false);
+            microphoneDevicesFoldout = new RuntimeFoldout(lang.MicrophoneDevices, false);
+            generalSettingsFoldout = new RuntimeFoldout(lang.GeneralSettings, false);
+            playerCustomizationFoldout = new RuntimeFoldout(lang.PlayerCustomization, true);
+            languageSettingsFoldout = new RuntimeFoldout(lang.Language, false);
         }
 
         internal override void DrawContent()
         {
+            var lang = LanguageManager.GetCurrentLanguage();
+
             // Handle key input for push-to-talk keybind (must be before GUI rendering)
             if (isWaitingForKey)
             {
@@ -46,7 +62,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             }
 
             bool isConnected = Core.networkManager.client != null;
-            string buttonText = isConnected ? "Disconnect" : "Connect";
+            string buttonText = isConnected ? lang.Disconnect : lang.Connect;
 
             if (GUILayout.Button(buttonText, StyleManager.Styles.Button))
             {
@@ -66,6 +82,9 @@ namespace BabyStepsMultiplayerClient.UI.Elements
                 }
             }
 
+            GUILayout.Space(5);
+
+            languageSettingsFoldout.Draw(HandleLanguageSettings);
             GUILayout.Space(10);
 
             serverInfoFoldout.Draw(HandleServerInfo);
@@ -77,17 +96,39 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             playerCustomizationFoldout.Draw(HandlePlayerCustomization);
         }
 
+        private void HandleLanguageSettings()
+        {
+            string[] availableLanguages = LanguageManager.GetAvailableLanguages();
+            string[] languageDisplayNames = new string[availableLanguages.Length];
+            
+            for (int i = 0; i < availableLanguages.Length; i++)
+            {
+                languageDisplayNames[i] = LanguageNativeNames.GetNativeName(availableLanguages[i]);
+            }
+
+            int currentLanguageIndex = System.Array.IndexOf(availableLanguages, LanguageManager.CurrentLanguage);
+            if (currentLanguageIndex < 0) currentLanguageIndex = 0;
+
+            int newLanguageIndex = GUILayout.SelectionGrid(currentLanguageIndex, languageDisplayNames, 2, StyleManager.Styles.ButtonLeftCenteredText);
+            if (newLanguageIndex != currentLanguageIndex && newLanguageIndex >= 0 && newLanguageIndex < availableLanguages.Length)
+            {
+                LanguageManager.SetLanguage(availableLanguages[newLanguageIndex]);
+                UpdateFoldoutLabels();
+            }
+        }
+
         private void HandleServerInfo()
         {
-            GUILayout.Label("Server IP:", StyleManager.Styles.Label);
+            var lang = LanguageManager.GetCurrentLanguage();
+            GUILayout.Label(lang.ServerIP, StyleManager.Styles.Label);
             ModSettings.connection.Address.Value = GUILayout.TextField(ModSettings.connection.Address.Value, 32, StyleManager.Styles.TextField);
-            GUILayout.Label("Server Port:", StyleManager.Styles.Label);
+            GUILayout.Label(lang.ServerPort, StyleManager.Styles.Label);
 
             string newPort = GUILayout.TextField(ModSettings.connection.Port.Value.ToString(), 5, StyleManager.Styles.TextField);
             if (int.TryParse(newPort, out int customPort))
                 ModSettings.connection.Port.Value = customPort;
 
-            GUILayout.Label("Password (Optional):", StyleManager.Styles.Label);
+            GUILayout.Label(lang.PasswordOptional, StyleManager.Styles.Label);
             ModSettings.connection.Password.Value = GUILayout.PasswordField(ModSettings.connection.Password.Value, '*', 32, StyleManager.Styles.TextField);
 
             GUILayout.Space(5);
@@ -95,9 +136,10 @@ namespace BabyStepsMultiplayerClient.UI.Elements
 
         private void HandleAudioSettings()
         {
+            var lang = LanguageManager.GetCurrentLanguage();
             GUI.enabled = LocalPlayer.Instance != null;
 
-            string buttonText = (ModSettings.audio.MicrophoneEnabled.Value ? "Disable" : "Enable") + " Microphone";
+            string buttonText = (ModSettings.audio.MicrophoneEnabled.Value ? lang.DisableMicrophone : lang.EnableMicrophone);
 
             if (GUILayout.Button(buttonText, StyleManager.Styles.Button))
             {
@@ -108,7 +150,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             GUILayout.Space(5);
 
             // Deafen Toggle
-            if (GUILayout.Button((ModSettings.audio.Deafened.Value ? "Undeafen" : "Deafen"), StyleManager.Styles.Button))
+            if (GUILayout.Button((ModSettings.audio.Deafened.Value ? lang.Undeafen : lang.Deafen), StyleManager.Styles.Button))
             {
                 ModSettings.audio.Deafened.Value = !ModSettings.audio.Deafened.Value;
             }
@@ -116,7 +158,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             GUILayout.Space(5);
 
             // Push to Talk Toggle
-            if (GUILayout.Button((ModSettings.audio.PushToTalk.Value ? "Disable" : "Enable") + " Push to Talk", StyleManager.Styles.Button))
+            if (GUILayout.Button((ModSettings.audio.PushToTalk.Value ? lang.DisablePushToTalk : lang.EnablePushToTalk), StyleManager.Styles.Button))
             {
                 ModSettings.audio.PushToTalk.Value = !ModSettings.audio.PushToTalk.Value;
                 LocalPlayer.Instance?.SetPushToTalkEnabled(ModSettings.audio.PushToTalk.Value);
@@ -128,9 +170,9 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             GUI.enabled = LocalPlayer.Instance != null && ModSettings.audio.PushToTalk.Value;
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Push to Talk Key:", StyleManager.Styles.Label);
+            GUILayout.Label(lang.PushToTalkKey, StyleManager.Styles.Label);
 
-            string keyButtonText = isWaitingForKey ? "Press any key..." : ModSettings.audio.PushToTalkKey.Value;
+            string keyButtonText = isWaitingForKey ? lang.PressAnyKey : ModSettings.audio.PushToTalkKey.Value;
             if (GUILayout.Button(keyButtonText, StyleManager.Styles.Button, GUILayout.Width(120)))
             {
                 isWaitingForKey = true;
@@ -141,7 +183,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             GUI.enabled = LocalPlayer.Instance != null;
 
             // Microphone Gain Slider
-            GUILayout.Label($"Microphone Gain: {ModSettings.audio.MicrophoneGain.Value:F2}x", StyleManager.Styles.Label);
+            GUILayout.Label($"{lang.MicrophoneGain} {ModSettings.audio.MicrophoneGain.Value:F2}x", StyleManager.Styles.Label);
             float newGain = GUILayout.HorizontalSlider(
                 ModSettings.audio.MicrophoneGain.Value,
                 0f,
@@ -178,7 +220,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
 
             // Meter
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Level:", StyleManager.Styles.Label, GUILayout.Width(45));
+            GUILayout.Label(LanguageManager.GetCurrentLanguage().Level, StyleManager.Styles.Label, GUILayout.Width(45));
 
             Rect meterRect = GUILayoutUtility.GetRect(180, 20, GUILayout.ExpandWidth(false));
 
@@ -277,8 +319,9 @@ namespace BabyStepsMultiplayerClient.UI.Elements
 
         private void HandleGeneralSettings()
         {
+            var lang = LanguageManager.GetCurrentLanguage();
             GUI.enabled = !(Core.networkManager.client == null);
-            if (GUILayout.Button((ModSettings.player.Collisions.Value ? "Disable" : "Enable") + " Collisions", StyleManager.Styles.Button))
+            if (GUILayout.Button((ModSettings.player.Collisions.Value ? lang.DisableCollisions : lang.EnableCollisions), StyleManager.Styles.Button))
             {
                 ModSettings.player.Collisions.Value = !ModSettings.player.Collisions.Value;
                 Core.networkManager.SendCollisionToggle(ModSettings.player.Collisions.Value);
@@ -295,7 +338,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             GUI.enabled = true;
 
             GUI.enabled = !(Core.networkManager.client == null);
-            if (GUILayout.Button((ModSettings.player.CutscenePlayerVisibility.Value ? "Enable" : "Disable") + " Player Cutscene Visibility", StyleManager.Styles.Button))
+            if (GUILayout.Button((ModSettings.player.CutscenePlayerVisibility.Value ? lang.DisablePlayerCutsceneVisibility : lang.EnablePlayerCutsceneVisibility), StyleManager.Styles.Button))
             {
                 ModSettings.player.CutscenePlayerVisibility.Value = !ModSettings.player.CutscenePlayerVisibility.Value;
             }
@@ -303,7 +346,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             GUI.enabled = true;
 
             GUI.enabled = !(Core.networkManager.client == null);
-            if (GUILayout.Button((ModSettings.player.ShowNametags.Value ? "Disable" : "Enable") + " Nametag Visibility", StyleManager.Styles.Button))
+            if (GUILayout.Button((ModSettings.player.ShowNametags.Value ? lang.DisableNametags : lang.EnableNametags), StyleManager.Styles.Button))
             {
                 ModSettings.player.ShowNametags.Value = !ModSettings.player.ShowNametags.Value;
             }
@@ -313,8 +356,9 @@ namespace BabyStepsMultiplayerClient.UI.Elements
 
         private void HandlePlayerCustomization()
         {
+            var lang = LanguageManager.GetCurrentLanguage();
             GUI.enabled = !(Core.networkManager.client == null);
-            if (GUILayout.Button("Update Name & Appearance", StyleManager.Styles.Button) && Core.networkManager.client != null)
+            if (GUILayout.Button(lang.UpdateNameAndAppearance, StyleManager.Styles.Button) && Core.networkManager.client != null)
             {
                 SaveConfig();
                 Core.networkManager.mainThreadActions.Enqueue(() => {
@@ -322,13 +366,13 @@ namespace BabyStepsMultiplayerClient.UI.Elements
                     if (LocalPlayer.Instance != null)
                         LocalPlayer.Instance.ApplySuitColor();
                 });
-                Core.uiManager.notificationsUI.AddMessage("Your appearance has been updated");
+                Core.uiManager.notificationsUI.AddMessage(lang.AppearanceUpdated);
             }
 
             GUILayout.Space(5);
             GUI.enabled = true;
 
-            GUILayout.Label("Nickname:", StyleManager.Styles.Label);
+            GUILayout.Label(lang.Nickname, StyleManager.Styles.Label);
             ModSettings.player.Nickname.Value = FilterKeyboardCharacters(GUILayout.TextField(ModSettings.player.Nickname.Value, 20, StyleManager.Styles.TextField));
 
             var currentColor = ModSettings.player.SuitColor.Value;
@@ -339,7 +383,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
 
             // Row: "Suit Tint:" and color preview block
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Suit Tint:", StyleManager.Styles.Label, GUILayout.Width(80));
+            GUILayout.Label(lang.SuitTint, StyleManager.Styles.Label, GUILayout.Width(80));
 
             // Draw the color block on the same line
             GUI.color = currentColor;
@@ -349,18 +393,25 @@ namespace BabyStepsMultiplayerClient.UI.Elements
 
             GUILayout.Space(2);
 
-            GUILayout.Label($"Red: {(int)(currentColor.r * 255)}", StyleManager.Styles.Label);
+            GUILayout.Label($"{lang.Red} {(int)(currentColor.r * 255)}", StyleManager.Styles.Label);
             currentColor.r = GUILayout.HorizontalSlider(currentColor.r, 0f, 1f, StyleManager.Styles.HorizontalSlider, StyleManager.Styles.HorizontalSliderThumb);
 
-            GUILayout.Label($"Green: {(int)(currentColor.g * 255)}", StyleManager.Styles.Label);
+            GUILayout.Label($"{lang.Green} {(int)(currentColor.g * 255)}", StyleManager.Styles.Label);
             currentColor.g = GUILayout.HorizontalSlider(currentColor.g, 0f, 1f, StyleManager.Styles.HorizontalSlider, StyleManager.Styles.HorizontalSliderThumb);
 
-            GUILayout.Label($"Blue: {(int)(currentColor.b * 255)}", StyleManager.Styles.Label);
+            GUILayout.Label($"{lang.Blue} {(int)(currentColor.b * 255)}", StyleManager.Styles.Label);
             currentColor.b = GUILayout.HorizontalSlider(currentColor.b, 0f, 1f, StyleManager.Styles.HorizontalSlider, StyleManager.Styles.HorizontalSliderThumb);
 
             GUILayout.Space(5);
             ModSettings.player.SuitColor.Value = currentColor;
 
+            GUI.enabled = !(Core.networkManager.client == null);
+            if (GUILayout.Button((ModSettings.player.ShowNametags.Value ? lang.DisableNametags : lang.EnableNametags), StyleManager.Styles.Button))
+            {
+                ModSettings.player.ShowNametags.Value = !ModSettings.player.ShowNametags.Value;
+            }
+            GUILayout.Space(5);
+            GUI.enabled = true;
         }
 
         // --- Helpers ---

@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using BabyStepsMultiplayerClient.Localization;
 
 namespace BabyStepsMultiplayerClient.UI.Elements
 {
@@ -66,7 +67,8 @@ namespace BabyStepsMultiplayerClient.UI.Elements
 
             Core.networkManager.SendChatMessage(message);
 
-            Core.uiManager.notificationsUI.AddMessage($"You: {message}");
+            var lang = LanguageManager.GetCurrentLanguage();
+            Core.uiManager.notificationsUI.AddMessage($"{lang.You}: {message}");
             message = "";
         }
     }

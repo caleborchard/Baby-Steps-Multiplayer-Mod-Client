@@ -1,5 +1,6 @@
 ﻿using BabyStepsMultiplayerClient.Audio;
 using BabyStepsMultiplayerClient.Player;
+using BabyStepsMultiplayerClient.Localization;
 using Il2Cpp;
 using LiteNetLib;
 using LiteNetLib.Utils;
@@ -178,6 +179,7 @@ namespace BabyStepsMultiplayerClient.Networking
 
         private void ApplyAppearanceUpdate(RemotePlayer player, byte[] data)
         {
+            var lang = LanguageManager.GetCurrentLanguage();
             Color color = new Color(data[2] / 255f, data[3] / 255f, data[4] / 255f);
 
             bool colorDifferent = player.GetSuitColor() != color;
@@ -189,15 +191,15 @@ namespace BabyStepsMultiplayerClient.Networking
                 string name = Encoding.UTF8.GetString(data, 5, nicknameLength);
                 if (!player.firstAppearanceApplication)
                 {
-                    Core.uiManager.notificationsUI.AddMessage($"{name} has connected");
+                    Core.uiManager.notificationsUI.AddMessage(string.Format(lang.HasConnected, name));
                     player.firstAppearanceApplication = true;
                 }
                 else
                 {
                     if (player.displayName != name)
-                        Core.uiManager.notificationsUI.AddMessage($"{player.displayName} has changed their nickname to {name}");
+                        Core.uiManager.notificationsUI.AddMessage(string.Format(lang.HasChangedNicknameTo, player.displayName, name));
                     if (colorDifferent)
-                        Core.uiManager.notificationsUI.AddMessage($"{player.displayName} has updated their color");
+                        Core.uiManager.notificationsUI.AddMessage(string.Format(lang.HasUpdatedTheirColor, player.displayName));
                 }
 
                 player.SetDisplayName(name);
@@ -509,10 +511,11 @@ namespace BabyStepsMultiplayerClient.Networking
                             byte disconnectedUUID = data[1];
                             if (players.TryGetValue(disconnectedUUID, out var player))
                             {
+                                var lang = LanguageManager.GetCurrentLanguage();
                                 players.Remove(disconnectedUUID, out _);
                                 lastSeenBoneSequences.Remove(disconnectedUUID, out _);
                                 lastSeenAudioFrameSequences.Remove(disconnectedUUID, out _);
-                                Core.uiManager.notificationsUI.AddMessage($"{player.displayName} has disconnected");
+                                Core.uiManager.notificationsUI.AddMessage(string.Format(lang.HasDisconnected, player.displayName));
                                 player.Dispose();
                             }
                             //else

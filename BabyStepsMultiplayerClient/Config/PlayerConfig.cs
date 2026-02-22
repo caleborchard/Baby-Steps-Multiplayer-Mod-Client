@@ -10,6 +10,7 @@ namespace BabyStepsMultiplayerClient.Config
         internal MelonPreferences_Entry<bool> Collisions;
         internal MelonPreferences_Entry<bool> CutscenePlayerVisibility;
         internal MelonPreferences_Entry<bool> ShowNametags;
+        internal MelonPreferences_Entry<string> Language;
 
         public override string ID
             => "Player";
@@ -40,6 +41,11 @@ namespace BabyStepsMultiplayerClient.Config
                 "Show Nametags",
                 "Show Nametags Above Other Players",
                 true);
+
+            Language = CreatePref("Language",
+                "Language",
+                "UI Language",
+                "English");
         }
     }
 }

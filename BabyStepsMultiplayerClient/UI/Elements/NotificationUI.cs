@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using BabyStepsMultiplayerClient.Localization;
 
 namespace BabyStepsMultiplayerClient.UI.Elements
 {
