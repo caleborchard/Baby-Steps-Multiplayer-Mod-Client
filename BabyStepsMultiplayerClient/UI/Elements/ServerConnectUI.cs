@@ -324,6 +324,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
                 });
                 Core.uiManager.notificationsUI.AddMessage("Your appearance has been updated");
             }
+
             GUILayout.Space(5);
             GUI.enabled = true;
 

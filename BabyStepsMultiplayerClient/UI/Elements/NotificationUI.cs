@@ -28,10 +28,11 @@ namespace BabyStepsMultiplayerClient.UI.Elements
         public void AddMessage(string message, float? holdDuration = null, Color? color = null)
         {
             Core.logger.Msg(message);
+            float resolvedHoldDuration = holdDuration ?? Mathf.Clamp(3.5f + (message?.Length ?? 0) * 0.075f, 4f, 16f);
             messages.Add(new Message
             {
                 Text = message,
-                HoldDuration = holdDuration ?? 3f,
+                HoldDuration = resolvedHoldDuration,
                 Color = color ?? Color.white
             });
         }
@@ -39,16 +40,21 @@ namespace BabyStepsMultiplayerClient.UI.Elements
         public void DrawUI()
         {
             float scale = Screen.height / REFERENCE_HEIGHT;
+            float fontScale = Mathf.Max(scale, 1f);
+            int fontSize = Mathf.RoundToInt(16f * fontScale);
 
-            Matrix4x4 originalMatrix = GUI.matrix;
-            GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(scale, scale, 1f));
+            var labelStyle = new GUIStyle(StyleManager.Styles.Label)
+            {
+                fontSize = fontSize,
+                wordWrap = true
+            };
 
             try
             {
                 float now = GetTime();
-                int yOffset = 10; // This is now 10 pixels at 1080p scale
-
-                float scaledScreenWidth = Screen.width / scale;
+                float yOffset = 10f * fontScale;
+                float xPadding = 10f * fontScale;
+                float availableWidth = Screen.width - (xPadding * 2f);
 
                 for (int i = messages.Count - 1; i >= 0; i--)
                 {
@@ -66,14 +72,14 @@ namespace BabyStepsMultiplayerClient.UI.Elements
 
                     GUI.color = new Color(msg.Color.r, msg.Color.g, msg.Color.b, alpha);
 
-                    GUI.Label(new Rect(10, yOffset, scaledScreenWidth - 20, 25), msg.Text, StyleManager.Styles.Label);
+                    float height = labelStyle.CalcHeight(new GUIContent(msg.Text), availableWidth);
+                    GUI.Label(new Rect(xPadding, yOffset, availableWidth, height), msg.Text, labelStyle);
 
-                    yOffset += 20;
+                    yOffset += height + (4f * fontScale);
                 }
             }
             finally
             {
-                GUI.matrix = originalMatrix;
                 GUI.color = Color.white;
             }
 
