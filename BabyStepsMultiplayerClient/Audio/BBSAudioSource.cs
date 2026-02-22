@@ -15,9 +15,10 @@ namespace BabyStepsMultiplayerClient.Audio
         private Sound sound;
         private Channel channel;
 
-        private const int SAMPLE_RATE = 48000;
+        // Match microphone capture settings for encoding/decoding compatibility
+        private const int SAMPLE_RATE = 24000; // 24kHz to match encoder
         private const int CHANNELS = 2; // Stereo
-        private const int FRAME_SIZE = 960;
+        private const int FRAME_SIZE = 960; // 40ms at 24kHz
 
         private const int BUFFER_SIZE = SAMPLE_RATE * CHANNELS * 2 * 200 / 1000;
 
@@ -60,7 +61,7 @@ namespace BabyStepsMultiplayerClient.Audio
             {
                 fmodSystem = Il2CppBabySteps.Core.Audio.Services.Player.system;
 
-                opusDecoder = new OpusDecoder(SAMPLE_RATE, 1);
+                opusDecoder = new OpusDecoder(SAMPLE_RATE, 1); // Use 24kHz to match encoder
                 decodedSamples = new short[FRAME_SIZE]; // Mono samples
                 stereoBuffer = new byte[FRAME_SIZE * 2 * 2]; // Stereo bytes
 

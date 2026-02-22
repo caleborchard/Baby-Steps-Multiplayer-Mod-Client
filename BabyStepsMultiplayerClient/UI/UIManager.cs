@@ -36,6 +36,8 @@ namespace BabyStepsMultiplayerClient.UI
 
             if (showChatTab)
                 chatTabUI.DrawUI();
+            else
+                notificationsUI.ShowChatHistory = false;
         }
 
         public void Update()

@@ -15,6 +15,9 @@ namespace BabyStepsMultiplayerClient.UI.Elements
                 textFieldStyle = new GUIStyle(StyleManager.Styles.MiddleLeftTextField);
             textFieldStyle.fontSize = Mathf.RoundToInt(Screen.height * 0.02f);
 
+            // Show chat history when chat tab is opened
+            Core.uiManager.notificationsUI.ShowChatHistory = true;
+
             // Do this before everything else to prevent inputs not being detected sometimes
             HandleChatInput();
 

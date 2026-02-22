@@ -16,9 +16,10 @@ namespace BabyStepsMultiplayerClient.Audio
         private bool isRecording = false;
         private bool isInitialized = false;
 
-        private const int SAMPLE_RATE = 48000;
+        // Balanced for good quality with bandwidth savings
+        private const int SAMPLE_RATE = 24000; // 24kHz - good balance between quality and bandwidth
         private const int CHANNELS = 1;
-        private const int FRAME_SIZE = 960; // Optimal for Opus
+        private const int FRAME_SIZE = 960; // 40ms frames at 24kHz
 
         private const int BUFFER_SIZE = SAMPLE_RATE * CHANNELS * 2 * 100 / 1000;
 
@@ -96,13 +97,13 @@ namespace BabyStepsMultiplayerClient.Audio
 
                 opusEncoder = new OpusEncoder(SAMPLE_RATE, 1, OpusApplication.OPUS_APPLICATION_VOIP);
 
-                // Set encoder parameters for low latency
-                opusEncoder.Bitrate = 12000; // Reduced from 24000 to 12kbps (half the bandwidth)
-                opusEncoder.Complexity = 3; // Reduced from 5 to 3 (faster encoding, lower CPU)
+                // Balanced encoder parameters for good quality with reasonable bandwidth
+                opusEncoder.Bitrate = 16000; // 16kbps - sweet spot for clear voice
+                opusEncoder.Complexity = 6; // Higher complexity for better quality at this bitrate
                 opusEncoder.SignalType = OpusSignal.OPUS_SIGNAL_VOICE;
                 opusEncoder.UseVBR = true; // Variable bitrate
                 opusEncoder.UseDTX = true; // Discontinuous transmission (shut up transmission on silence). Super nice that this is built in
-                opusEncoder.MaxBandwidth = OpusBandwidth.OPUS_BANDWIDTH_MEDIUMBAND; // Reduces bandwidth usage by limiting frequency range
+                opusEncoder.MaxBandwidth = OpusBandwidth.OPUS_BANDWIDTH_WIDEBAND; // Wideband (8kHz) - much better quality than narrowband
 
                 CREATESOUNDEXINFO exinfo = new CREATESOUNDEXINFO();
                 exinfo.cbsize = System.Runtime.InteropServices.Marshal.SizeOf(typeof(CREATESOUNDEXINFO));
