@@ -10,7 +10,8 @@
         { "German", "Deutsch" },
         { "Korean", "한국어" },
         { "ChineseSimplified", "简体中文" },
-        { "ChineseTraditional", "繁體中文" }
+        { "ChineseTraditional", "繁體中文" },
+        { "Japanese", "日本語" }
     };
 
         public static string GetNativeName(string languageCode)
@@ -387,5 +388,51 @@
         public string HasUpdatedTheirColor => "{0} 更新了顏色";
         public string ConnectedToServer => "已連線至伺服器";
         public string Language => "語言：";
+    }
+
+    public class JapaneseLanguage : ILanguage
+    {
+        public string Disconnect => "切断";
+        public string Connect => "接続";
+        public string ServerInformation => "サーバー情報";
+        public string AudioSettings => "オーディオ設定";
+        public string MicrophoneDevices => "マイクデバイス";
+        public string GeneralSettings => "一般設定";
+        public string PlayerCustomization => "プレイヤー設定";
+        public string ServerIP => "サーバーIP：";
+        public string ServerPort => "ポート：";
+        public string PasswordOptional => "パスワード（任意）：";
+        public string DisableMicrophone => "マイクをオフ";
+        public string EnableMicrophone => "マイクをオン";
+        public string Deafen => "ミュート（受信）";
+        public string Undeafen => "ミュート解除（受信）";
+        public string EnablePushToTalk => "プッシュトゥトークを有効化";
+        public string DisablePushToTalk => "プッシュトゥトークを無効化";
+        public string PushToTalkKey => "プッシュトゥトークキー：";
+        public string PressAnyKey => "いずれかのキーを押してください...";
+        public string MicrophoneGain => "マイク音量：";
+        public string Level => "レベル：";
+        public string EnableCollisions => "衝突を有効化";
+        public string DisableCollisions => "衝突を無効化";
+        public string EnablePlayerCutsceneVisibility => "カットシーンでプレイヤーを表示";
+        public string DisablePlayerCutsceneVisibility => "カットシーンでプレイヤーを非表示";
+        public string ConnectedPlayers => "接続中のプレイヤー";
+        public string NoPlayersConnected => "接続中のプレイヤーはいません。";
+        public string You => "あなた";
+        public string UpdateNameAndAppearance => "名前と外見を更新";
+        public string Nickname => "ニックネーム：";
+        public string SuitTint => "スーツの色：";
+        public string Red => "赤：";
+        public string Green => "緑：";
+        public string Blue => "青：";
+        public string EnableNametags => "ネームタグを表示";
+        public string DisableNametags => "ネームタグを非表示";
+        public string AppearanceUpdated => "外見が更新されました";
+        public string HasConnected => "{0} が接続しました";
+        public string HasDisconnected => "{0} が切断しました";
+        public string HasChangedNicknameTo => "{0} がニックネームを {1} に変更しました";
+        public string HasUpdatedTheirColor => "{0} が色を変更しました";
+        public string ConnectedToServer => "サーバーに接続しました";
+        public string Language => "言語：";
     }
 }
