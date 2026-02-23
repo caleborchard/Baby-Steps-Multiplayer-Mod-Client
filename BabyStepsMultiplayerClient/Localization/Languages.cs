@@ -2,17 +2,18 @@
 {
     public static class LanguageNativeNames
     {
+        // All AI translations must be checked with native speakers before the full release of the update.
         public static readonly Dictionary<string, string> NativeNames = new()
-    {
-        { "English", "English" },
-        { "Spanish", "Español" },
-        { "French", "Français" },
-        { "German", "Deutsch" },
-        { "Korean", "한국어" },
-        { "ChineseSimplified", "简体中文" },
-        { "ChineseTraditional", "繁體中文" },
-        { "Japanese", "日本語" }
-    };
+        {
+            { "English", "English" },
+            { "Spanish", "Español" }, //Human reviewed
+            { "French", "Français" }, //AI
+            { "German", "Deutsch" }, //AI
+            { "Korean", "한국어" }, //AI
+            { "ChineseSimplified", "简体中文" }, //AI
+            { "ChineseTraditional", "繁體中文" }, //AI
+            { "Japanese", "日本語" } //AI
+        };
 
         public static string GetNativeName(string languageCode)
         {
@@ -151,7 +152,7 @@
         public string Blue => "Azul:";
         public string EnableNametags => "Mostrar nombres";
         public string DisableNametags => "Ocultar nombres";
-        public string AppearanceUpdated => "Apariencia actualizada";
+        public string AppearanceUpdated => "Tu apariencia se ha actualizada";
         public string HasConnected => "{0} se ha conectado";
         public string HasDisconnected => "{0} se ha desconectado";
         public string HasChangedNicknameTo => "{0} cambió su apodo a {1}";
