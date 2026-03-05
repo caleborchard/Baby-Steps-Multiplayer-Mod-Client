@@ -596,6 +596,9 @@ namespace BabyStepsMultiplayerClient.Networking
                             WorldObjectSyncManager.OnServerTimeSample(uptimeMs);
 
                             Core.logger.Msg($"Received UUID: {uuid}");
+                            
+                            var lang = LanguageManager.GetCurrentLanguage();
+                            Core.uiManager.notificationsUI.AddMessage("Press the 'T' key to send a message");
                             break;
                         }
 

@@ -9,12 +9,21 @@ namespace BabyStepsMultiplayerClient.UI.Elements
         private string message = "";
         private Rect textFieldRect;
         private GUIStyle textFieldStyle;
+        private Texture2D backgroundTexture;
 
         public void DrawUI()
         {
             if (textFieldStyle == null)
                 textFieldStyle = new GUIStyle(StyleManager.Styles.MiddleLeftTextField);
             textFieldStyle.fontSize = Mathf.RoundToInt(Screen.height * 0.02f);
+
+            // Create semi-transparent background texture
+            if (backgroundTexture == null)
+            {
+                backgroundTexture = new Texture2D(1, 1);
+                backgroundTexture.SetPixel(0, 0, new Color(0, 0, 0, 0.7f)); // Semi-transparent black
+                backgroundTexture.Apply();
+            }
 
             // Show chat history when chat tab is opened
             Core.uiManager.notificationsUI.ShowChatHistory = true;
@@ -28,6 +37,11 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             float x = (Screen.width - width) / 2;
             float y = Screen.height - height - 20;
             textFieldRect = new Rect(x, y, width, height);
+
+            // Draw overlay background from slightly above the chat input box down to the bottom
+            float overlayStartY = y - 20;
+            float overlayHeight = Screen.height - overlayStartY;
+            GUI.DrawTexture(new Rect(0, overlayStartY, Screen.width, overlayHeight), backgroundTexture);
 
             GUILayout.BeginArea(textFieldRect);
             GUI.SetNextControlName("ChatInput");
