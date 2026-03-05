@@ -9,7 +9,7 @@ using UnityEngine;
 
 [assembly: MelonInfo(typeof(BabyStepsMultiplayerClient.Core),
     "BabyStepsMultiplayerClient",
-    "1.2.2",
+    "1.2.3",
     "Caleb Orchard",
     "https://github.com/caleborchard/Baby-Steps-Multiplayer-Mod-Client")]
 [assembly: MelonGame("DefaultCompany", "BabySteps")]
@@ -99,8 +99,8 @@ namespace BabyStepsMultiplayerClient
 
         public static void DebugMsg(string msg)
         {
-            if (!MelonDebug.IsEnabled())
-                return;
+            //if (!MelonDebug.IsEnabled())
+              //  return;
             logger.Msg(msg);
         }
 

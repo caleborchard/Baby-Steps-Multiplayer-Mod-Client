@@ -5,9 +5,9 @@
         // All AI translations must be checked with native speakers before the full release of the update.
         public static readonly Dictionary<string, string> NativeNames = new()
         {
-            { "English", "English" },
-            { "Spanish", "Español" }, //Human reviewed
-            { "French", "Français" }, //AI
+            { "English", "English" }, //Original
+            { "Spanish", "Español" }, //Approved
+            { "French", "Français" }, //Approved
             { "German", "Deutsch" }, //AI
             { "Korean", "한국어" }, //AI
             { "ChineseSimplified", "简体中文" }, //AI
