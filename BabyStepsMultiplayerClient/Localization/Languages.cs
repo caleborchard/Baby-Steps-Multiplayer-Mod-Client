@@ -10,9 +10,10 @@
             { "French", "Français" }, //Approved
             { "German", "Deutsch" }, //AI
             { "Korean", "한국어" }, //AI
-            { "ChineseSimplified", "简体中文" }, //AI
-            { "ChineseTraditional", "繁體中文" }, //AI
+            { "ChineseSimplified", "简体中文" }, //Approved
+            { "ChineseTraditional", "繁體中文" }, //Approved
             { "Japanese", "日本語" } //AI
+            // Polish will be added soon
         };
 
         public static string GetNativeName(string languageCode)
@@ -319,7 +320,7 @@
         public string DisablePushToTalk => "禁用按键说话";
         public string PushToTalkKey => "说话按键：";
         public string PressAnyKey => "按任意键...";
-        public string MicrophoneGain => "麦克风增益：";
+        public string MicrophoneGain => "麦克风音量：";
         public string Level => "级别：";
         public string EnableCollisions => "启用碰撞";
         public string DisableCollisions => "禁用碰撞";
@@ -365,7 +366,7 @@
         public string DisablePushToTalk => "停用按鍵說話";
         public string PushToTalkKey => "說話按鍵：";
         public string PressAnyKey => "按任意鍵...";
-        public string MicrophoneGain => "麥克風增益：";
+        public string MicrophoneGain => "麥克風音量：";
         public string Level => "等級：";
         public string EnableCollisions => "啟用碰撞";
         public string DisableCollisions => "停用碰撞";
