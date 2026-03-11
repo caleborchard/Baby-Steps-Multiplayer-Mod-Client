@@ -13,13 +13,18 @@ The **Baby Steps: Multiplayer Mod** is an unofficial [MelonLoader](https://melon
 
 Cutscenes are triggered independently on each client and do not affect other players. Each player has full collisions and can bump into each other. Hats and held items are replicated.
 
+It's highly recommended that you use the Thunderstore Mod Manager to install this mod! Watch the video below for more information.
+
+[Tutorial Video for Setup](https://www.youtube.com/watch?v=KcpDWvq2DTw)
+---
+
+[Thunderstore Link](https://thunderstore.io/c/baby-steps/p/CalebOrchard/Baby_Steps_Multiplayer_Mod/)
+---
+
 [Nexus Mods Link](https://www.nexusmods.com/babysteps/mods/1)
 ---
 
 [Join the Discord!](https://discord.gg/fpBQW5cKdE)
----
-
-[Tutorial Video for Setup](https://youtu.be/QvQRWCoEZUk)
 ---
 
 ## 📸 Screenshots
@@ -42,6 +47,7 @@ Cutscenes are triggered independently on each client and do not affect other pla
 ---
 
 ## ✨ Features
+- Support for seven different languages
 - Proximity Voice Chat
 - Custom player colors
 - Toggleable player collisions
@@ -59,7 +65,6 @@ Cutscenes are triggered independently on each client and do not affect other pla
 - Suit muddying and wetness
 - Water and dust particles
 - Native UI implementation with controller support
-- Translation options
 
 ---
 
