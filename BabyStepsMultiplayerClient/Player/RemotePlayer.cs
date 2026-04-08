@@ -311,10 +311,17 @@ namespace BabyStepsMultiplayerClient.Player
                     bool shouldEnableColliders = ModSettings.player.Collisions.Value && netCollisionsEnabled;
 
                     if (!shouldEnableColliders) SetOpacity(0.75f);
-                    else if (ModSettings.player.CutscenePlayerVisibility.Value && LocalPlayer.Instance.playerMovement.inCutscene) SetOpacity(0);
+                    else if (ModSettings.player.CutscenePlayerVisibility.Value
+                        && LocalPlayer.Instance.playerMovement != null
+                        && LocalPlayer.Instance.playerMovement.inCutscene) SetOpacity(0);
+                    else if (LocalPlayer.Instance.playerMovement != null
+                        && LocalPlayer.Instance.playerMovement.currentHat != null
+                        && LocalPlayer.Instance.playerMovement.currentHat.name != null
+                        && LocalPlayer.Instance.playerMovement.currentHat.name.IndexOf("CrashHelmet", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                        SetOpacity(1f);
                     else FadeByDistance(distance);
-                }
-            }
+                 }
+             }
 
             if (EnsureAudioSourceValid())
             {
