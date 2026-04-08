@@ -105,43 +105,29 @@ namespace BabyStepsMultiplayerClient.UI.Elements
                 // Draw chat history if enabled
                 if (ShowChatHistory && chatHistory.Count > 0)
                 {
-                    // Add some spacing
                     yOffset += 20f * fontScale;
-                    
-                    float maxHeight = Screen.height - yOffset - 50f; // Leave room at bottom
+
+                    float maxHeight = Screen.height - yOffset - 50f;
                     float currentHeight = 0f;
-                    int startIndex = chatHistory.Count - 1;
 
-                    // Find where to start drawing from bottom up
                     for (int i = chatHistory.Count - 1; i >= 0; i--)
-                    {
-                        float height = labelStyle.CalcHeight(new GUIContent(chatHistory[i].Text), availableWidth);
-                        if (currentHeight + height + (4f * fontScale) > maxHeight)
-                        {
-                            startIndex = i + 1;
-                            break;
-                        }
-                        currentHeight += height + (4f * fontScale);
-                        if (i == 0)
-                            startIndex = 0;
-                    }
-
-                    // Draw history messages with full opacity
-                    for (int i = startIndex; i < chatHistory.Count; i++)
                     {
                         float height = labelStyle.CalcHeight(new GUIContent(chatHistory[i].Text), availableWidth);
                         float width = labelStyle.CalcSize(new GUIContent(chatHistory[i].Text)).x;
                         float padding = 4f * fontScale;
+                        float rowHeight = height + padding + (4f * fontScale);
 
-                        // Draw backdrop sized to text
+                        if (currentHeight + rowHeight > maxHeight)
+                            break;
+
                         GUI.color = new Color(0.2f, 0.2f, 0.2f, BACKDROP_ALPHA);
                         GUI.Box(new Rect(xPadding - padding, yOffset - padding, width + (padding * 2), height + (padding * 2)), "", backdropStyle);
 
-                        // Draw text
                         GUI.color = Color.white;
                         GUI.Label(new Rect(xPadding, yOffset, availableWidth, height), chatHistory[i].Text, labelStyle);
 
-                        yOffset += height + padding + (4f * fontScale);
+                        yOffset += rowHeight;
+                        currentHeight += rowHeight;
                     }
                 }
             }

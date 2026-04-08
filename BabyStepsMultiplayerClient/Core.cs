@@ -2,14 +2,16 @@
 using BabyStepsMultiplayerClient.Networking;
 using BabyStepsMultiplayerClient.Player;
 using BabyStepsMultiplayerClient.UI;
+using HarmonyLib;
 using Il2Cpp;
 using Il2CppInterop.Runtime.Injection;
 using MelonLoader;
+using System.Reflection;
 using UnityEngine;
 
 [assembly: MelonInfo(typeof(BabyStepsMultiplayerClient.Core),
     "BabyStepsMultiplayerClient",
-    "1.2.3",
+    "1.2.4",
     "Caleb Orchard",
     "https://github.com/caleborchard/Baby-Steps-Multiplayer-Mod-Client")]
 [assembly: MelonGame("DefaultCompany", "BabySteps")]
@@ -35,6 +37,8 @@ namespace BabyStepsMultiplayerClient
             CLIENT_VERSION = Info.Version;
 
             logger = LoggerInstance;
+
+            HarmonyInstance.PatchAll(Assembly.GetExecutingAssembly());
 
             ManagedEnumerator.Register();
 

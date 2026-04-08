@@ -8,6 +8,9 @@ namespace BabyStepsMultiplayerClient.UI
     {
         public bool showChatTab;
 
+        private bool playerMovementSuppressedForChat;
+        private bool playerMovementWasEnabledBeforeChat;
+
         public PlayersTabUI playersTabUI { get; private set; }
         public ServerConnectUI serverConnectUI { get; private set; }
         public NotificationUI notificationsUI { get; private set; }
@@ -60,6 +63,36 @@ namespace BabyStepsMultiplayerClient.UI
 
                 // Toggle the Scoreboard only when Chat Input is Disabled
                 playersTabUI.IsOpen = !showChatTab && Input.GetKey(KeyCode.Tab);
+            }
+
+            UpdateGameplayInputSuppression();
+        }
+
+        private void UpdateGameplayInputSuppression()
+        {
+            var localPlayer = LocalPlayer.Instance;
+            var movement = localPlayer?.playerMovement;
+            if (movement == null)
+            {
+                playerMovementSuppressedForChat = false;
+                return;
+            }
+
+            if (showChatTab)
+            {
+                if (!playerMovementSuppressedForChat)
+                {
+                    playerMovementWasEnabledBeforeChat = movement.enabled;
+                    if (playerMovementWasEnabledBeforeChat)
+                        movement.enabled = false;
+
+                    playerMovementSuppressedForChat = true;
+                }
+            }
+            else if (playerMovementSuppressedForChat)
+            {
+                movement.enabled = playerMovementWasEnabledBeforeChat;
+                playerMovementSuppressedForChat = false;
             }
         }
 
