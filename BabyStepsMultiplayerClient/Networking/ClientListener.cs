@@ -15,6 +15,7 @@ namespace BabyStepsMultiplayerClient.Networking
             Core.networkManager.SendPlayerInformation();
             var lang = LanguageManager.GetCurrentLanguage();
             Core.uiManager.notificationsUI.AddMessage(lang.ConnectedToServer);
+            Core.OnConnectionStateChanged?.Invoke();
         }
 
         public void OnPeerDisconnected(NetPeer peer, DisconnectInfo info)

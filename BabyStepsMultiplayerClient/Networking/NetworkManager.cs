@@ -61,7 +61,13 @@ namespace BabyStepsMultiplayerClient.Networking
 
         public void Connect(string serverIP, int serverPort, string password)
         {
-            Disconnect();
+            // Disconnect silently first if already connected to avoid duplicate listeners
+            if (client != null)
+            {
+                client?.Stop();
+                client = null;
+                server = null;
+            }
 
             Core.uiManager.notificationsUI.AddMessage("Connecting to server...");
 
@@ -70,12 +76,11 @@ namespace BabyStepsMultiplayerClient.Networking
             {
                 AutoRecycle = true,
                 DisconnectTimeout = 15000,
-                UseNativeSockets = true,
             };
 
             client.Start();
 
-            string effectivePassword = Core.SERVER_VERSION + (password == "" ? "cuzzillobochfoddy" : password);
+            string effectivePassword = Core.SERVER_VERSION + (string.IsNullOrEmpty(password) ? "cuzzillobochfoddy" : password);
             client.Connect(serverIP, serverPort, effectivePassword);
         }
 
@@ -110,6 +115,7 @@ namespace BabyStepsMultiplayerClient.Networking
             WorldObjectSyncManager.ClearCachedWheels();
 
             Core.uiManager.notificationsUI.AddMessage("Disconnected from server");
+            Core.OnConnectionStateChanged?.Invoke();
         }
 
         public void Update()

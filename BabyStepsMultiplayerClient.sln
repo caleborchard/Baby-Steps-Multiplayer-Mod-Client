@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.36203.30
+# Visual Studio Version 18
+VisualStudioVersion = 18.4.11626.88 stable
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BabyStepsMultiplayerClient", "BabyStepsMultiplayerClient\BabyStepsMultiplayerClient.csproj", "{E89268A0-D78B-4AD6-A651-3B92EA74BFF6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BabyStepsMenuLib", "BabyStepsMenuLib\BabyStepsMenuLib.csproj", "{AF23CE9C-EBCA-A900-181A-88559B791B9D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,14 @@ Global
 		{E89268A0-D78B-4AD6-A651-3B92EA74BFF6}.Retail - Debug|Any CPU.Build.0 = Retail - Debug|Any CPU
 		{E89268A0-D78B-4AD6-A651-3B92EA74BFF6}.Retail - Release|Any CPU.ActiveCfg = Retail - Release|Any CPU
 		{E89268A0-D78B-4AD6-A651-3B92EA74BFF6}.Retail - Release|Any CPU.Build.0 = Retail - Release|Any CPU
+		{AF23CE9C-EBCA-A900-181A-88559B791B9D}.Demo - Debug|Any CPU.ActiveCfg = Demo - Debug|Any CPU
+		{AF23CE9C-EBCA-A900-181A-88559B791B9D}.Demo - Debug|Any CPU.Build.0 = Demo - Debug|Any CPU
+		{AF23CE9C-EBCA-A900-181A-88559B791B9D}.Demo - Release|Any CPU.ActiveCfg = Demo - Release|Any CPU
+		{AF23CE9C-EBCA-A900-181A-88559B791B9D}.Demo - Release|Any CPU.Build.0 = Demo - Release|Any CPU
+		{AF23CE9C-EBCA-A900-181A-88559B791B9D}.Retail - Debug|Any CPU.ActiveCfg = Retail - Debug|Any CPU
+		{AF23CE9C-EBCA-A900-181A-88559B791B9D}.Retail - Debug|Any CPU.Build.0 = Retail - Debug|Any CPU
+		{AF23CE9C-EBCA-A900-181A-88559B791B9D}.Retail - Release|Any CPU.ActiveCfg = Retail - Release|Any CPU
+		{AF23CE9C-EBCA-A900-181A-88559B791B9D}.Retail - Release|Any CPU.Build.0 = Retail - Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

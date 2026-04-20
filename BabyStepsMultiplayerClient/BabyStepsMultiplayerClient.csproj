@@ -717,4 +717,8 @@
 			<Private>False</Private>
 		</Reference>
 	</ItemGroup>
+
+	<Target Name="BuildBabyStepsMenuLib" BeforeTargets="CoreCompile">
+		<MSBuild Projects="$(MenuLibProjectPath)" Targets="Build" Properties="Configuration=$(Configuration)" />
+	</Target>
 </Project>

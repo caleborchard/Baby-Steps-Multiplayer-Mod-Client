@@ -1,4 +1,4 @@
-﻿using BabyStepsMultiplayerClient.Components;
+using BabyStepsMultiplayerClient.Components;
 using BabyStepsMultiplayerClient.Networking;
 using BabyStepsMultiplayerClient.Player;
 using BabyStepsMultiplayerClient.UI;
@@ -6,6 +6,7 @@ using HarmonyLib;
 using Il2Cpp;
 using Il2CppInterop.Runtime.Injection;
 using MelonLoader;
+using System.Collections;
 using System.Reflection;
 using UnityEngine;
 
@@ -32,6 +33,10 @@ namespace BabyStepsMultiplayerClient
 
         private static bool _firstOpen = false;
 
+        // Fired on the main thread whenever the connection goes up or down.
+        // Subscribe to update UI that reflects connection state (e.g. connect button label).
+        public static Action OnConnectionStateChanged;
+
         public override void OnLateInitializeMelon()
         {
             CLIENT_VERSION = Info.Version;
@@ -55,7 +60,7 @@ namespace BabyStepsMultiplayerClient
 
         public override void OnSceneWasInitialized(int buildIndex, string sceneName)
         {
-            if (!_firstOpen 
+            if (!_firstOpen
                 && sceneName.Contains("Title"))
             {
                 _firstOpen = true;
