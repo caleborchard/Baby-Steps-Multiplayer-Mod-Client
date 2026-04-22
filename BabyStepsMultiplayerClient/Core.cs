@@ -43,12 +43,21 @@ namespace BabyStepsMultiplayerClient
 
             logger = LoggerInstance;
 
-            HarmonyInstance.PatchAll(Assembly.GetExecutingAssembly());
+            try
+            {
+                HarmonyInstance.PatchAll(Assembly.GetExecutingAssembly());
+            }
+            catch (Exception ex)
+            {
+                logger.Error($"Harmony patching failed: {ex}");
+            }
 
             ManagedEnumerator.Register();
 
             uiManager = new();
             networkManager = new();
+
+            MultiplayerMenuDemo.Initialize();
 
             logger.Msg("Initialized!");
 
@@ -56,7 +65,12 @@ namespace BabyStepsMultiplayerClient
         }
 
         public override void OnGUI()
-            => uiManager.Draw();
+        {
+            if (uiManager == null)
+                return;
+
+            uiManager.Draw();
+        }
 
         public override void OnSceneWasInitialized(int buildIndex, string sceneName)
         {
@@ -70,6 +84,9 @@ namespace BabyStepsMultiplayerClient
 
         public override void OnUpdate()
         {
+            if (uiManager == null || networkManager == null)
+                return;
+
             uiManager.Update();
             networkManager.Update();
 
@@ -90,6 +107,9 @@ namespace BabyStepsMultiplayerClient
 
         public override void OnLateUpdate()
         {
+            if (networkManager == null)
+                return;
+
             if (LocalPlayer.Instance != null)
                 LocalPlayer.Instance.LateUpdate();
 
@@ -97,7 +117,12 @@ namespace BabyStepsMultiplayerClient
         }
 
         public override void OnApplicationQuit()
-            => networkManager.Disconnect();
+        {
+            if (networkManager == null)
+                return;
+
+            networkManager.Disconnect();
+        }
 
         public static bool HasLoadedGame()
         {
@@ -109,7 +134,7 @@ namespace BabyStepsMultiplayerClient
         public static void DebugMsg(string msg)
         {
             //if (!MelonDebug.IsEnabled())
-              //  return;
+            //  return;
             logger.Msg(msg);
         }
 
