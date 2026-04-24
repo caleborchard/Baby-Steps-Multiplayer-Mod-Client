@@ -499,6 +499,7 @@ namespace BabyStepsMultiplayerClient.UI
                             {
                                 _mouseHasEdited = true;
                                 RefreshMouseTypingDisplay();
+                                _mouseTypingField.OnChanged?.Invoke(_mouseTypingField.Value);
                             }
                         }
                         if (_mouseTypingActive && _mouseTypingField?.DisplayText != null &&
@@ -1469,7 +1470,15 @@ namespace BabyStepsMultiplayerClient.UI
             {
                 if (menu?.mainMenuCanvas == null) return null;
                 var all = menu.mainMenuCanvas.GetComponentsInChildren<Toggle>(true);
-                return all != null && all.Length > 0 ? all[0] : null;
+                if (all == null || all.Length == 0) return null;
+
+                var toggle = all[0];
+                // Strip template localizers at the source so cloned toggles don't inherit
+                // a component that rewrites every label to the original template key.
+                if (toggle != null)
+                    StripLocalizationComponentsImmediate(toggle.gameObject);
+
+                return toggle;
             }
 
             private static Slider FindSliderTemplate(Menu menu)
@@ -1621,29 +1630,41 @@ namespace BabyStepsMultiplayerClient.UI
         }
 
         public static Toggle AddToggle(string text, bool initialValue, UnityAction<bool> onValueChanged,
-            RectTransform parent = null)
+    RectTransform parent = null)
         {
             var p = parent ?? customRoot;
             if (p == null || toggleTemplate == null) return null;
 
             var obj = UnityEngine.Object.Instantiate(toggleTemplate.gameObject, p);
             obj.name = "BBSMP_Toggle";
-            StripLocalizationComponents(obj);
+
+            // Resolve label explicitly
+            var labelTransform = obj.transform.Find("Label");
+            if (labelTransform != null)
+            {
+                // Optional: remove BBLocalize if you ever need to
+                var localize = labelTransform.GetComponent<Il2Cpp.BBLocalize>();
+                if (localize != null)
+                    UnityEngine.Object.DestroyImmediate(localize);
+
+                var label = labelTransform.GetComponent<TMP_Text>();
+                if (label != null)
+                    label.text = text;
+            }
 
             var toggle = obj.GetComponent<Toggle>();
             if (toggle == null) return null;
 
             toggle.onValueChanged = new Toggle.ToggleEvent();
             toggle.isOn = initialValue;
+
             if (onValueChanged != null)
                 toggle.onValueChanged.AddListener(onValueChanged);
-
-            var tmp = obj.GetComponentInChildren<TMP_Text>(true);
-            if (tmp != null) { tmp.text = text; tmp.ForceMeshUpdate(); }
 
             PlaceInLayout(obj.GetComponent<RectTransform>(), p, DefaultHeight);
 
             _currentTabMenu?.RegisterPageSelectable(_currentTabPage, toggle);
+
             return toggle;
         }
 
@@ -2017,7 +2038,7 @@ namespace BabyStepsMultiplayerClient.UI
             {
                 var comp = comps[i];
                 if (comp == null) continue;
-                if (!IsLocalizationComponent(comp.GetType().FullName)) continue;
+                if (!IsLocalizationComponent(comp)) continue;
                 if (comp is UnityEngine.Behaviour b) b.enabled = false;
                 UnityEngine.Object.DestroyImmediate(comp);
             }
@@ -2044,7 +2065,7 @@ namespace BabyStepsMultiplayerClient.UI
             for (int i = 0; i < comps.Length; i++)
             {
                 var comp = comps[i];
-                if (comp != null && IsLocalizationComponent(comp.GetType().FullName))
+                if (comp != null && IsLocalizationComponent(comp))
                     UnityEngine.Object.Destroy(comp);
             }
         }
@@ -2057,19 +2078,17 @@ namespace BabyStepsMultiplayerClient.UI
             for (int i = 0; i < comps.Length; i++)
             {
                 var comp = comps[i];
-                if (comp != null && IsLocalizationComponent(comp.GetType().FullName))
+                if (comp != null && IsLocalizationComponent(comp))
                     toDestroy.Add(comp);
             }
             for (int i = 0; i < toDestroy.Count; i++)
                 UnityEngine.Object.DestroyImmediate(toDestroy[i]);
         }
 
-        private static bool IsLocalizationComponent(string typeName)
-            => !string.IsNullOrEmpty(typeName) && (
-                typeName.Contains("I2.Loc.Localize", System.StringComparison.Ordinal) ||
-                typeName.EndsWith(".Localize",        System.StringComparison.Ordinal) ||
-                typeName.Contains("Localized",        System.StringComparison.Ordinal) ||
-                typeName.Contains("BBLocalize",       System.StringComparison.Ordinal));
+        private static bool IsLocalizationComponent(Component comp)
+        {
+            return comp is Il2Cpp.BBLocalize;
+        }
     }
 
     [HarmonyPatch]

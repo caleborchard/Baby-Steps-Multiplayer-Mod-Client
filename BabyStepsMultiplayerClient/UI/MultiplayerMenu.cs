@@ -11,13 +11,10 @@ namespace BabyStepsMultiplayerClient.UI
     {
         private static MenuInjectionLibrary.InjectedMenu _menu;
 
-        private static Button _micBtn;
-        private static Button _deafenBtn;
-        private static Button _pttBtn;
+        private static Toggle _collisionToggle;
+        private static Toggle _cutsceneToggle;
+        private static Toggle _nametagToggle;
         private static Button _pttKeyBtn;
-        private static Button _collisionBtn;
-        private static Button _cutsceneBtn;
-        private static Button _nametagBtn;
         private static Image  _colorPreviewImage;
 
         private static bool _isWaitingForKey;
@@ -125,16 +122,22 @@ namespace BabyStepsMultiplayerClient.UI
 
         private static void ConfigureGeneralTab(MenuInjectionLibrary.TabBuilder tab)
         {
-            _collisionBtn = tab.AddButton(GetCollisionLabel(), (UnityAction)OnCollisionClicked);
-            _cutsceneBtn  = tab.AddButton(GetCutsceneLabel(),  (UnityAction)OnCutsceneClicked);
-            _nametagBtn   = tab.AddButton(GetNametagLabel(),   (UnityAction)OnNametagClicked);
+            _collisionToggle = tab.AddToggle(GetCollisionToggleLabel(), ModSettings.player.Collisions.Value,
+                (UnityAction<bool>)OnCollisionToggled);
+            _cutsceneToggle  = tab.AddToggle(GetCutsceneToggleLabel(), ModSettings.player.CutscenePlayerVisibility.Value,
+                (UnityAction<bool>)OnCutsceneToggled);
+            _nametagToggle   = tab.AddToggle(GetNametagToggleLabel(), ModSettings.player.ShowNametags.Value,
+                (UnityAction<bool>)OnNametagToggled);
         }
 
         private static void ConfigureAudioTab(MenuInjectionLibrary.TabBuilder tab)
         {
-            _micBtn    = tab.AddButton(GetMicLabel(),    (UnityAction)OnMicClicked);
-            _deafenBtn = tab.AddButton(GetDeafenLabel(), (UnityAction)OnDeafenClicked);
-            _pttBtn    = tab.AddButton(GetPttLabel(),    (UnityAction)OnPttClicked);
+            tab.AddToggle(GetMicrophoneToggleLabel(), ModSettings.audio.MicrophoneEnabled.Value,
+                (UnityAction<bool>)OnMicrophoneToggled);
+            tab.AddToggle(GetDeafenToggleLabel(), ModSettings.audio.Deafened.Value,
+                (UnityAction<bool>)OnDeafenToggled);
+            tab.AddToggle(GetPushToTalkToggleLabel(), ModSettings.audio.PushToTalk.Value,
+                (UnityAction<bool>)OnPushToTalkToggled);
             _pttKeyBtn = tab.AddButton($"Bind Key: {ModSettings.audio.PushToTalkKey.Value}", (UnityAction)OnPttKeyClicked);
             _pttKeyBtn.interactable = ModSettings.audio.PushToTalk.Value;
 
@@ -168,25 +171,22 @@ namespace BabyStepsMultiplayerClient.UI
             }
         }
 
-        private static void OnMicClicked()
+        private static void OnMicrophoneToggled(bool enabled)
         {
-            ModSettings.audio.MicrophoneEnabled.Value = !ModSettings.audio.MicrophoneEnabled.Value;
-            LocalPlayer.Instance?.SetMicrophoneEnabled(ModSettings.audio.MicrophoneEnabled.Value);
-            SetBtnText(_micBtn, GetMicLabel());
+            ModSettings.audio.MicrophoneEnabled.Value = enabled;
+            LocalPlayer.Instance?.SetMicrophoneEnabled(enabled);
         }
 
-        private static void OnDeafenClicked()
+        private static void OnDeafenToggled(bool enabled)
         {
-            ModSettings.audio.Deafened.Value = !ModSettings.audio.Deafened.Value;
-            SetBtnText(_deafenBtn, GetDeafenLabel());
+            ModSettings.audio.Deafened.Value = enabled;
         }
 
-        private static void OnPttClicked()
+        private static void OnPushToTalkToggled(bool enabled)
         {
-            ModSettings.audio.PushToTalk.Value = !ModSettings.audio.PushToTalk.Value;
-            LocalPlayer.Instance?.SetPushToTalkEnabled(ModSettings.audio.PushToTalk.Value);
-            SetBtnText(_pttBtn, GetPttLabel());
-            if (_pttKeyBtn != null) _pttKeyBtn.interactable = ModSettings.audio.PushToTalk.Value;
+            ModSettings.audio.PushToTalk.Value = enabled;
+            LocalPlayer.Instance?.SetPushToTalkEnabled(enabled);
+            if (_pttKeyBtn != null) _pttKeyBtn.interactable = enabled;
         }
 
         private static void OnPttKeyClicked()
@@ -195,32 +195,49 @@ namespace BabyStepsMultiplayerClient.UI
             SetBtnText(_pttKeyBtn, LanguageManager.GetCurrentLanguage().PressAnyKey);
         }
 
-        private static void OnCollisionClicked()
+        private static void OnCollisionToggled(bool enabled)
         {
-            if (Core.networkManager.client == null) return;
-            ModSettings.player.Collisions.Value = !ModSettings.player.Collisions.Value;
-            Core.networkManager.SendCollisionToggle(ModSettings.player.Collisions.Value);
+            if (Core.networkManager.client == null)
+            {
+                if (_collisionToggle != null && _collisionToggle.isOn != ModSettings.player.Collisions.Value)
+                    _collisionToggle.isOn = ModSettings.player.Collisions.Value;
+                return;
+            }
+
+            if (ModSettings.player.Collisions.Value == enabled) return;
+
+            ModSettings.player.Collisions.Value = enabled;
+            Core.networkManager.SendCollisionToggle(enabled);
             foreach (var player in Core.networkManager.players)
             {
                 bool shouldEnable = ModSettings.player.Collisions.Value && player.Value.netCollisionsEnabled;
                 if (shouldEnable) player.Value.EnableCollision();
                 else              player.Value.DisableCollision();
             }
-            SetBtnText(_collisionBtn, GetCollisionLabel());
         }
 
-        private static void OnCutsceneClicked()
+        private static void OnCutsceneToggled(bool enabled)
         {
-            if (Core.networkManager.client == null) return;
-            ModSettings.player.CutscenePlayerVisibility.Value = !ModSettings.player.CutscenePlayerVisibility.Value;
-            SetBtnText(_cutsceneBtn, GetCutsceneLabel());
+            if (Core.networkManager.client == null)
+            {
+                if (_cutsceneToggle != null && _cutsceneToggle.isOn != ModSettings.player.CutscenePlayerVisibility.Value)
+                    _cutsceneToggle.isOn = ModSettings.player.CutscenePlayerVisibility.Value;
+                return;
+            }
+
+            ModSettings.player.CutscenePlayerVisibility.Value = enabled;
         }
 
-        private static void OnNametagClicked()
+        private static void OnNametagToggled(bool enabled)
         {
-            if (Core.networkManager.client == null) return;
-            ModSettings.player.ShowNametags.Value = !ModSettings.player.ShowNametags.Value;
-            SetBtnText(_nametagBtn, GetNametagLabel());
+            if (Core.networkManager.client == null)
+            {
+                if (_nametagToggle != null && _nametagToggle.isOn != ModSettings.player.ShowNametags.Value)
+                    _nametagToggle.isOn = ModSettings.player.ShowNametags.Value;
+                return;
+            }
+
+            ModSettings.player.ShowNametags.Value = enabled;
         }
 
         private static void OnUpdateAppearanceClicked()
@@ -251,41 +268,75 @@ namespace BabyStepsMultiplayerClient.UI
                 ? LanguageManager.GetCurrentLanguage().Disconnect
                 : LanguageManager.GetCurrentLanguage().Connect;
 
-        private static string GetMicLabel()
-            => ModSettings.audio.MicrophoneEnabled.Value
-                ? LanguageManager.GetCurrentLanguage().DisableMicrophone
-                : LanguageManager.GetCurrentLanguage().EnableMicrophone;
+        private static string GetMicrophoneToggleLabel()
+            => GetNeutralToggleLabel(
+                LanguageManager.GetCurrentLanguage().EnableMicrophone,
+                LanguageManager.GetCurrentLanguage().DisableMicrophone);
 
-        private static string GetDeafenLabel()
-            => ModSettings.audio.Deafened.Value
-                ? LanguageManager.GetCurrentLanguage().Undeafen
-                : LanguageManager.GetCurrentLanguage().Deafen;
+        private static string GetDeafenToggleLabel()
+            => GetNeutralToggleLabel(
+                LanguageManager.GetCurrentLanguage().Deafen,
+                LanguageManager.GetCurrentLanguage().Undeafen);
 
-        private static string GetPttLabel()
-            => ModSettings.audio.PushToTalk.Value
-                ? LanguageManager.GetCurrentLanguage().DisablePushToTalk
-                : LanguageManager.GetCurrentLanguage().EnablePushToTalk;
+        private static string GetPushToTalkToggleLabel()
+            => GetNeutralToggleLabel(
+                LanguageManager.GetCurrentLanguage().EnablePushToTalk,
+                LanguageManager.GetCurrentLanguage().DisablePushToTalk);
 
-        private static string GetCollisionLabel()
-            => ModSettings.player.Collisions.Value
-                ? LanguageManager.GetCurrentLanguage().DisableCollisions
-                : LanguageManager.GetCurrentLanguage().EnableCollisions;
+        private static string GetCollisionToggleLabel()
+            => GetNeutralToggleLabel(
+                LanguageManager.GetCurrentLanguage().EnableCollisions,
+                LanguageManager.GetCurrentLanguage().DisableCollisions);
 
-        private static string GetCutsceneLabel()
-            => ModSettings.player.CutscenePlayerVisibility.Value
-                ? LanguageManager.GetCurrentLanguage().DisablePlayerCutsceneVisibility
-                : LanguageManager.GetCurrentLanguage().EnablePlayerCutsceneVisibility;
+        private static string GetCutsceneToggleLabel()
+            => GetNeutralToggleLabel(
+                LanguageManager.GetCurrentLanguage().EnablePlayerCutsceneVisibility,
+                LanguageManager.GetCurrentLanguage().DisablePlayerCutsceneVisibility);
 
-        private static string GetNametagLabel()
-            => ModSettings.player.ShowNametags.Value
-                ? LanguageManager.GetCurrentLanguage().DisableNametags
-                : LanguageManager.GetCurrentLanguage().EnableNametags;
+        private static string GetNametagToggleLabel()
+            => GetNeutralToggleLabel(
+                LanguageManager.GetCurrentLanguage().EnableNametags,
+                LanguageManager.GetCurrentLanguage().DisableNametags);
 
         private static string GetGainLabel()
             => $"{LanguageManager.GetCurrentLanguage().MicrophoneGain} {ModSettings.audio.MicrophoneGain.Value:F2}x";
 
         private static string GetChannelLabel(string channel, float value)
             => $"{channel}: {(int)(value * 255)}";
+
+        private static string GetNeutralToggleLabel(string enabledText, string disabledText)
+        {
+            if (string.IsNullOrEmpty(enabledText)) return disabledText ?? string.Empty;
+            if (string.IsNullOrEmpty(disabledText)) return enabledText;
+
+            if (disabledText.EndsWith(enabledText, System.StringComparison.OrdinalIgnoreCase))
+                return enabledText;
+            if (enabledText.EndsWith(disabledText, System.StringComparison.OrdinalIgnoreCase))
+                return disabledText;
+
+            var enabledWords = enabledText.Split(' ');
+            var disabledWords = disabledText.Split(' ');
+            int i = enabledWords.Length - 1;
+            int j = disabledWords.Length - 1;
+            int commonWords = 0;
+            while (i >= 0 && j >= 0 &&
+                   string.Equals(enabledWords[i], disabledWords[j], System.StringComparison.OrdinalIgnoreCase))
+            {
+                commonWords++;
+                i--;
+                j--;
+            }
+
+            if (commonWords > 0)
+            {
+                int start = enabledWords.Length - commonWords;
+                var neutral = string.Join(" ", enabledWords, start, commonWords).Trim();
+                if (!string.IsNullOrEmpty(neutral))
+                    return neutral;
+            }
+
+            return enabledText;
+        }
 
         // ── UI helpers ────────────────────────────────────────────────────────
 

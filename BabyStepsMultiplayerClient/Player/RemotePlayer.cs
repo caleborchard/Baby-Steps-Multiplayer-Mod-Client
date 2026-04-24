@@ -175,6 +175,12 @@ namespace BabyStepsMultiplayerClient.Player
 
             SetHairHat(1, new Vector4(0, 1, 1, 0));
 
+            eyeBalls.Item1.gameObject.active = true;
+            eyeBalls.Item2.gameObject.active = true;
+            eyeLids.Item1.gameObject.active = true;
+            eyeLids.Item2.gameObject.active = true;
+            nateGlasses.gameObject.active = true;
+
             if (eyeBalls.Item1 != null)
                 eyeBalls.Item1.localRotation = Quaternion.identity;
             if (eyeBalls.Item2 != null)
