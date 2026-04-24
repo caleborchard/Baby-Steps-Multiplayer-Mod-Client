@@ -13,12 +13,11 @@ namespace BabyStepsMultiplayerClient.UI
             if (_menu != null) return;
             _menu = MenuInjectionLibrary.CreateMenu("Multiplayer")
                 .AddTab("General", ConfigureTab)
-                .AddTab("Audio",   ConfigureTab)
-                .AddTab("Debug",   ConfigureTab)
+                .AddTab("Audio", ConfigureTab)
+                .AddTab("Debug", ConfigureTab)
                 .AddFixedButton("Open Multiplayer Panel", (UnityAction)(() =>
                 {
-                    if (Core.uiManager?.serverConnectUI != null)
-                        Core.uiManager.serverConnectUI.IsOpen = true;
+                    if (Core.uiManager?.serverConnectUI != null) Core.uiManager.serverConnectUI.IsOpen = true;
                 }))
                 .AddFixedButton("Back")
                 .Build();
@@ -27,9 +26,10 @@ namespace BabyStepsMultiplayerClient.UI
         private static void ConfigureTab(MenuInjectionLibrary.TabBuilder tab)
         {
             tab.AddLabel("UI Element Showcase");
-            tab.AddButton("Example Button", (UnityAction)(()       => Core.logger?.Msg("[Demo] Button clicked")));
-            tab.AddToggle("Example Toggle", false, (UnityAction<bool>)(val  => Core.logger?.Msg($"[Demo] Toggle: {val}")));
+            tab.AddButton("Example Button", (UnityAction)(() => Core.logger?.Msg("[Demo] Button clicked")));
+            tab.AddToggle("Example Toggle", false, (UnityAction<bool>)  (val => Core.logger?.Msg($"[Demo] Toggle: {val}")));
             tab.AddSlider("Example Slider", 0f, 1f, 0.5f, (UnityAction<float>)(val => Core.logger?.Msg($"[Demo] Slider: {val:F2}")));
+            tab.AddInputField("Server IP...", (UnityAction<string>)(val => Core.logger?.Msg($"[Demo] Input: {val}")));
         }
     }
 }
