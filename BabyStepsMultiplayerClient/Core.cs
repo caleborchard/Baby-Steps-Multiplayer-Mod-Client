@@ -31,10 +31,7 @@ namespace BabyStepsMultiplayerClient
         public static UIManager uiManager;
         public static NetworkManager networkManager;
 
-        private static bool _firstOpen = false;
-
         // Fired on the main thread whenever the connection goes up or down.
-        // Subscribe to update UI that reflects connection state (e.g. connect button label).
         public static Action OnConnectionStateChanged;
 
         public override void OnLateInitializeMelon()
@@ -57,7 +54,7 @@ namespace BabyStepsMultiplayerClient
             uiManager = new();
             networkManager = new();
 
-            MultiplayerMenuDemo.Initialize();
+            MultiplayerMenu.Initialize();
 
             logger.Msg("Initialized!");
 
@@ -72,16 +69,6 @@ namespace BabyStepsMultiplayerClient
             uiManager.Draw();
         }
 
-        public override void OnSceneWasInitialized(int buildIndex, string sceneName)
-        {
-            if (!_firstOpen
-                && sceneName.Contains("Title"))
-            {
-                _firstOpen = true;
-                uiManager.serverConnectUI.IsOpen = true;
-            }
-        }
-
         public override void OnUpdate()
         {
             if (uiManager == null || networkManager == null)
@@ -89,6 +76,7 @@ namespace BabyStepsMultiplayerClient
 
             uiManager.Update();
             networkManager.Update();
+            MultiplayerMenu.Update();
 
             if (LocalPlayer.Instance != null)
                 LocalPlayer.Instance.Update();

@@ -135,6 +135,7 @@ namespace BabyStepsMultiplayerClient.UI
 
             private readonly string[] _tabNames;
             private readonly List<Selectable>[] _pageSelectables;
+            private int _setTabFrame = -1;
 
             internal MenuItemList ManagedItemList { get; set; }
             internal Color NativeHighlightedColor { get; set; } = TabHighlighted;
@@ -164,6 +165,9 @@ namespace BabyStepsMultiplayerClient.UI
             public void SetActiveTab(int index)
             {
                 if (Tabs == null || Pages == null || index < 0 || index >= TabCount) return;
+                int frame = UnityEngine.Time.frameCount;
+                if (frame == _setTabFrame) return;
+                _setTabFrame = frame;
                 ActiveTab = index;
 
                 var sels = _pageSelectables?[index];
@@ -263,8 +267,11 @@ namespace BabyStepsMultiplayerClient.UI
                 UnityAction<float> onChange, bool wholeNumbers = false)
                 => MenuInjectionLibrary.AddSlider(text, min, max, value, onChange, wholeNumbers);
 
-            public Button AddInputField(string placeholder = "", UnityAction<string> onChange = null)
-                => MenuInjectionLibrary.AddInputField(placeholder, onChange);
+            public Button AddInputField(string placeholder = "", UnityAction<string> onChange = null, string initialValue = null)
+                => MenuInjectionLibrary.AddInputField(placeholder, onChange, initialValue);
+
+            public Image AddImage(Color color, float height = DefaultHeight)
+                => MenuInjectionLibrary.AddImage(color, height);
         }
 
         public sealed class MenuBuilder
@@ -355,7 +362,7 @@ namespace BabyStepsMultiplayerClient.UI
 
             private bool KbVisible => _kbCG != null && _kbCG.alpha > 0.5f;
             private bool IsKbButton(GameObject go) => go != null && _kbAllButtons.Contains(go);
-            private const float CanvasW = 560f;
+            private const float CanvasW = 860f;
             private const float CanvasH = 650f;
             private const float ContentH = 460f;
             private const float ContentPad = 10f;
@@ -366,6 +373,9 @@ namespace BabyStepsMultiplayerClient.UI
                 _tabDescs = b._tabs;
                 _fixedDescs = b._fixed;
             }
+
+            public Button GetFixedButton(int index)
+                => index >= 0 && index < _fixedButtonInstances.Count ? _fixedButtonInstances[index] : null;
 
             public void OnMenuAwake(Menu menu)
             {
@@ -506,9 +516,9 @@ namespace BabyStepsMultiplayerClient.UI
                         if (_tabMenu != null && menu.rwPlayer != null)
                         {
                             if (menu.rwPlayer.GetButtonDown((int)InputActions.UITabPrev))
-                                _tabMenu.SetActiveTab((_tabMenu.ActiveTab + 1) % _tabMenu.TabCount);
-                            else if (menu.rwPlayer.GetButtonDown((int)InputActions.UITabNext))
                                 _tabMenu.SetActiveTab((_tabMenu.ActiveTab - 1 + _tabMenu.TabCount) % _tabMenu.TabCount);
+                            else if (menu.rwPlayer.GetButtonDown((int)InputActions.UITabNext))
+                                _tabMenu.SetActiveTab((_tabMenu.ActiveTab + 1) % _tabMenu.TabCount);
                         }
                     }
                 }
@@ -682,7 +692,7 @@ namespace BabyStepsMultiplayerClient.UI
                 contentRect.anchorMin = new Vector2(0.5f, 1f);
                 contentRect.anchorMax = new Vector2(0.5f, 1f);
                 contentRect.pivot = new Vector2(0.5f, 1f);
-                contentRect.sizeDelta = new Vector2(520f, ContentH);
+                contentRect.sizeDelta = new Vector2(800f, ContentH);
                 contentRect.anchoredPosition = new Vector2(0f, -ContentPad);
 
                 var tmplRect = tmpl.GetComponent<RectTransform>();
@@ -743,7 +753,7 @@ namespace BabyStepsMultiplayerClient.UI
                     new[] { "Z","X","C","V","B","N","M" },
                 };
 
-                const float PanelW = 520f;
+                const float PanelW = 800f;
                 const float KeyH = 44f;
                 const float HGap = 6f;
                 const float VGap = 4f;
@@ -1572,6 +1582,23 @@ namespace BabyStepsMultiplayerClient.UI
             return tmp;
         }
 
+        public static Image AddImage(Color color, float height = DefaultHeight, RectTransform parent = null)
+        {
+            var p = parent ?? customRoot;
+            if (p == null) return null;
+
+            var obj = new GameObject("BBSMP_Image");
+            obj.transform.SetParent(p, false);
+
+            var rect = obj.AddComponent<RectTransform>();
+            var img  = obj.AddComponent<Image>();
+            img.sprite = null;
+            img.color  = color;
+
+            PlaceInLayout(rect, p, height);
+            return img;
+        }
+
         public static Button AddButton(string text, UnityAction onClick, RectTransform parent = null)
         {
             var p = parent ?? customRoot;
@@ -1714,7 +1741,7 @@ namespace BabyStepsMultiplayerClient.UI
             return slider;
         }
         public static Button AddInputField(string placeholder = "",
-            UnityAction<string> onChange = null, RectTransform parent = null)
+            UnityAction<string> onChange = null, string initialValue = null, RectTransform parent = null)
         {
             var p = parent ?? customRoot;
             if (p == null || buttonTemplate == null) return null;
@@ -1815,9 +1842,10 @@ namespace BabyStepsMultiplayerClient.UI
                 Color placeholderTextColor = new Color(TabText.r, TabText.g, TabText.b, TabText.a * 0.45f);
                 Color activeTextColor = new Color(TabText.r * 0.65f, TabText.g * 0.65f, TabText.b * 0.65f, 1f);
 
-                valTmp.text = placeholder ?? "";
+                bool hasInitial = !string.IsNullOrEmpty(initialValue);
+                valTmp.text = hasInitial ? initialValue : (placeholder ?? "");
                 valTmp.alignment = TextAlignmentOptions.MidlineLeft;
-                valTmp.color = placeholderTextColor;
+                valTmp.color = hasInitial ? activeTextColor : placeholderTextColor;
                 valTmp.enableWordWrapping = false;
                 valTmp.overflowMode = TextOverflowModes.Overflow;
                 valTmp.fontSize = 19f;
@@ -1850,7 +1878,7 @@ namespace BabyStepsMultiplayerClient.UI
             }
             var capturedInfo = new InputFieldInfo
             {
-                Value = "",
+                Value = initialValue ?? "",
                 DisplayText = valTmp,
                 OnChanged = onChange,
                 Placeholder = placeholder ?? "",
