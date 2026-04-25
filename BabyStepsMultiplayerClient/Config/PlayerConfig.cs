@@ -1,5 +1,6 @@
 ﻿using MelonLoader;
 using UnityEngine;
+using Il2CppSteamworks;
 
 namespace BabyStepsMultiplayerClient.Config
 {
@@ -20,7 +21,7 @@ namespace BabyStepsMultiplayerClient.Config
             Nickname = CreatePref("Nickname",
                 "Nickname",
                 "User Nickname",
-                "Nate");
+                SteamFriends.Internal.GetFriendPersonaName(SteamUser.Internal.GetSteamID()));
 
             SuitColor = CreatePref("SuitColor",
                 "Suit Color",

@@ -22,6 +22,7 @@ namespace BabyStepsMultiplayerClient.UI
         private const float SliderHandleSize = 112f;
         private static Sprite _inputFieldSprite;
         private static Sprite _sliderHandleSprite;
+        private static Sprite _solidSprite;
         private static TMP_FontAsset _lowercaseTextFont;
 
         private static TMP_FontAsset GetOrCreateLowercaseTextFont()
@@ -113,6 +114,16 @@ namespace BabyStepsMultiplayerClient.UI
                 new Vector4(R, R, R, R));
             return _inputFieldSprite;
         }
+        private static Sprite GetOrCreateSolidSprite()
+        {
+            if (_solidSprite != null) return _solidSprite;
+            var tex = new Texture2D(1, 1, TextureFormat.RGBA32, false);
+            tex.SetPixels32(new[] { new Color32(255, 255, 255, 255) });
+            tex.Apply(false, false);
+            _solidSprite = Sprite.Create(tex, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
+            return _solidSprite;
+        }
+
         private static RuntimeTabMenu _currentTabMenu;
         private static int _currentTabPage = -1;
         private static InjectedMenu _currentInjectedMenu;
@@ -280,6 +291,8 @@ namespace BabyStepsMultiplayerClient.UI
             internal readonly string _mainButtonLabel;
             internal readonly List<(string name, System.Action<TabBuilder> configure)> _tabs = new List<(string, System.Action<TabBuilder>)>();
             internal readonly List<(string label, UnityAction action)> _fixed = new List<(string, UnityAction)>();
+            internal float _sideMargin;
+            internal float _topMargin;
 
             internal MenuBuilder(string mainButtonLabel) => _mainButtonLabel = mainButtonLabel;
 
@@ -288,9 +301,17 @@ namespace BabyStepsMultiplayerClient.UI
                 _tabs.Add((name, configure));
                 return this;
             }
+
             public MenuBuilder AddFixedButton(string label, UnityAction action = null)
             {
                 _fixed.Add((label, action));
+                return this;
+            }
+
+            public MenuBuilder WithMargin(float sideMargin, float topMargin)
+            {
+                _sideMargin = sideMargin;
+                _topMargin  = topMargin;
                 return this;
             }
 
@@ -367,12 +388,17 @@ namespace BabyStepsMultiplayerClient.UI
             private const float CanvasH = 650f;
             private const float ContentH = 460f;
             private const float ContentPad = 10f;
+            private readonly float _sideMargin;
+            private readonly float _topMargin;
+            private RectTransform _submenuRect;
 
             internal InjectedMenu(MenuBuilder b)
             {
                 _mainButtonLabel = b._mainButtonLabel;
                 _tabDescs = b._tabs;
                 _fixedDescs = b._fixed;
+                _sideMargin = b._sideMargin;
+                _topMargin  = b._topMargin;
             }
 
             public Button GetFixedButton(int index)
@@ -691,11 +717,11 @@ namespace BabyStepsMultiplayerClient.UI
                 var contentObj = new GameObject("CustomSettingsContentRoot");
                 contentObj.transform.SetParent(root.transform, false);
                 var contentRect = contentObj.AddComponent<RectTransform>();
-                contentRect.anchorMin = new Vector2(0.5f, 1f);
-                contentRect.anchorMax = new Vector2(0.5f, 1f);
-                contentRect.pivot = new Vector2(0.5f, 1f);
+                contentRect.anchorMin = new Vector2(0f, 1f);
+                contentRect.anchorMax = new Vector2(0f, 1f);
+                contentRect.pivot = new Vector2(0f, 1f);
                 contentRect.sizeDelta = new Vector2(800f, ContentH);
-                contentRect.anchoredPosition = new Vector2(0f, -ContentPad);
+                contentRect.anchoredPosition = new Vector2(10f, -ContentPad);
 
                 var tmplRect = tmpl.GetComponent<RectTransform>();
                 float btnW = tmplRect != null ? Mathf.Max(200f, tmplRect.sizeDelta.x) : 520f;
@@ -732,6 +758,9 @@ namespace BabyStepsMultiplayerClient.UI
 
                 _submenuItemList = root.AddComponent<MenuItemList>();
                 _submenuItemList.items = new GameObject[0];
+
+                _submenuRect = rect;
+                ApplyMargin();
 
                 return root;
             }
@@ -1299,6 +1328,7 @@ namespace BabyStepsMultiplayerClient.UI
 
                 if (isVisible)
                 {
+                    ApplyMargin();
                     _tabMenu?.OnShown();
                     if (_submenuItemList != null) MenuItemList.active = _submenuItemList;
                 }
@@ -1349,6 +1379,12 @@ namespace BabyStepsMultiplayerClient.UI
                 if (menu?.rwPlayer == null || KbVisible || _mouseTypingActive) return;
                 if (Input.GetKeyDown(KeyCode.Escape) || menu.rwPlayer.GetButtonDown((int)InputActions.UICancel))
                     SetSubmenuVisible(false);
+            }
+
+            private void ApplyMargin()
+            {
+                if (_submenuRect != null)
+                    _submenuRect.anchoredPosition = new Vector2(10f + _sideMargin, -10f - _topMargin);
             }
 
             private bool GetSubmenuVisible() => _submenuCG != null && _submenuCG.alpha > 0.5f;
@@ -1425,6 +1461,7 @@ namespace BabyStepsMultiplayerClient.UI
                 _submenuObj = null;
                 _submenuCG = null;
                 _submenuItemList = null;
+                _submenuRect = null;
                 _mainMenuRoot = null;
                 _mainMenuCG = null;
                 _mainMenuItemList = null;
@@ -1602,7 +1639,8 @@ namespace BabyStepsMultiplayerClient.UI
 
             var rect = obj.AddComponent<RectTransform>();
             var img  = obj.AddComponent<Image>();
-            img.sprite = null;
+            img.sprite = GetOrCreateSolidSprite();
+            img.type   = Image.Type.Simple;
             img.color  = color;
 
             PlaceInLayout(rect, p, height);
@@ -1690,17 +1728,16 @@ namespace BabyStepsMultiplayerClient.UI
             layout.childForceExpandWidth = false;
             layout.childControlWidth = true;
 
-            // Label (LEFT)
-            var label = AddLabel(text, container);
-            float labelWidth = 0f;
-
-            if (label != null)
+            // Label (LEFT) — only created when text is non-empty; an empty label still occupies spacing
+            if (!string.IsNullOrEmpty(text))
             {
-                var labelLE = label.GetComponent<LayoutElement>() ?? label.gameObject.AddComponent<LayoutElement>();
-                labelLE.flexibleWidth = 0f;
-
-                label.ForceMeshUpdate();
-                labelWidth = Mathf.Ceil(label.GetPreferredValues(text).x);
+                var label = AddLabel(text, container);
+                if (label != null)
+                {
+                    var labelLE = label.GetComponent<LayoutElement>() ?? label.gameObject.AddComponent<LayoutElement>();
+                    labelLE.flexibleWidth = 0f;
+                    label.ForceMeshUpdate();
+                }
             }
 
             // Slider
@@ -1719,10 +1756,8 @@ namespace BabyStepsMultiplayerClient.UI
             if (onValueChanged != null)
                 slider.onValueChanged.AddListener(onValueChanged);
 
-            var sliderRect = obj.GetComponent<RectTransform>();
-
             var sliderLE = obj.GetComponent<LayoutElement>() ?? obj.AddComponent<LayoutElement>();
-            sliderLE.flexibleWidth = 0f;
+            sliderLE.flexibleWidth = 1f;
             sliderLE.minWidth = 100f;
 
             RectTransform handleRect = slider.handleRect;
@@ -1792,14 +1827,6 @@ namespace BabyStepsMultiplayerClient.UI
 
             PlaceInLayout(container, p, DefaultHeight + 12f);
 
-            // Right side shrink
-            UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(container);
-            float totalWidth = container.rect.width;
-            const float correction = 0f;
-            float sliderWidth = totalWidth - labelWidth - layout.spacing - correction;
-            sliderWidth = Mathf.Max(100f, sliderWidth);
-            sliderRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, sliderWidth);
-
             _currentTabMenu?.RegisterPageSelectable(_currentTabPage, slider);
             return slider;
         }
@@ -1837,47 +1864,36 @@ namespace BabyStepsMultiplayerClient.UI
             var pillImg = pillObj.AddComponent<Image>();
             pillImg.sprite = GetOrCreateInputFieldSprite();
             pillImg.type = Image.Type.Sliced;
-            pillImg.color = Color.white;
             var pillNormal = new Color(0.02f, 0.04f, 0.08f, 0.92f);
-            var pillSelected = new Color(0.15f, 0.40f, 0.60f, 0.92f);
 
             if (sliderTemplate != null)
             {
                 var sliderImages = sliderTemplate.GetComponentsInChildren<Image>(true);
-                Image trackImg = null, fillImg = null;
                 for (int si = 0; si < sliderImages.Length; si++)
                 {
                     var img = sliderImages[si];
                     if (img == null) continue;
                     var n = img.gameObject.name;
-                    if (trackImg == null && (
-                            n.IndexOf("Background", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
-                            n.IndexOf("Track",      System.StringComparison.OrdinalIgnoreCase) >= 0 ||
-                            n.IndexOf("Base",       System.StringComparison.OrdinalIgnoreCase) >= 0))
-                        trackImg = img;
-                    if (fillImg == null && (
-                            n.IndexOf("Fill",       System.StringComparison.OrdinalIgnoreCase) >= 0))
-                        fillImg = img;
+                    if (n.IndexOf("Background", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        n.IndexOf("Track",      System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        n.IndexOf("Base",       System.StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        pillNormal = img.color;
+                        break;
+                    }
                 }
-                if (trackImg != null) pillNormal = trackImg.color;
-                if (fillImg  != null) pillSelected = fillImg.color;
             }
 
-            var pillPressed = Color.Lerp(pillSelected, Color.white, 0.15f);
-            var pillDisabled = new Color(pillNormal.r * 0.6f, pillNormal.g * 0.6f, pillNormal.b * 0.6f, pillNormal.a);
             if (btn != null)
             {
+                // Disable Unity's built-in color transition — it propagates to ALL child
+                // Graphics in this game's button class, washing out the text color.
+                // We drive pill color directly instead.
+                btn.transition = Selectable.Transition.None;
                 btn.targetGraphic = pillImg;
-                var cb = btn.colors;
-                cb.normalColor = pillNormal;
-                cb.highlightedColor = pillSelected;
-                cb.selectedColor = pillSelected;
-                cb.pressedColor = pillPressed;
-                cb.disabledColor = pillDisabled;
-                cb.colorMultiplier = 1f;
-                cb.fadeDuration = 0.1f;
-                btn.colors = cb;
             }
+            pillImg.color = pillNormal;
+
             var viewObj = new GameObject("BBSMP_InputViewport");
             viewObj.transform.SetParent(pillObj.transform, false);
             var viewRect = viewObj.AddComponent<RectTransform>();
@@ -1897,24 +1913,22 @@ namespace BabyStepsMultiplayerClient.UI
                     if (clonedImgs[ci] != null) UnityEngine.Object.DestroyImmediate(clonedImgs[ci]);
 
                 valTmp = valObj.GetComponent<TMP_Text>();
-                Color templateTextColor = existingTmp.color;
-                Color templatePlaceholder = new Color(
-                    templateTextColor.r, templateTextColor.g, templateTextColor.b,
-                    templateTextColor.a * 0.45f);
-                
-                Color placeholderTextColor = new Color(TabText.r, TabText.g, TabText.b, TabText.a * 0.45f);
-                Color activeTextColor = new Color(TabText.r * 0.65f, TabText.g * 0.65f, TabText.b * 0.65f, 1f);
-
                 bool hasInitial = !string.IsNullOrEmpty(initialValue);
                 valTmp.text = hasInitial ? initialValue : (placeholder ?? "");
                 valTmp.alignment = TextAlignmentOptions.MidlineLeft;
-                valTmp.color = hasInitial ? activeTextColor : placeholderTextColor;
                 valTmp.enableWordWrapping = false;
                 valTmp.overflowMode = TextOverflowModes.Overflow;
                 valTmp.fontSize = 19f;
                 valTmp.fontStyle = FontStyles.Normal;
+                valTmp.enableVertexGradient = false;
                 ApplyLowercaseTextFont(valTmp);
                 valTmp.ForceMeshUpdate();
+                // Set color last so it wins over anything the font/mesh rebuild touched
+                Color activeTextColor = Color.black;
+                Color placeholderTextColor = new Color(0.45f, 0.45f, 0.45f, 1f);
+                valTmp.color = hasInitial ? activeTextColor : placeholderTextColor;
+                // Force CanvasRenderer tint to neutral so the button's color block can't wash it out
+                valTmp.canvasRenderer.SetColor(Color.white);
 
                 var vr = valObj.GetComponent<RectTransform>();
                 if (vr != null)
@@ -1946,8 +1960,8 @@ namespace BabyStepsMultiplayerClient.UI
                 OnChanged = onChange,
                 Placeholder = placeholder ?? "",
                 Viewport = viewRect,
-                ActiveColor = new Color(TabText.r * 0.65f, TabText.g * 0.65f, TabText.b * 0.65f, 1f),
-                PlaceholderColor = new Color(TabText.r, TabText.g, TabText.b, TabText.a * 0.45f),
+                ActiveColor = Color.black,
+                PlaceholderColor = new Color(0.45f, 0.45f, 0.45f, 1f),
              };
             var capturedBtn = btn;
             var capturedMenu = _currentInjectedMenu;
@@ -2037,8 +2051,8 @@ namespace BabyStepsMultiplayerClient.UI
                 pageRect.anchorMin = Vector2.zero;
                 pageRect.anchorMax = Vector2.one;
                 pageRect.pivot = new Vector2(0.5f, 1f);
-                pageRect.offsetMin = new Vector2(4f, 4f);
-                pageRect.offsetMax = new Vector2(-4f, -(HeaderH + 4f));
+                pageRect.offsetMin = new Vector2(0f, 4f);
+                pageRect.offsetMax = new Vector2(0f, -(HeaderH + 4f));
 
                 var pageCG = pageObj.AddComponent<CanvasGroup>();
                 pageCG.alpha = 0f;

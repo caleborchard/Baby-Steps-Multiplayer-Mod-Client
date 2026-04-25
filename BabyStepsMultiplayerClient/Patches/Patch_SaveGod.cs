@@ -20,7 +20,7 @@ namespace BabyStepsMultiplayerClient.Patches
         [HarmonyPrefix]
         private static bool TryLoadSave_Prefix(SaveGod __instance)
         {
-            Core.DebugMsg("SaveGod TryLoadSave HarmonyPatch");
+            //Core.DebugMsg("SaveGod TryLoadSave HarmonyPatch");
 
             if (Core.networkManager != null)
                 Core.networkManager.Disconnect();

@@ -34,6 +34,7 @@ namespace BabyStepsMultiplayerClient.UI
                 .AddTab("Audio",      ConfigureAudioTab)
                 .AddFixedButton(GetConnectLabel(), (UnityAction)OnConnectClicked)
                 .AddFixedButton("Back")
+                .WithMargin(136f, 125f)
                 .Build();
 
             Core.OnConnectionStateChanged += RefreshConnectionState;
@@ -125,6 +126,7 @@ namespace BabyStepsMultiplayerClient.UI
                 (UnityAction<bool>)OnCutsceneToggled);
             _nametagToggle   = tab.AddToggle(GetNametagToggleLabel(), ModSettings.player.ShowNametags.Value,
                 (UnityAction<bool>)OnNametagToggled);
+
         }
 
         private static void ConfigureAudioTab(MenuInjectionLibrary.TabBuilder tab)
