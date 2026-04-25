@@ -1,11 +1,12 @@
 using HarmonyLib;
 using Il2Cpp;
+using Il2CppInterop.Runtime;
 using Il2CppTMPro;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.Events;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace BabyStepsMultiplayerClient.UI
@@ -1669,28 +1670,61 @@ namespace BabyStepsMultiplayerClient.UI
         }
 
         public static Slider AddSlider(string text, float min, float max, float value,
-            UnityAction<float> onValueChanged, bool wholeNumbers = false, RectTransform parent = null)
+    UnityAction<float> onValueChanged, bool wholeNumbers = false, RectTransform parent = null)
         {
             var p = parent ?? customRoot;
             if (p == null || sliderTemplate == null) return null;
 
-            var obj = UnityEngine.Object.Instantiate(sliderTemplate.gameObject, p);
+            // Container
+            var types = new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppReferenceArray<Il2CppSystem.Type>(2);
+            types[0] = Il2CppType.Of<RectTransform>();
+            types[1] = Il2CppType.Of<HorizontalLayoutGroup>();
+
+            var containerGO = new GameObject("BBSMP_SliderContainer", types);
+            var container = containerGO.GetComponent<RectTransform>();
+            container.SetParent(p, false);
+
+            var layout = containerGO.GetComponent<HorizontalLayoutGroup>();
+            layout.childAlignment = TextAnchor.MiddleLeft;
+            layout.spacing = 30f;
+            layout.childForceExpandWidth = false;
+            layout.childControlWidth = true;
+
+            // Label (LEFT)
+            var label = AddLabel(text, container);
+            float labelWidth = 0f;
+
+            if (label != null)
+            {
+                var labelLE = label.GetComponent<LayoutElement>() ?? label.gameObject.AddComponent<LayoutElement>();
+                labelLE.flexibleWidth = 0f;
+
+                label.ForceMeshUpdate();
+                labelWidth = Mathf.Ceil(label.GetPreferredValues(text).x);
+            }
+
+            // Slider
+            var obj = UnityEngine.Object.Instantiate(sliderTemplate.gameObject, container);
             obj.name = "BBSMP_Slider";
             StripLocalizationComponents(obj);
 
             var slider = obj.GetComponent<Slider>();
             if (slider == null) return null;
 
-            slider.onValueChanged = new Slider.SliderEvent();
             slider.minValue = min;
             slider.maxValue = max;
             slider.wholeNumbers = wholeNumbers;
             slider.value = Mathf.Clamp(value, min, max);
+
             if (onValueChanged != null)
                 slider.onValueChanged.AddListener(onValueChanged);
 
-            var tmp = obj.GetComponentInChildren<TMP_Text>(true);
-            if (tmp != null) { tmp.text = text; tmp.ForceMeshUpdate(); }
+            var sliderRect = obj.GetComponent<RectTransform>();
+
+            var sliderLE = obj.GetComponent<LayoutElement>() ?? obj.AddComponent<LayoutElement>();
+            sliderLE.flexibleWidth = 0f;
+            sliderLE.minWidth = 100f;
+
             RectTransform handleRect = slider.handleRect;
             if (handleRect == null)
             {
@@ -1701,8 +1735,8 @@ namespace BabyStepsMultiplayerClient.UI
                     if (r == null) continue;
                     var hn = r.gameObject.name;
                     if (hn.IndexOf("Handle", System.StringComparison.OrdinalIgnoreCase) >= 0 &&
-                        hn.IndexOf("Area",   System.StringComparison.OrdinalIgnoreCase) < 0  &&
-                        hn.IndexOf("Slide",  System.StringComparison.OrdinalIgnoreCase) < 0)
+                        hn.IndexOf("Area", System.StringComparison.OrdinalIgnoreCase) < 0 &&
+                        hn.IndexOf("Slide", System.StringComparison.OrdinalIgnoreCase) < 0)
                     {
                         handleRect = r;
                         break;
@@ -1756,7 +1790,15 @@ namespace BabyStepsMultiplayerClient.UI
                 }
             }
 
-            PlaceInLayout(obj.GetComponent<RectTransform>(), p, DefaultHeight + 12f);
+            PlaceInLayout(container, p, DefaultHeight + 12f);
+
+            // Right side shrink
+            UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(container);
+            float totalWidth = container.rect.width;
+            const float correction = 0f;
+            float sliderWidth = totalWidth - labelWidth - layout.spacing - correction;
+            sliderWidth = Mathf.Max(100f, sliderWidth);
+            sliderRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, sliderWidth);
 
             _currentTabMenu?.RegisterPageSelectable(_currentTabPage, slider);
             return slider;

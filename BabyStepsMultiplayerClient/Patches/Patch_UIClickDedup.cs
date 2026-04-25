@@ -28,10 +28,6 @@ namespace BabyStepsMultiplayerClient.Patches
             int id = __instance.GetInstanceID();
             bool isDup = _toggleClickFrame.TryGetValue(id, out int last) && last == frame;
 
-            Core.logger?.Msg(
-                $"[ToggleFix] frame={frame} OPC '{__instance.gameObject?.name}'" +
-                $" isOn={__instance.isOn} → {(isDup ? "BLOCKED" : "ALLOWED")}");
-
             if (isDup) return false;
             _toggleClickFrame[id] = frame;
 

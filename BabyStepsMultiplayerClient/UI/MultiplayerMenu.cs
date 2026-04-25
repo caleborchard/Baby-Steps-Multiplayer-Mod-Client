@@ -70,30 +70,27 @@ namespace BabyStepsMultiplayerClient.UI
 
             Slider rSlider = null, gSlider = null, bSlider = null;
 
-            rSlider = tab.AddSlider(GetChannelLabel(lang.Red, color.r), 0f, 1f, color.r,
+            rSlider = tab.AddSlider("R:", 0f, 1f, color.r,
                 (UnityAction<float>)(val =>
                 {
                     var c = ModSettings.player.SuitColor.Value; c.r = val;
                     ModSettings.player.SuitColor.Value = c;
-                    UpdateSliderLabel(rSlider, GetChannelLabel(LanguageManager.GetCurrentLanguage().Red, val));
                     RefreshColorPreview();
                 }));
 
-            gSlider = tab.AddSlider(GetChannelLabel(lang.Green, color.g), 0f, 1f, color.g,
+            gSlider = tab.AddSlider("G:", 0f, 1f, color.g,
                 (UnityAction<float>)(val =>
                 {
                     var c = ModSettings.player.SuitColor.Value; c.g = val;
                     ModSettings.player.SuitColor.Value = c;
-                    UpdateSliderLabel(gSlider, GetChannelLabel(LanguageManager.GetCurrentLanguage().Green, val));
                     RefreshColorPreview();
                 }));
 
-            bSlider = tab.AddSlider(GetChannelLabel(lang.Blue, color.b), 0f, 1f, color.b,
+            bSlider = tab.AddSlider("B:", 0f, 1f, color.b,
                 (UnityAction<float>)(val =>
                 {
                     var c = ModSettings.player.SuitColor.Value; c.b = val;
                     ModSettings.player.SuitColor.Value = c;
-                    UpdateSliderLabel(bSlider, GetChannelLabel(LanguageManager.GetCurrentLanguage().Blue, val));
                     RefreshColorPreview();
                 }));
 
@@ -300,9 +297,6 @@ namespace BabyStepsMultiplayerClient.UI
 
         private static string GetGainLabel()
             => $"{LanguageManager.GetCurrentLanguage().MicrophoneGain} {ModSettings.audio.MicrophoneGain.Value:F2}x";
-
-        private static string GetChannelLabel(string channel, float value)
-            => $"{channel}: {(int)(value * 255)}";
 
         private static string GetNeutralToggleLabel(string enabledText, string disabledText)
         {
