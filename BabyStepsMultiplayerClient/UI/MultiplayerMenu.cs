@@ -1,6 +1,7 @@
 using Il2CppTMPro;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using BabyStepsMultiplayerClient.Player;
 using BabyStepsMultiplayerClient.Localization;
@@ -20,6 +21,8 @@ namespace BabyStepsMultiplayerClient.UI
         private static Image  _colorPreviewImage;
 
         private static KeybindCaptureTarget _keybindCaptureTarget;
+        private static bool _waitingForRelease;
+        private static BaseInputModule _cachedInputModule;
 
         private enum KeybindCaptureTarget
         {
@@ -53,9 +56,23 @@ namespace BabyStepsMultiplayerClient.UI
         public static void Update()
         {
             if (_keybindCaptureTarget == KeybindCaptureTarget.None) return;
+
+            if (_waitingForRelease)
+            {
+                // Wait until nothing is pressed anymore
+                foreach (KeyCode keyCode in System.Enum.GetValues(typeof(KeyCode)))
+                {
+                    if (!Input.anyKeyDown)
+                        return;
+                }
+
+                _waitingForRelease = false;
+                return;
+            }
+
             foreach (KeyCode keyCode in System.Enum.GetValues(typeof(KeyCode)))
             {
-                if (Input.GetKeyDown(keyCode) && keyCode != KeyCode.None && keyCode != KeyCode.Mouse0)
+                if (Input.GetKeyDown(keyCode))
                 {
                     ApplyCapturedKeybind(keyCode);
                     break;
@@ -199,19 +216,19 @@ namespace BabyStepsMultiplayerClient.UI
 
         private static void OnPttKeyClicked()
         {
-            _keybindCaptureTarget = KeybindCaptureTarget.PushToTalk;
+            BeginCapture(KeybindCaptureTarget.PushToTalk);
             SetBtnText(_pttKeyBtn, LanguageManager.GetCurrentLanguage().PressAnyKey);
         }
 
         private static void OnTabMenuKeyClicked()
         {
-            _keybindCaptureTarget = KeybindCaptureTarget.TabMenu;
+            BeginCapture(KeybindCaptureTarget.TabMenu);
             SetBtnText(_tabMenuKeyBtn, LanguageManager.GetCurrentLanguage().PressAnyKey);
         }
 
         private static void OnChatMenuKeyClicked()
         {
-            _keybindCaptureTarget = KeybindCaptureTarget.ChatMenu;
+            BeginCapture(KeybindCaptureTarget.ChatMenu);
             SetBtnText(_chatMenuKeyBtn, LanguageManager.GetCurrentLanguage().PressAnyKey);
         }
 
@@ -322,7 +339,7 @@ namespace BabyStepsMultiplayerClient.UI
             => $"Push to Talk Key: {ModSettings.audio.PushToTalkKey.Value}";
 
         private static string GetTabMenuKeyLabel()
-            => $"Tab Menu Key: {ModSettings.player.TabMenuKey.Value}";
+            => $"Player List Key: {ModSettings.player.TabMenuKey.Value}";
 
         private static string GetChatMenuKeyLabel()
             => $"Chat Menu Key: {ModSettings.player.ChatMenuKey.Value}";
@@ -406,6 +423,28 @@ namespace BabyStepsMultiplayerClient.UI
 
             _keybindCaptureTarget = KeybindCaptureTarget.None;
             ModSettings.Save();
+            EndCapture();
+        }
+
+        private static void BeginCapture(KeybindCaptureTarget target)
+        {
+            _keybindCaptureTarget = target;
+            _waitingForRelease = true;
+
+            if (EventSystem.current != null)
+            {
+                _cachedInputModule = EventSystem.current.currentInputModule;
+                if (_cachedInputModule != null)
+                    _cachedInputModule.enabled = false;
+            }
+        }
+
+        private static void EndCapture()
+        {
+            if (_cachedInputModule != null)
+                _cachedInputModule.enabled = true;
+
+            _keybindCaptureTarget = KeybindCaptureTarget.None;
         }
     }
 }
