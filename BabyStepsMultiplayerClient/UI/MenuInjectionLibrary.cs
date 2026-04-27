@@ -2148,11 +2148,23 @@ namespace BabyStepsMultiplayerClient.UI
             }
 
             tmp.text = label;
+
+            // Match font size with toggle label (closer to whats seen in original settings menu)
+            if (toggleTemplate != null)
+            {
+                var toggleLabel = toggleTemplate.transform.Find("Label")?.GetComponent<TMP_Text>();
+                if (toggleLabel != null)
+                {
+                    tmp.fontSize = toggleLabel.fontSize;
+                }
+            }
+
             if (useLowercaseFont)
             {
                 tmp.fontStyle = FontStyles.Normal;
                 ApplyLowercaseTextFont(tmp);
             }
+
             tmp.ForceMeshUpdate();
         }
 

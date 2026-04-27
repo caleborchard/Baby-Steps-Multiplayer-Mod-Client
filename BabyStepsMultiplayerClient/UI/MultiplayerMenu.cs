@@ -15,9 +15,19 @@ namespace BabyStepsMultiplayerClient.UI
         private static Toggle _cutsceneToggle;
         private static Toggle _nametagToggle;
         private static Button _pttKeyBtn;
+        private static Button _tabMenuKeyBtn;
+        private static Button _chatMenuKeyBtn;
         private static Image  _colorPreviewImage;
 
-        private static bool _isWaitingForKey;
+        private static KeybindCaptureTarget _keybindCaptureTarget;
+
+        private enum KeybindCaptureTarget
+        {
+            None,
+            PushToTalk,
+            TabMenu,
+            ChatMenu,
+        }
 
         private static Button ConnectFixedBtn => _menu?.GetFixedButton(0);
 
@@ -42,16 +52,12 @@ namespace BabyStepsMultiplayerClient.UI
 
         public static void Update()
         {
-            if (!_isWaitingForKey) return;
+            if (_keybindCaptureTarget == KeybindCaptureTarget.None) return;
             foreach (KeyCode keyCode in System.Enum.GetValues(typeof(KeyCode)))
             {
                 if (Input.GetKeyDown(keyCode) && keyCode != KeyCode.None && keyCode != KeyCode.Mouse0)
                 {
-                    ModSettings.audio.PushToTalkKey.Value = keyCode.ToString();
-                    if (LocalPlayer.Instance != null)
-                        LocalPlayer.Instance.SetPushToTalkKey(keyCode);
-                    _isWaitingForKey = false;
-                    SetBtnText(_pttKeyBtn, $"Bind Key: {keyCode}");
+                    ApplyCapturedKeybind(keyCode);
                     break;
                 }
             }
@@ -127,6 +133,9 @@ namespace BabyStepsMultiplayerClient.UI
             _nametagToggle   = tab.AddToggle(GetNametagToggleLabel(), ModSettings.player.ShowNametags.Value,
                 (UnityAction<bool>)OnNametagToggled);
 
+            _tabMenuKeyBtn = tab.AddButton(GetTabMenuKeyLabel(), (UnityAction)OnTabMenuKeyClicked);
+            _chatMenuKeyBtn = tab.AddButton(GetChatMenuKeyLabel(), (UnityAction)OnChatMenuKeyClicked);
+
         }
 
         private static void ConfigureAudioTab(MenuInjectionLibrary.TabBuilder tab)
@@ -137,7 +146,7 @@ namespace BabyStepsMultiplayerClient.UI
                 (UnityAction<bool>)OnDeafenToggled);
             tab.AddToggle(GetPushToTalkToggleLabel(), ModSettings.audio.PushToTalk.Value,
                 (UnityAction<bool>)OnPushToTalkToggled);
-            _pttKeyBtn = tab.AddButton($"Bind Key: {ModSettings.audio.PushToTalkKey.Value}", (UnityAction)OnPttKeyClicked);
+            _pttKeyBtn = tab.AddButton(GetPttKeyLabel(), (UnityAction)OnPttKeyClicked);
             _pttKeyBtn.interactable = ModSettings.audio.PushToTalk.Value;
 
             TMP_Text gainLabel = null;
@@ -190,8 +199,20 @@ namespace BabyStepsMultiplayerClient.UI
 
         private static void OnPttKeyClicked()
         {
-            _isWaitingForKey = true;
+            _keybindCaptureTarget = KeybindCaptureTarget.PushToTalk;
             SetBtnText(_pttKeyBtn, LanguageManager.GetCurrentLanguage().PressAnyKey);
+        }
+
+        private static void OnTabMenuKeyClicked()
+        {
+            _keybindCaptureTarget = KeybindCaptureTarget.TabMenu;
+            SetBtnText(_tabMenuKeyBtn, LanguageManager.GetCurrentLanguage().PressAnyKey);
+        }
+
+        private static void OnChatMenuKeyClicked()
+        {
+            _keybindCaptureTarget = KeybindCaptureTarget.ChatMenu;
+            SetBtnText(_chatMenuKeyBtn, LanguageManager.GetCurrentLanguage().PressAnyKey);
         }
 
         private static void OnCollisionToggled(bool enabled)
@@ -296,6 +317,15 @@ namespace BabyStepsMultiplayerClient.UI
             => GetNeutralToggleLabel(
                 LanguageManager.GetCurrentLanguage().EnableNametags,
                 LanguageManager.GetCurrentLanguage().DisableNametags);
+        
+        private static string GetPttKeyLabel()
+            => $"Push to Talk Key: {ModSettings.audio.PushToTalkKey.Value}";
+
+        private static string GetTabMenuKeyLabel()
+            => $"Tab Menu Key: {ModSettings.player.TabMenuKey.Value}";
+
+        private static string GetChatMenuKeyLabel()
+            => $"Chat Menu Key: {ModSettings.player.ChatMenuKey.Value}";
 
         private static string GetGainLabel()
             => $"{LanguageManager.GetCurrentLanguage().MicrophoneGain} {ModSettings.audio.MicrophoneGain.Value:F2}x";
@@ -352,6 +382,30 @@ namespace BabyStepsMultiplayerClient.UI
             if (tmp == null) return;
             tmp.text = text;
             tmp.ForceMeshUpdate();
+        }
+
+        private static void ApplyCapturedKeybind(KeyCode keyCode)
+        {
+            switch (_keybindCaptureTarget)
+            {
+                case KeybindCaptureTarget.PushToTalk:
+                    ModSettings.audio.PushToTalkKey.Value = keyCode.ToString();
+                    if (LocalPlayer.Instance != null)
+                        LocalPlayer.Instance.SetPushToTalkKey(keyCode);
+                    SetBtnText(_pttKeyBtn, $"Bind Key: {keyCode}");
+                    break;
+                case KeybindCaptureTarget.TabMenu:
+                    ModSettings.player.TabMenuKey.Value = keyCode.ToString();
+                    SetBtnText(_tabMenuKeyBtn, GetTabMenuKeyLabel());
+                    break;
+                case KeybindCaptureTarget.ChatMenu:
+                    ModSettings.player.ChatMenuKey.Value = keyCode.ToString();
+                    SetBtnText(_chatMenuKeyBtn, GetChatMenuKeyLabel());
+                    break;
+            }
+
+            _keybindCaptureTarget = KeybindCaptureTarget.None;
+            ModSettings.Save();
         }
     }
 }

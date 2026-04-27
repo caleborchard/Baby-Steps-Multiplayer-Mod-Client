@@ -8,6 +8,9 @@ namespace BabyStepsMultiplayerClient.UI
     {
         public bool showChatTab;
 
+        private KeyCode chatMenuKey = KeyCode.T;
+        private KeyCode tabMenuKey = KeyCode.Tab;
+
         private bool playerMovementSuppressedForChat;
         private bool playerMovementWasEnabledBeforeChat;
 
@@ -39,6 +42,8 @@ namespace BabyStepsMultiplayerClient.UI
 
         public void Update()
         {
+            RefreshConfiguredKeys();
+
             if (Core.networkManager.client == null)
             {
                 playersTabUI.IsOpen = false;
@@ -46,10 +51,10 @@ namespace BabyStepsMultiplayerClient.UI
             }
             else
             {
-                if (!showChatTab && Input.GetKeyDown(KeyCode.T))
+                if (!showChatTab && Input.GetKeyDown(chatMenuKey))
                     showChatTab = true;
 
-                playersTabUI.IsOpen = !showChatTab && Input.GetKey(KeyCode.Tab);
+                playersTabUI.IsOpen = !showChatTab && Input.GetKey(tabMenuKey);
             }
 
             UpdateGameplayInputSuppression();
@@ -80,6 +85,21 @@ namespace BabyStepsMultiplayerClient.UI
             {
                 movement.enabled = playerMovementWasEnabledBeforeChat;
                 playerMovementSuppressedForChat = false;
+            }
+        }
+
+        private void RefreshConfiguredKeys()
+        {
+            if (!System.Enum.TryParse(ModSettings.player.ChatMenuKey.Value, true, out chatMenuKey)
+                || chatMenuKey == KeyCode.None)
+            {
+                chatMenuKey = KeyCode.T;
+            }
+
+            if (!System.Enum.TryParse(ModSettings.player.TabMenuKey.Value, true, out tabMenuKey)
+                || tabMenuKey == KeyCode.None)
+            {
+                tabMenuKey = KeyCode.Tab;
             }
         }
 

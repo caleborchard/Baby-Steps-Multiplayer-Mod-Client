@@ -15,11 +15,19 @@ namespace BabyStepsMultiplayerClient.UI.Elements
         private RuntimeFoldout languageSettingsFoldout;
 
         private string[] availableDevices = new string[0];
-        private bool isWaitingForKey = false;
+        private KeybindCaptureTarget keybindCaptureTarget = KeybindCaptureTarget.None;
 
         // Peak meter variables
         private float currentPeak = 0f;
         private float peakDecayRate = 0.95f;
+
+        private enum KeybindCaptureTarget
+        {
+            None,
+            PushToTalk,
+            TabMenu,
+            ChatMenu,
+        }
 
         public ServerConnectUI()
             : base($"Server Join Panel v{Core.CLIENT_VERSION}", 0, new(30, 30), new(250, 400), false)
@@ -44,18 +52,13 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             var lang = LanguageManager.GetCurrentLanguage();
 
             // Handle key input for push-to-talk keybind (must be before GUI rendering)
-            if (isWaitingForKey)
+            if (keybindCaptureTarget != KeybindCaptureTarget.None)
             {
                 foreach (KeyCode keyCode in System.Enum.GetValues(typeof(KeyCode)))
                 {
                     if (Input.GetKeyDown(keyCode) && keyCode != KeyCode.None && keyCode != KeyCode.Mouse0)
                     {
-                        ModSettings.audio.PushToTalkKey.Value = keyCode.ToString();
-                        if (LocalPlayer.Instance != null)
-                        {
-                            LocalPlayer.Instance.SetPushToTalkKey(keyCode);
-                        }
-                        isWaitingForKey = false;
+                        ApplyCapturedKey(keyCode);
                         break;
                     }
                 }
@@ -174,10 +177,10 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             GUILayout.BeginHorizontal();
             GUILayout.Label(lang.PushToTalkKey, StyleManager.Styles.Label);
 
-            string keyButtonText = isWaitingForKey ? lang.PressAnyKey : ModSettings.audio.PushToTalkKey.Value;
+            string keyButtonText = GetKeybindButtonText(ModSettings.audio.PushToTalkKey.Value, KeybindCaptureTarget.PushToTalk, lang.PressAnyKey);
             if (GUILayout.Button(keyButtonText, StyleManager.Styles.Button, GUILayout.Width(120)))
             {
-                isWaitingForKey = true;
+                keybindCaptureTarget = KeybindCaptureTarget.PushToTalk;
             }
             GUILayout.EndHorizontal();
 
@@ -322,6 +325,29 @@ namespace BabyStepsMultiplayerClient.UI.Elements
         private void HandleGeneralSettings()
         {
             var lang = LanguageManager.GetCurrentLanguage();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Tab Menu Key:", StyleManager.Styles.Label);
+            string tabMenuKeyButtonText = GetKeybindButtonText(ModSettings.player.TabMenuKey.Value, KeybindCaptureTarget.TabMenu, lang.PressAnyKey);
+            if (GUILayout.Button(tabMenuKeyButtonText, StyleManager.Styles.Button, GUILayout.Width(120)))
+            {
+                keybindCaptureTarget = KeybindCaptureTarget.TabMenu;
+            }
+            GUILayout.EndHorizontal();
+
+            GUILayout.Space(5);
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Chat Menu Key:", StyleManager.Styles.Label);
+            string chatMenuKeyButtonText = GetKeybindButtonText(ModSettings.player.ChatMenuKey.Value, KeybindCaptureTarget.ChatMenu, lang.PressAnyKey);
+            if (GUILayout.Button(chatMenuKeyButtonText, StyleManager.Styles.Button, GUILayout.Width(120)))
+            {
+                keybindCaptureTarget = KeybindCaptureTarget.ChatMenu;
+            }
+            GUILayout.EndHorizontal();
+
+            GUILayout.Space(5);
+
             GUI.enabled = !(Core.networkManager.client == null);
             if (GUILayout.Button((ModSettings.player.Collisions.Value ? lang.DisableCollisions : lang.EnableCollisions), StyleManager.Styles.Button))
             {
@@ -428,6 +454,32 @@ namespace BabyStepsMultiplayerClient.UI.Elements
         private string FilterKeyboardCharacters(string input)
         {
             return Regex.Replace(input, @"[^\p{L}\p{N}!@#\$%\^&\*\(\)_\+\-=\[\]{};:'"",<.>/?\\|`~ ]", "");
+        }
+
+        private void ApplyCapturedKey(KeyCode keyCode)
+        {
+            switch (keybindCaptureTarget)
+            {
+                case KeybindCaptureTarget.PushToTalk:
+                    ModSettings.audio.PushToTalkKey.Value = keyCode.ToString();
+                    if (LocalPlayer.Instance != null)
+                        LocalPlayer.Instance.SetPushToTalkKey(keyCode);
+                    break;
+                case KeybindCaptureTarget.TabMenu:
+                    ModSettings.player.TabMenuKey.Value = keyCode.ToString();
+                    break;
+                case KeybindCaptureTarget.ChatMenu:
+                    ModSettings.player.ChatMenuKey.Value = keyCode.ToString();
+                    break;
+            }
+
+            keybindCaptureTarget = KeybindCaptureTarget.None;
+            ModSettings.Save();
+        }
+
+        private string GetKeybindButtonText(string configuredKey, KeybindCaptureTarget target, string prompt)
+        {
+            return keybindCaptureTarget == target ? prompt : configuredKey;
         }
     }
 }

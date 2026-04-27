@@ -11,6 +11,8 @@ namespace BabyStepsMultiplayerClient.Config
         internal MelonPreferences_Entry<bool> Collisions;
         internal MelonPreferences_Entry<bool> CutscenePlayerVisibility;
         internal MelonPreferences_Entry<bool> ShowNametags;
+        internal MelonPreferences_Entry<string> TabMenuKey;
+        internal MelonPreferences_Entry<string> ChatMenuKey;
         internal MelonPreferences_Entry<string> Language;
 
         public override string ID
@@ -42,6 +44,16 @@ namespace BabyStepsMultiplayerClient.Config
                 "Show Nametags",
                 "Show Nametags Above Other Players",
                 true);
+
+            TabMenuKey = CreatePref("TabMenuKey",
+                "Tab Menu Key",
+                "Key to hold for showing the players tab menu",
+                "Tab");
+
+            ChatMenuKey = CreatePref("ChatMenuKey",
+                "Chat Menu Key",
+                "Key to open chat input",
+                "T");
 
             Language = CreatePref("Language",
                 "Language",
