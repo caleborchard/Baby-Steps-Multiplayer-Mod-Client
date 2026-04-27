@@ -1741,17 +1741,18 @@ namespace BabyStepsMultiplayerClient.UI
             }
 
             // Slider
-            var obj = UnityEngine.Object.Instantiate(sliderTemplate.gameObject, container);
+            var obj = InstantiateSliderTemplateSafely(sliderTemplate.gameObject, container);
             obj.name = "BBSMP_Slider";
             StripLocalizationComponents(obj);
 
             var slider = obj.GetComponent<Slider>();
             if (slider == null) return null;
 
+            slider.onValueChanged = new Slider.SliderEvent();
             slider.minValue = min;
             slider.maxValue = max;
             slider.wholeNumbers = wholeNumbers;
-            slider.value = Mathf.Clamp(value, min, max);
+            slider.SetValueWithoutNotify(Mathf.Clamp(value, min, max));
 
             if (onValueChanged != null)
                 slider.onValueChanged.AddListener(onValueChanged);
@@ -1829,6 +1830,53 @@ namespace BabyStepsMultiplayerClient.UI
 
             _currentTabMenu?.RegisterPageSelectable(_currentTabPage, slider);
             return slider;
+        }
+
+        private static GameObject InstantiateSliderTemplateSafely(GameObject template, Transform parent)
+        {
+            if (template == null) return null;
+
+            // Create the clone under an inactive staging root so inherited behaviours
+            // cannot run before we strip them.
+            var staging = new GameObject("BBSMP_SliderStaging");
+            staging.SetActive(false);
+            var clone = UnityEngine.Object.Instantiate(template, staging.transform);
+            StripNonUiComponents(clone);
+
+            clone.transform.SetParent(parent, false);
+            staging.SetActive(true);
+            UnityEngine.Object.Destroy(staging);
+            return clone;
+        }
+
+        private static void StripNonUiComponents(GameObject root)
+        {
+            if (root == null) return;
+
+            var components = root.GetComponentsInChildren<Component>(true);
+            for (int i = 0; i < components.Length; i++)
+            {
+                var comp = components[i];
+                if (comp == null || IsSafeSliderComponent(comp))
+                    continue;
+                UnityEngine.Object.DestroyImmediate(comp);
+            }
+        }
+
+        private static bool IsSafeSliderComponent(Component comp)
+        {
+            if (comp is Transform || comp is RectTransform || comp is CanvasRenderer)
+                return true;
+
+            var type = comp.GetType();
+            var ns = type?.Namespace ?? string.Empty;
+
+            // Keep built-in Unity/TMP components so visuals/layout keep working.
+            if (ns.StartsWith("UnityEngine", System.StringComparison.Ordinal)
+                || ns.StartsWith("TMPro", System.StringComparison.Ordinal))
+                return true;
+
+            return false;
         }
         public static Button AddInputField(string placeholder = "",
             UnityAction<string> onChange = null, string initialValue = null, RectTransform parent = null)
