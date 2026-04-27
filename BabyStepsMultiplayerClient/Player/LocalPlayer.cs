@@ -1,6 +1,7 @@
 ﻿using BabyStepsMultiplayerClient.Audio;
 using BabyStepsMultiplayerClient.Extensions;
 using BabyStepsMultiplayerClient.Networking;
+using BabyStepsMultiplayerClient.UI;
 using Il2Cpp;
 using Il2CppCinemachine;
 using MelonLoader;
@@ -39,7 +40,7 @@ namespace BabyStepsMultiplayerClient.Player
         private bool _isSpeaking = false;
         private Camera.CameraCallback _onPreCullDelegate;
         private bool pushToTalkEnabled = false;
-        private KeyCode pushToTalkKey = KeyCode.V;
+        private string pushToTalkBinding = KeyCode.V.ToString();
 
         private LineOfSightManager lineOfSightManager;
         private float lastGazableUpdateTime = 0f;
@@ -71,6 +72,7 @@ namespace BabyStepsMultiplayerClient.Player
             if (micEnabled) mic.StartRecording();
 
             SetPushToTalkEnabled(ModSettings.audio.PushToTalk.Value);
+            SetPushToTalkBinding(ModSettings.audio.PushToTalkKey.Value);
 
             _onPreCullDelegate = new Action<Camera>(OnCameraPreCull);
             Camera.onPreCull += _onPreCullDelegate;
@@ -140,8 +142,13 @@ namespace BabyStepsMultiplayerClient.Player
         public bool IsMicrophoneEnabled() { return micEnabled; }
         public void SetPushToTalkEnabled(bool state) { pushToTalkEnabled = state; }
         public bool IsPushToTalkEnabled() { return pushToTalkEnabled; }
-        public void SetPushToTalkKey(KeyCode key) { pushToTalkKey = key; }
-        public KeyCode GetPushToTalkKey() { return pushToTalkKey; }
+        public void SetPushToTalkBinding(string binding)
+        {
+            pushToTalkBinding = string.IsNullOrWhiteSpace(binding)
+                ? KeyCode.V.ToString()
+                : binding;
+        }
+        public string GetPushToTalkBinding() { return pushToTalkBinding; }
         public void SetMicrophoneDevice(int deviceIndex)
         {
             micDevice = deviceIndex;
@@ -308,7 +315,13 @@ namespace BabyStepsMultiplayerClient.Player
             if (micEnabled && mic != null && mic.IsRecording())
             {
                 bool shouldTransmit = true;
-                if (pushToTalkEnabled) shouldTransmit = Input.GetKey(pushToTalkKey);
+                if (pushToTalkEnabled)
+                {
+                    if (GetPushToTalkBinding() != ModSettings.audio.PushToTalkKey.Value)
+                        SetPushToTalkBinding(ModSettings.audio.PushToTalkKey.Value);
+
+                    shouldTransmit = InputBindingHelper.IsPressed(pushToTalkBinding);
+                }
 
                 if (shouldTransmit)
                 {

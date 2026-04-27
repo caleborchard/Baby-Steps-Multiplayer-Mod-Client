@@ -463,7 +463,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
                 case KeybindCaptureTarget.PushToTalk:
                     ModSettings.audio.PushToTalkKey.Value = keyCode.ToString();
                     if (LocalPlayer.Instance != null)
-                        LocalPlayer.Instance.SetPushToTalkKey(keyCode);
+                        LocalPlayer.Instance.SetPushToTalkBinding(keyCode.ToString());
                     break;
                 case KeybindCaptureTarget.TabMenu:
                     ModSettings.player.TabMenuKey.Value = keyCode.ToString();

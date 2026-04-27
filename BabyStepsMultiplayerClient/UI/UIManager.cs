@@ -8,8 +8,8 @@ namespace BabyStepsMultiplayerClient.UI
     {
         public bool showChatTab;
 
-        private KeyCode chatMenuKey = KeyCode.T;
-        private KeyCode tabMenuKey = KeyCode.Tab;
+        private string chatMenuBinding = KeyCode.T.ToString();
+        private string tabMenuBinding = KeyCode.Tab.ToString();
 
         private bool playerMovementSuppressedForChat;
         private bool playerMovementWasEnabledBeforeChat;
@@ -51,10 +51,10 @@ namespace BabyStepsMultiplayerClient.UI
             }
             else
             {
-                if (!showChatTab && Input.GetKeyDown(chatMenuKey))
+                if (!showChatTab && InputBindingHelper.IsDown(chatMenuBinding))
                     showChatTab = true;
 
-                playersTabUI.IsOpen = !showChatTab && Input.GetKey(tabMenuKey);
+                playersTabUI.IsOpen = !showChatTab && InputBindingHelper.IsPressed(tabMenuBinding);
             }
 
             UpdateGameplayInputSuppression();
@@ -90,17 +90,13 @@ namespace BabyStepsMultiplayerClient.UI
 
         private void RefreshConfiguredKeys()
         {
-            if (!System.Enum.TryParse(ModSettings.player.ChatMenuKey.Value, true, out chatMenuKey)
-                || chatMenuKey == KeyCode.None)
-            {
-                chatMenuKey = KeyCode.T;
-            }
+            chatMenuBinding = string.IsNullOrWhiteSpace(ModSettings.player.ChatMenuKey.Value)
+                ? KeyCode.T.ToString()
+                : ModSettings.player.ChatMenuKey.Value;
 
-            if (!System.Enum.TryParse(ModSettings.player.TabMenuKey.Value, true, out tabMenuKey)
-                || tabMenuKey == KeyCode.None)
-            {
-                tabMenuKey = KeyCode.Tab;
-            }
+            tabMenuBinding = string.IsNullOrWhiteSpace(ModSettings.player.TabMenuKey.Value)
+                ? KeyCode.Tab.ToString()
+                : ModSettings.player.TabMenuKey.Value;
         }
 
         public void ApplyCollisionToggle(RemotePlayer player, bool collisionsEnabled)

@@ -420,6 +420,7 @@ namespace BabyStepsMultiplayerClient.UI
 
                 bool vis = GetSubmenuVisible();
                 bool kbVis = vis && KbVisible;
+                bool isCapturingKeybind = MultiplayerMenu.IsCapturingKeybind;
 
                 if (vis)
                 {
@@ -433,7 +434,7 @@ namespace BabyStepsMultiplayerClient.UI
                             sel = _kbCharRows[0][0].gameObject;
                             ev?.SetSelectedGameObject(sel);
                         }
-                        if (Time.frameCount != _kbNavFrame)
+                        if (!isCapturingKeybind && Time.frameCount != _kbNavFrame)
                         {
                             _kbNavFrame = Time.frameCount;
 
@@ -476,77 +477,80 @@ namespace BabyStepsMultiplayerClient.UI
                     }
                     else
                     {
-                        TryHandleCancel(menu);
-                        if (_mouseTypingActive && _mouseTypingField != null &&
-                            Time.frameCount != _mouseTypingNavFrame)
+                        if (!isCapturingKeybind)
                         {
-                            _mouseTypingNavFrame = Time.frameCount;
-
-                            bool changed = false;
-                            foreach (char c in Input.inputString)
+                            TryHandleCancel(menu);
+                            if (_mouseTypingActive && _mouseTypingField != null &&
+                                Time.frameCount != _mouseTypingNavFrame)
                             {
-                                if (c == '\b')
+                                _mouseTypingNavFrame = Time.frameCount;
+
+                                bool changed = false;
+                                foreach (char c in Input.inputString)
                                 {
-                                    if (_mouseTypingField.Value.Length > 0)
+                                    if (c == '\b')
                                     {
-                                        _mouseTypingField.Value = _mouseTypingField.Value
-                                            .Substring(0, _mouseTypingField.Value.Length - 1);
+                                        if (_mouseTypingField.Value.Length > 0)
+                                        {
+                                            _mouseTypingField.Value = _mouseTypingField.Value
+                                                .Substring(0, _mouseTypingField.Value.Length - 1);
+                                            changed = true;
+                                        }
+                                    }
+                                    else if (c == '\r' || c == '\n')
+                                    {
+                                        _mouseTypingField.OnChanged?.Invoke(_mouseTypingField.Value);
+                                        CloseMouseTyping(restoreSelection: false);
+                                        changed = false;
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        _mouseTypingField.Value += c;
                                         changed = true;
                                     }
                                 }
-                                else if (c == '\r' || c == '\n')
+
+                                if (Input.GetKeyDown(KeyCode.Escape) && _mouseTypingActive)
                                 {
-                                    _mouseTypingField.OnChanged?.Invoke(_mouseTypingField.Value);
+                                    CloseMouseTyping(restoreSelection: true);
+                                    changed = false;
+                                }
+
+                                if (Input.GetMouseButtonDown(0) && _mouseTypingActive &&
+                                    _mouseTypingField?.OwnerButton != null &&
+                                    !IsPointerOverGameObject(_mouseTypingField.OwnerButton.gameObject))
+                                {
                                     CloseMouseTyping(restoreSelection: false);
                                     changed = false;
-                                    break;
                                 }
-                                else
+
+                                if (changed && _mouseTypingField != null)
                                 {
-                                    _mouseTypingField.Value += c;
-                                    changed = true;
+                                    _mouseHasEdited = true;
+                                    RefreshMouseTypingDisplay();
+                                    _mouseTypingField.OnChanged?.Invoke(_mouseTypingField.Value);
                                 }
                             }
-
-                            if (Input.GetKeyDown(KeyCode.Escape) && _mouseTypingActive)
+                            if (_mouseTypingActive && _mouseTypingField?.DisplayText != null &&
+                                Time.frameCount != _mouseCursorBlinkFrame)
                             {
-                                CloseMouseTyping(restoreSelection: true);
-                                changed = false;
+                                _mouseCursorBlinkFrame = Time.frameCount;
+                                _mouseCursorTimer += Time.unscaledDeltaTime;
+                                if (_mouseCursorTimer >= 0.53f)
+                                {
+                                    _mouseCursorTimer = 0f;
+                                    _mouseCursorVisible = !_mouseCursorVisible;
+                                    RefreshMouseTypingDisplay();
+                                }
                             }
-
-                            if (Input.GetMouseButtonDown(0) && _mouseTypingActive &&
-                                _mouseTypingField?.OwnerButton != null &&
-                                !IsPointerOverGameObject(_mouseTypingField.OwnerButton.gameObject))
+                            if (_tabMenu != null && menu.rwPlayer != null)
                             {
-                                CloseMouseTyping(restoreSelection: false);
-                                changed = false;
+                                if (menu.rwPlayer.GetButtonDown((int)InputActions.UITabPrev))
+                                    _tabMenu.SetActiveTab((_tabMenu.ActiveTab - 1 + _tabMenu.TabCount) % _tabMenu.TabCount);
+                                else if (menu.rwPlayer.GetButtonDown((int)InputActions.UITabNext))
+                                    _tabMenu.SetActiveTab((_tabMenu.ActiveTab + 1) % _tabMenu.TabCount);
                             }
-
-                            if (changed && _mouseTypingField != null)
-                            {
-                                _mouseHasEdited = true;
-                                RefreshMouseTypingDisplay();
-                                _mouseTypingField.OnChanged?.Invoke(_mouseTypingField.Value);
-                            }
-                        }
-                        if (_mouseTypingActive && _mouseTypingField?.DisplayText != null &&
-                            Time.frameCount != _mouseCursorBlinkFrame)
-                        {
-                            _mouseCursorBlinkFrame = Time.frameCount;
-                            _mouseCursorTimer += Time.unscaledDeltaTime;
-                            if (_mouseCursorTimer >= 0.53f)
-                            {
-                                _mouseCursorTimer = 0f;
-                                _mouseCursorVisible = !_mouseCursorVisible;
-                                RefreshMouseTypingDisplay();
-                            }
-                        }
-                        if (_tabMenu != null && menu.rwPlayer != null)
-                        {
-                            if (menu.rwPlayer.GetButtonDown((int)InputActions.UITabPrev))
-                                _tabMenu.SetActiveTab((_tabMenu.ActiveTab - 1 + _tabMenu.TabCount) % _tabMenu.TabCount);
-                            else if (menu.rwPlayer.GetButtonDown((int)InputActions.UITabNext))
-                                _tabMenu.SetActiveTab((_tabMenu.ActiveTab + 1) % _tabMenu.TabCount);
                         }
                     }
                 }

@@ -23,6 +23,8 @@ namespace BabyStepsMultiplayerClient.UI
         private static KeybindCaptureTarget _keybindCaptureTarget;
         private static bool _waitingForRelease;
         private static BaseInputModule _cachedInputModule;
+        private static bool _playerMovementSuppressedForCapture;
+        private static bool _playerMovementWasEnabledBeforeCapture;
 
         private enum KeybindCaptureTarget
         {
@@ -33,6 +35,7 @@ namespace BabyStepsMultiplayerClient.UI
         }
 
         private static Button ConnectFixedBtn => _menu?.GetFixedButton(0);
+        public static bool IsCapturingKeybind => _keybindCaptureTarget != KeybindCaptureTarget.None;
 
         public static void Initialize()
         {
@@ -57,26 +60,20 @@ namespace BabyStepsMultiplayerClient.UI
         {
             if (_keybindCaptureTarget == KeybindCaptureTarget.None) return;
 
+            UpdateGameplayInputSuppressionForCapture();
+
             if (_waitingForRelease)
             {
-                // Wait until nothing is pressed anymore
-                foreach (KeyCode keyCode in System.Enum.GetValues(typeof(KeyCode)))
-                {
-                    if (!Input.anyKeyDown)
-                        return;
-                }
-
+                // Wait until all input is released before listening for a new press.
+                if (InputBindingHelper.IsInputHeldForCapture())
+                    return;
                 _waitingForRelease = false;
                 return;
             }
 
-            foreach (KeyCode keyCode in System.Enum.GetValues(typeof(KeyCode)))
+            if (InputBindingHelper.TryCapturePressedBinding(out string binding, out string displayName))
             {
-                if (Input.GetKeyDown(keyCode))
-                {
-                    ApplyCapturedKeybind(keyCode);
-                    break;
-                }
+                ApplyCapturedKeybind(binding, displayName);
             }
         }
 
@@ -336,13 +333,13 @@ namespace BabyStepsMultiplayerClient.UI
                 LanguageManager.GetCurrentLanguage().DisableNametags);
         
         private static string GetPttKeyLabel()
-            => $"Push to Talk Key: {ModSettings.audio.PushToTalkKey.Value}";
+            => $"Push to Talk Key: {InputBindingHelper.GetDisplayName(ModSettings.audio.PushToTalkKey.Value)}";
 
         private static string GetTabMenuKeyLabel()
-            => $"Player List Key: {ModSettings.player.TabMenuKey.Value}";
+            => $"Player List Key: {InputBindingHelper.GetDisplayName(ModSettings.player.TabMenuKey.Value)}";
 
         private static string GetChatMenuKeyLabel()
-            => $"Chat Menu Key: {ModSettings.player.ChatMenuKey.Value}";
+            => $"Chat Menu Key: {InputBindingHelper.GetDisplayName(ModSettings.player.ChatMenuKey.Value)}";
 
         private static string GetGainLabel()
             => $"{LanguageManager.GetCurrentLanguage().MicrophoneGain} {ModSettings.audio.MicrophoneGain.Value:F2}x";
@@ -392,31 +389,26 @@ namespace BabyStepsMultiplayerClient.UI
             tmp.ForceMeshUpdate();
         }
 
-        private static void UpdateSliderLabel(Slider slider, string text)
+        private static void ApplyCapturedKeybind(string binding, string displayName)
         {
-            if (slider == null) return;
-            var tmp = slider.GetComponentInChildren<TMP_Text>(true);
-            if (tmp == null) return;
-            tmp.text = text;
-            tmp.ForceMeshUpdate();
-        }
+            if (string.Equals(binding, KeyCode.Escape.ToString(), System.StringComparison.OrdinalIgnoreCase))
+            {
+                CancelCapture();
+                return;
+            }
 
-        private static void ApplyCapturedKeybind(KeyCode keyCode)
-        {
             switch (_keybindCaptureTarget)
             {
                 case KeybindCaptureTarget.PushToTalk:
-                    ModSettings.audio.PushToTalkKey.Value = keyCode.ToString();
-                    if (LocalPlayer.Instance != null)
-                        LocalPlayer.Instance.SetPushToTalkKey(keyCode);
-                    SetBtnText(_pttKeyBtn, $"Bind Key: {keyCode}");
+                    ModSettings.audio.PushToTalkKey.Value = binding;
+                    SetBtnText(_pttKeyBtn, $"Bind Key: {displayName}");
                     break;
                 case KeybindCaptureTarget.TabMenu:
-                    ModSettings.player.TabMenuKey.Value = keyCode.ToString();
+                    ModSettings.player.TabMenuKey.Value = binding;
                     SetBtnText(_tabMenuKeyBtn, GetTabMenuKeyLabel());
                     break;
                 case KeybindCaptureTarget.ChatMenu:
-                    ModSettings.player.ChatMenuKey.Value = keyCode.ToString();
+                    ModSettings.player.ChatMenuKey.Value = binding;
                     SetBtnText(_chatMenuKeyBtn, GetChatMenuKeyLabel());
                     break;
             }
@@ -428,8 +420,14 @@ namespace BabyStepsMultiplayerClient.UI
 
         private static void BeginCapture(KeybindCaptureTarget target)
         {
+            if (_keybindCaptureTarget != KeybindCaptureTarget.None)
+            {
+                return;
+            }
+
             _keybindCaptureTarget = target;
             _waitingForRelease = true;
+            UpdateGameplayInputSuppressionForCapture();
 
             if (EventSystem.current != null)
             {
@@ -439,12 +437,60 @@ namespace BabyStepsMultiplayerClient.UI
             }
         }
 
+        private static void CancelCapture()
+        {
+            switch (_keybindCaptureTarget)
+            {
+                case KeybindCaptureTarget.PushToTalk:
+                    SetBtnText(_pttKeyBtn, GetPttKeyLabel());
+                    break;
+                case KeybindCaptureTarget.TabMenu:
+                    SetBtnText(_tabMenuKeyBtn, GetTabMenuKeyLabel());
+                    break;
+                case KeybindCaptureTarget.ChatMenu:
+                    SetBtnText(_chatMenuKeyBtn, GetChatMenuKeyLabel());
+                    break;
+            }
+
+            EndCapture();
+        }
+
+        private static void UpdateGameplayInputSuppressionForCapture()
+        {
+            var localPlayer = LocalPlayer.Instance;
+            var movement = localPlayer?.playerMovement;
+            if (movement == null)
+            {
+                _playerMovementSuppressedForCapture = false;
+                return;
+            }
+
+            if (IsCapturingKeybind)
+            {
+                if (!_playerMovementSuppressedForCapture)
+                {
+                    _playerMovementWasEnabledBeforeCapture = movement.enabled;
+                    if (_playerMovementWasEnabledBeforeCapture)
+                        movement.enabled = false;
+
+                    _playerMovementSuppressedForCapture = true;
+                }
+            }
+            else if (_playerMovementSuppressedForCapture)
+            {
+                movement.enabled = _playerMovementWasEnabledBeforeCapture;
+                _playerMovementSuppressedForCapture = false;
+            }
+        }
+
         private static void EndCapture()
         {
             if (_cachedInputModule != null)
                 _cachedInputModule.enabled = true;
 
             _keybindCaptureTarget = KeybindCaptureTarget.None;
+            _waitingForRelease = false;
+            UpdateGameplayInputSuppressionForCapture();
         }
     }
 }
