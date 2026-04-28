@@ -47,24 +47,22 @@ It's highly recommended that you use the Thunderstore Mod Manager to install thi
 ---
 
 ## ✨ Features
-- Support for seven different languages
+- Native UI implementation with controller support
 - Proximity Voice Chat
 - Custom player colors
 - Toggleable player collisions
 - Optional player cutscene visibility
 - Hat and held item replication
 - Mud and vegetation interaction
-- Lag compensation
 - Server passwords
 
 ---
 
 ## 🛠️ Work in Progress / TODO
-- Sync more world objects
-- Player sound effects (Nate grunts, steps, thuds)
 - Suit muddying and wetness
-- Water and dust particles
-- Native UI implementation with controller support
+- Face idle animations
+- Multi-language support for new GUI
+- Sync more world objects
 
 ---
 
