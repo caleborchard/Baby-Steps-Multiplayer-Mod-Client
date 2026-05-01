@@ -455,6 +455,8 @@ namespace BabyStepsMultiplayerClient.UI
             private bool _mouseHasEdited;
             private float _mouseCursorTimer = 0f;
             private bool _mouseCursorVisible = true;
+            private bool _kbUsingOverlay;
+
 
             private bool KbVisible => _kbCG != null && _kbCG.alpha > 0.5f;
             private bool IsKbButton(GameObject go) => go != null && _kbAllButtons.Contains(go);
@@ -632,7 +634,7 @@ namespace BabyStepsMultiplayerClient.UI
                             sel = target.gameObject;
                         }
 
-                        if (Input.GetKeyDown(KeyCode.JoystickButton0) || Input.GetKeyDown(KeyCode.JoystickButton1))
+                        if (_kbUsingOverlay && (Input.GetKeyDown(KeyCode.JoystickButton0) || Input.GetKeyDown(KeyCode.JoystickButton1)))
                         {
                             var submitBtn = sel?.GetComponent<Button>();
                             submitBtn?.onClick.Invoke();
@@ -1202,6 +1204,7 @@ namespace BabyStepsMultiplayerClient.UI
                 _kbActiveField = info;
                 _kbReturnButton = returnButton;
                 _kbOnDone = onDone;
+                _kbUsingOverlay = useOverlay;
                 _kbShift = false;
                 _kbHasEdited = false;
                 _kbCursorVisible = true;
@@ -1275,6 +1278,16 @@ namespace BabyStepsMultiplayerClient.UI
             {
                 _kbOnDone?.Invoke();
                 CloseKeyboard();
+            }
+
+            internal void OnInputFieldButtonClick(InputFieldInfo info, Button btn)
+            {
+                if (IsMouseTyping == true) return;
+
+                if (Input.GetMouseButtonUp(0))
+                    OpenMouseTyping(info);
+                else
+                    OpenKeyboard(info, btn);
             }
 
             internal void OpenMouseTyping(InputFieldInfo info)
@@ -2082,7 +2095,7 @@ namespace BabyStepsMultiplayerClient.UI
             pillImg.sprite = GetOrCreateInputFieldSprite();
             pillImg.type = Image.Type.Sliced;
             var pillNormal = new Color(0.02f, 0.04f, 0.08f, 0.92f);
-            var selectedPillColor = Color.Lerp(pillNormal, Color.white, 2.2f);
+            var selectedPillColor = Color.Lerp(pillNormal, Color.white, 2f);
 
             if (sliderTemplate != null)
             {
@@ -2192,15 +2205,7 @@ namespace BabyStepsMultiplayerClient.UI
             capturedInfo.OwnerButton = btn;
             capturedInfo.CursorImage = cursorImg;
 
-            btn?.onClick.AddListener((UnityAction)(() =>
-            {
-                if (capturedMenu?.IsMouseTyping == true) return;
-
-                if (Input.GetMouseButtonUp(0))
-                    capturedMenu?.OpenMouseTyping(capturedInfo);
-                else
-                    capturedMenu?.OpenKeyboard(capturedInfo, capturedBtn);
-            }));
+            btn?.onClick.AddListener((UnityAction)(() => capturedMenu?.OnInputFieldButtonClick(capturedInfo, capturedBtn)));
 
             PlaceInLayout(obj.GetComponent<RectTransform>(), p, DefaultHeight);
 
