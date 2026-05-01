@@ -7,6 +7,7 @@ namespace BabyStepsMultiplayerClient.UI
     public class UIManager
     {
         public bool showChatTab;
+        public bool ChatMenuUsesControllerBinding { get; private set; }
 
         private string chatMenuBinding = KeyCode.T.ToString();
         private string tabMenuBinding = KeyCode.Tab.ToString();
@@ -52,10 +53,16 @@ namespace BabyStepsMultiplayerClient.UI
             else
             {
                 if (!showChatTab && InputBindingHelper.IsDown(chatMenuBinding))
+                {
                     showChatTab = true;
+                    ChatMenuUsesControllerBinding = InputBindingHelper.IsControllerBinding(chatMenuBinding);
+                }
 
                 playersTabUI.IsOpen = !showChatTab && InputBindingHelper.IsPressed(tabMenuBinding);
             }
+
+            if (!showChatTab)
+                ChatMenuUsesControllerBinding = false;
 
             UpdateGameplayInputSuppression();
         }

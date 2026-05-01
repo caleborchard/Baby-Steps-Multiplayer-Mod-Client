@@ -1,4 +1,5 @@
 ﻿using System;
+using Il2Cpp;
 using UnityEngine;
 using BabyStepsMultiplayerClient.Localization;
 
@@ -29,7 +30,9 @@ namespace BabyStepsMultiplayerClient.UI.Elements
 
             Core.uiManager.notificationsUI.ShowChatHistory = true;
 
-            HandleChatInput();
+            bool controllerKeyboardActive = TrySyncControllerKeyboard();
+
+            HandleChatInput(controllerKeyboardActive);
 
             float width = Screen.width * 0.4f;
             float height = Screen.height * 0.05f;
@@ -52,7 +55,38 @@ namespace BabyStepsMultiplayerClient.UI.Elements
                 GUI.FocusControl(string.Empty);
         }
 
-        private void HandleChatInput()
+        private bool TrySyncControllerKeyboard()
+        {
+            var menu = MenuInjectionLibrary.GetKeyboardMenu();
+            if (menu == null || !Core.uiManager.ChatMenuUsesControllerBinding)
+                return false;
+
+            if (!menu.IsKeyboardOpen)
+            {
+                var info = new MenuInjectionLibrary.InputFieldInfo
+                {
+                    Value = message,
+                    DisplayText = null,
+                    OnChanged = (UnityEngine.Events.UnityAction<string>)(value => message = value),
+                    Placeholder = string.Empty,
+                    Viewport = null,
+                    ActiveColor = Color.white,
+                    PlaceholderColor = new Color(1f, 1f, 1f, 0.45f),
+                    OwnerButton = null,
+                    CursorImage = null,
+                };
+
+                menu.OpenKeyboardForChat(info, () =>
+                {
+                    SendCurrentMessage();
+                    Core.uiManager.showChatTab = false;
+                });
+            }
+
+            return menu.IsKeyboardOpen;
+        }
+
+        private void HandleChatInput(bool controllerKeyboardActive)
         {
             Event e = Event.current;
 
@@ -67,21 +101,23 @@ namespace BabyStepsMultiplayerClient.UI.Elements
                 if (e.keyCode == KeyCode.Return || e.keyCode == KeyCode.KeypadEnter)
                 {
                     SendCurrentMessage();
+                    MenuInjectionLibrary.GetKeyboardMenu()?.CloseKeyboardOverlay();
                     Core.uiManager.showChatTab = false;
                     e.Use();
                 }
                 else if (e.keyCode == KeyCode.Escape)
                 {
+                    MenuInjectionLibrary.GetKeyboardMenu()?.CloseKeyboardOverlay();
                     Core.uiManager.showChatTab = false;
                     e.Use();
                 }
                 else if (e.keyCode == KeyCode.Backspace)
                 {
-                    if (message.Length > 0)
+                    if (!controllerKeyboardActive && message.Length > 0)
                         message = message.Substring(0, message.Length - 1);
                     e.Use();
                 }
-                else if (!char.IsControl(e.character) && message.Length < 150)
+                else if (!controllerKeyboardActive && !char.IsControl(e.character) && message.Length < 150)
                 {
                     message += e.character;
                     e.Use();

@@ -156,6 +156,24 @@ namespace BabyStepsMultiplayerClient.UI
             return false;
         }
 
+        public static bool IsControllerBinding(string binding)
+        {
+            if (string.IsNullOrWhiteSpace(binding))
+                return false;
+
+            if (TryParseKeyCode(binding, out var keyCode))
+                return IsJoystickKeyCode(keyCode);
+
+            if (binding.StartsWith(RewiredActionPrefix, StringComparison.Ordinal)
+                || binding.StartsWith(RewiredButtonPrefix, StringComparison.Ordinal)
+                || binding.StartsWith(RewiredAxisPrefix, StringComparison.Ordinal))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         public static string GetDisplayName(string binding)
         {
             if (TryParseRewiredAction(binding, out string actionName))

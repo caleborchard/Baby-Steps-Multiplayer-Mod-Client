@@ -2,6 +2,8 @@ using HarmonyLib;
 using Il2Cpp;
 using Il2CppInterop.Runtime;
 using Il2CppTMPro;
+using MelonLoader;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
@@ -24,6 +26,77 @@ namespace BabyStepsMultiplayerClient.UI
         private static Sprite _sliderHandleSprite;
         private static Sprite _solidSprite;
         private static TMP_FontAsset _lowercaseTextFont;
+        private const float KeyboardKeyFontSize = 20f;
+        internal static InjectedMenu CurrentMenu => _currentInjectedMenu;
+        internal static InjectedMenu GetKeyboardMenu()
+        {
+            if (_registeredMenus.Count > 0)
+                return _registeredMenus[0];
+
+            return null;
+        }
+
+        private static RectTransform _keyboardOverlayRoot;
+        private static CanvasGroup _keyboardOverlayCanvasGroup;
+
+        private static RectTransform EnsureKeyboardOverlayRoot()
+        {
+            if (_keyboardOverlayRoot != null)
+                return _keyboardOverlayRoot;
+
+            var types = new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppReferenceArray<Il2CppSystem.Type>(5);
+            types[0] = Il2CppType.Of<RectTransform>();
+            types[1] = Il2CppType.Of<Canvas>();
+            types[2] = Il2CppType.Of<CanvasScaler>();
+            types[3] = Il2CppType.Of<GraphicRaycaster>();
+            types[4] = Il2CppType.Of<CanvasGroup>();
+
+            var overlayObj = new GameObject("BBSMP_ChatKeyboardOverlay", types);
+            UnityEngine.Object.DontDestroyOnLoad(overlayObj);
+
+            var canvas = overlayObj.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = 5000;
+
+            _keyboardOverlayCanvasGroup = overlayObj.GetComponent<CanvasGroup>();
+            _keyboardOverlayCanvasGroup.alpha = 1f;
+            _keyboardOverlayCanvasGroup.blocksRaycasts = true;
+            _keyboardOverlayCanvasGroup.interactable = true;
+
+            _keyboardOverlayRoot = overlayObj.GetComponent<RectTransform>();
+            _keyboardOverlayRoot.anchorMin = Vector2.zero;
+            _keyboardOverlayRoot.anchorMax = Vector2.one;
+            _keyboardOverlayRoot.offsetMin = Vector2.zero;
+            _keyboardOverlayRoot.offsetMax = Vector2.zero;
+
+            return _keyboardOverlayRoot;
+        }
+
+        internal static void HideKeyboardOverlay()
+        {
+            if (_keyboardOverlayCanvasGroup != null)
+            {
+                _keyboardOverlayCanvasGroup.alpha = 0f;
+                _keyboardOverlayCanvasGroup.blocksRaycasts = false;
+                _keyboardOverlayCanvasGroup.interactable = false;
+            }
+        }
+
+        internal static void ShowKeyboardOverlay()
+        {
+            var root = EnsureKeyboardOverlayRoot();
+            if (root != null)
+            {
+                var cg = _keyboardOverlayCanvasGroup;
+                if (cg != null)
+                {
+                    cg.alpha = 1f;
+                    cg.blocksRaycasts = true;
+                    cg.interactable = true;
+                }
+            }
+        }
 
         private static TMP_FontAsset GetOrCreateLowercaseTextFont()
         {
@@ -368,6 +441,7 @@ namespace BabyStepsMultiplayerClient.UI
             private Button _kbShiftBtn;
             private InputFieldInfo _kbActiveField;
             private Button _kbReturnButton;
+            private System.Action _kbOnDone;
             private bool _kbBuilt;
             private bool _kbHasEdited;
             private int _kbNavFrame = -1;
@@ -419,63 +493,17 @@ namespace BabyStepsMultiplayerClient.UI
                     TryInject(menu, "PreUpdateRetry");
 
                 bool vis = GetSubmenuVisible();
-                bool kbVis = vis && KbVisible;
+                bool kbVis = KbVisible;
                 bool isCapturingKeybind = MultiplayerMenu.IsCapturingKeybind;
+
+                if (kbVis)
+                {
+                    HandleKeyboardInput(menu, isCapturingKeybind, vis);
+                }
 
                 if (vis)
                 {
-                    if (kbVis)
-                    {
-                        var ev = EventSystem.current;
-                        var sel = ev?.currentSelectedGameObject;
-                        if ((sel == null || !IsKbButton(sel)) &&
-                            _kbCharRows != null && _kbCharRows.Length > 0)
-                        {
-                            sel = _kbCharRows[0][0].gameObject;
-                            ev?.SetSelectedGameObject(sel);
-                        }
-                        if (!isCapturingKeybind && Time.frameCount != _kbNavFrame)
-                        {
-                            _kbNavFrame = Time.frameCount;
-
-                            if (sel != null && IsKbButton(sel) && menu.rwPlayer != null)
-                            {
-                                float x  = menu.rwPlayer.GetAxis    ((int)InputActions.UIHorizontal);
-                                float xp = menu.rwPlayer.GetAxisPrev((int)InputActions.UIHorizontal);
-                                float y  = menu.rwPlayer.GetAxis    ((int)InputActions.UIVertical);
-                                float yp = menu.rwPlayer.GetAxisPrev((int)InputActions.UIVertical);
-                                var selComp = sel.GetComponent<Selectable>();
-                                Selectable target = null;
-                                if      (y < -0.5f && yp >= -0.5f) target = selComp?.navigation.selectOnDown;
-                                else if (y >  0.5f && yp <= 0.5f)  target = selComp?.navigation.selectOnUp;
-                                else if (x >  0.5f && xp <= 0.5f)  target = selComp?.navigation.selectOnRight;
-                                else if (x < -0.5f && xp >= -0.5f) target = selComp?.navigation.selectOnLeft;
-
-                                if (target != null)
-                                {
-                                    ev?.SetSelectedGameObject(target.gameObject);
-                                    sel = target.gameObject;
-                                }
-                            }
-                            if (menu.rwPlayer != null &&
-                                (Input.GetKeyDown(KeyCode.Escape) ||
-                                 menu.rwPlayer.GetButtonDown((int)InputActions.UICancel)))
-                                CloseKeyboard();
-                            if (_kbActiveField?.DisplayText != null)
-                            {
-                                _kbCursorTimer += Time.unscaledDeltaTime;
-                                if (_kbCursorTimer >= 0.53f)
-                                {
-                                    _kbCursorTimer = 0f;
-                                    _kbCursorVisible = !_kbCursorVisible;
-                                    KbBlinkCursor();
-                                }
-                            }
-                        }
-                        if (_submenuItemList != null && sel != null)
-                            _submenuItemList.items = new[] { sel };
-                    }
-                    else
+                    if (!kbVis)
                     {
                         if (!isCapturingKeybind)
                         {
@@ -556,7 +584,7 @@ namespace BabyStepsMultiplayerClient.UI
                 }
                 if (kbVis)
                 {
-                    if (_submenuItemList != null) MenuItemList.active = _submenuItemList;
+                    if (vis && _submenuItemList != null) MenuItemList.active = _submenuItemList;
                 }
                 else if (vis)
                 {
@@ -568,6 +596,69 @@ namespace BabyStepsMultiplayerClient.UI
                 {
                     if (_mainMenuItemList != null) MenuItemList.active = _mainMenuItemList;
                 }
+            }
+
+            private void HandleKeyboardInput(Menu menu, bool isCapturingKeybind, bool submenuVisible)
+            {
+                var ev = EventSystem.current;
+                var sel = ev?.currentSelectedGameObject;
+
+                if ((sel == null || !IsKbButton(sel)) && _kbCharRows != null && _kbCharRows.Length > 0)
+                {
+                    sel = _kbCharRows[0][0].gameObject;
+                    ev?.SetSelectedGameObject(sel);
+                }
+
+                if (!isCapturingKeybind && Time.frameCount != _kbNavFrame)
+                {
+                    _kbNavFrame = Time.frameCount;
+
+                    if (sel != null && IsKbButton(sel) && menu.rwPlayer != null)
+                    {
+                        float x = menu.rwPlayer.GetAxis((int)InputActions.UIHorizontal);
+                        float xp = menu.rwPlayer.GetAxisPrev((int)InputActions.UIHorizontal);
+                        float y = menu.rwPlayer.GetAxis((int)InputActions.UIVertical);
+                        float yp = menu.rwPlayer.GetAxisPrev((int)InputActions.UIVertical);
+                        var selComp = sel.GetComponent<Selectable>();
+                        Selectable target = null;
+                        if (y < -0.5f && yp >= -0.5f) target = selComp?.navigation.selectOnDown;
+                        else if (y > 0.5f && yp <= 0.5f) target = selComp?.navigation.selectOnUp;
+                        else if (x > 0.5f && xp <= 0.5f) target = selComp?.navigation.selectOnRight;
+                        else if (x < -0.5f && xp >= -0.5f) target = selComp?.navigation.selectOnLeft;
+
+                        if (target != null)
+                        {
+                            ev?.SetSelectedGameObject(target.gameObject);
+                            sel = target.gameObject;
+                        }
+
+                        if (Input.GetKeyDown(KeyCode.JoystickButton0) || Input.GetKeyDown(KeyCode.JoystickButton1))
+                        {
+                            var submitBtn = sel?.GetComponent<Button>();
+                            submitBtn?.onClick.Invoke();
+                        }
+                    }
+
+                    if (menu.rwPlayer != null &&
+                        (Input.GetKeyDown(KeyCode.Escape) ||
+                         Input.GetKeyDown(KeyCode.JoystickButton2) ||
+                         menu.rwPlayer.GetButtonDown((int)InputActions.UICancel)))
+                        CloseKeyboardOverlay(_kbReturnButton == null && _kbOnDone != null);
+
+                    if (_kbActiveField?.DisplayText != null)
+                    {
+                        _kbCursorTimer += Time.unscaledDeltaTime;
+                        if (_kbCursorTimer >= 0.53f)
+                        {
+                            _kbCursorTimer = 0f;
+                            _kbCursorVisible = !_kbCursorVisible;
+                            KbBlinkCursor();
+                        }
+                    }
+                }
+
+                if (submenuVisible && _submenuItemList != null && sel != null)
+                    _submenuItemList.items = new[] { sel };
             }
 
             public void OnMenuUpdate(Menu menu)
@@ -796,7 +887,6 @@ namespace BabyStepsMultiplayerClient.UI
                 const float PadV = 10f;
                 const float SpecFixedW = 72f;
                 const float SpecGap = HGap;
-                const float KeyFontSize = 20f;
 
                 int totalRows = _kbLowerRows.Length + 1;
                 float panelH = PadV * 2f + totalRows * KeyH + (totalRows - 1) * VGap - 15f;
@@ -817,7 +907,7 @@ namespace BabyStepsMultiplayerClient.UI
                 rootRect.anchorMax = new Vector2(0.5f, 0f);
                 rootRect.pivot = new Vector2(0.5f, 0f);
                 rootRect.sizeDelta = new Vector2(PanelW, panelH);
-                rootRect.anchoredPosition = new Vector2(0f, 30f);
+                rootRect.anchoredPosition = new Vector2(0f, 100f);
 
                 var bgImg = _kbRoot.AddComponent<Image>();
                 bgImg.color = new Color(0.05f, 0.11f, 0.18f, 0.97f);
@@ -857,7 +947,10 @@ namespace BabyStepsMultiplayerClient.UI
 
                         var keyTmp = keyObj.GetComponentInChildren<TMP_Text>(true);
                         if (keyTmp != null)
-                            keyTmp.fontSize = Mathf.Min(keyTmp.fontSize, KeyFontSize);
+                        {
+                            //keyTmp.fontSize = Mathf.Min(keyTmp.fontSize, KeyboardKeyFontSize);
+                            keyTmp.fontSize = KeyboardKeyFontSize;
+                        }
 
                         var kr = keyObj.GetComponent<RectTransform>();
                         kr.anchorMin = new Vector2(0.5f, 1f);
@@ -896,7 +989,7 @@ namespace BabyStepsMultiplayerClient.UI
                             case 0: btn.onClick.AddListener((UnityAction)KbToggleShift); _kbShiftBtn = btn; break;
                             case 1: btn.onClick.AddListener((UnityAction)KbSpace); break;
                             case 2: btn.onClick.AddListener((UnityAction)KbBackspace); break;
-                            case 3: btn.onClick.AddListener((UnityAction)CloseKeyboard); break;
+                            case 3: btn.onClick.AddListener((UnityAction)KbDone); break;
                         }
                     }
 
@@ -904,7 +997,7 @@ namespace BabyStepsMultiplayerClient.UI
 
                     var keyTmp = keyObj.GetComponentInChildren<TMP_Text>(true);
                     if (keyTmp != null)
-                        keyTmp.fontSize = Mathf.Min(keyTmp.fontSize, KeyFontSize);
+                        keyTmp.fontSize = KeyboardKeyFontSize;
 
                      var kr = keyObj.GetComponent<RectTransform>();
                      kr.anchorMin = new Vector2(0.5f, 1f);
@@ -919,6 +1012,8 @@ namespace BabyStepsMultiplayerClient.UI
                 }
 
                 WireKeyboardNavigation();
+                ForceKeyboardFontSizes();
+                MelonCoroutines.Start(EnforceKeyboardFontSizesCoroutine());
 
                 _kbBuilt = true;
             }
@@ -1009,7 +1104,38 @@ namespace BabyStepsMultiplayerClient.UI
                         SetButtonLabel(_kbCharRows[row][col].gameObject, arr[row][col], _kbUseLowercaseFontForKeyLabels);
 
                 if (_kbShiftBtn != null)
+                {
                     SetButtonLabel(_kbShiftBtn.gameObject, _kbShift ? "SHIFT" : "Shift", false);
+                    ForceKeyboardFontSize(_kbShiftBtn.gameObject);
+                }
+            }
+
+            private void ForceKeyboardFontSizes()
+            {
+                if (_kbAllButtons.Count == 0) return;
+
+                for (int i = 0; i < _kbAllButtons.Count; i++)
+                    ForceKeyboardFontSize(_kbAllButtons[i]);
+            }
+
+            private static void ForceKeyboardFontSize(GameObject keyObj)
+            {
+                if (keyObj == null) return;
+
+                var tmp = keyObj.GetComponentInChildren<TMP_Text>(true);
+                if (tmp == null) return;
+
+                tmp.fontSize = KeyboardKeyFontSize;
+                tmp.ForceMeshUpdate();
+            }
+
+            private IEnumerator EnforceKeyboardFontSizesCoroutine()
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    ForceKeyboardFontSizes();
+                    yield return null;
+                }
             }
 
             private void KbRefreshDisplay()
@@ -1062,17 +1188,49 @@ namespace BabyStepsMultiplayerClient.UI
             }
 
             internal void OpenKeyboard(InputFieldInfo info, Button returnButton)
+                => OpenKeyboard(info, returnButton, null, false);
+
+            internal void OpenKeyboard(InputFieldInfo info, Button returnButton, System.Action onDone)
+                => OpenKeyboard(info, returnButton, onDone, false);
+
+            internal void OpenKeyboardForChat(InputFieldInfo info, System.Action onDone)
+                => OpenKeyboard(info, null, onDone, true);
+
+            private void OpenKeyboard(InputFieldInfo info, Button returnButton, System.Action onDone, bool useOverlay)
             {
                 if (!_kbBuilt) return;
                 _kbActiveField = info;
                 _kbReturnButton = returnButton;
+                _kbOnDone = onDone;
                 _kbShift = false;
                 _kbHasEdited = false;
                 _kbCursorVisible = true;
                 _kbCursorTimer = 0f;
+                if (useOverlay && _kbRoot != null)
+                {
+                    var overlayRoot = EnsureKeyboardOverlayRoot();
+                    _kbRoot.transform.SetParent(overlayRoot, false);
+                    _kbRoot.transform.SetAsLastSibling();
+                    ShowKeyboardOverlay();
+                }
                 KbRefreshKeyLabels();
                 KbRefreshDisplay();
                 SetKeyboardVisible(true);
+            }
+
+            internal bool IsKeyboardOpen => _kbActiveField != null;
+
+            internal void CloseKeyboardForChat() => CloseKeyboard();
+
+            internal void CloseKeyboardOverlay()
+                => CloseKeyboardOverlay(false);
+
+            internal void CloseKeyboardOverlay(bool dismissChatTab)
+            {
+                CloseKeyboard();
+                HideKeyboardOverlay();
+                if (dismissChatTab)
+                    Core.uiManager.showChatTab = false;
             }
 
             private void CloseKeyboard()
@@ -1108,8 +1266,15 @@ namespace BabyStepsMultiplayerClient.UI
                 var returnTo = _kbReturnButton;
                 _kbActiveField = null;
                 _kbReturnButton = null;
+                _kbOnDone = null;
                 if (returnTo != null)
                     EventSystem.current?.SetSelectedGameObject(returnTo.gameObject);
+            }
+
+            private void KbDone()
+            {
+                _kbOnDone?.Invoke();
+                CloseKeyboard();
             }
 
             internal void OpenMouseTyping(InputFieldInfo info)
@@ -1917,6 +2082,7 @@ namespace BabyStepsMultiplayerClient.UI
             pillImg.sprite = GetOrCreateInputFieldSprite();
             pillImg.type = Image.Type.Sliced;
             var pillNormal = new Color(0.02f, 0.04f, 0.08f, 0.92f);
+            var selectedPillColor = Color.Lerp(pillNormal, Color.white, 2.2f);
 
             if (sliderTemplate != null)
             {
@@ -1938,11 +2104,17 @@ namespace BabyStepsMultiplayerClient.UI
 
             if (btn != null)
             {
-                // Disable Unity's built-in color transition — it propagates to ALL child
-                // Graphics in this game's button class, washing out the text color.
-                // We drive pill color directly instead.
-                btn.transition = Selectable.Transition.None;
+                btn.transition = Selectable.Transition.ColorTint;
                 btn.targetGraphic = pillImg;
+
+                var cb = btn.colors;
+                cb.normalColor = pillNormal;
+                cb.highlightedColor = selectedPillColor;
+                cb.selectedColor = selectedPillColor;
+                cb.pressedColor = selectedPillColor;
+                cb.disabledColor = pillNormal;
+                cb.colorMultiplier = 1f;
+                btn.colors = cb;
             }
             pillImg.color = pillNormal;
 
