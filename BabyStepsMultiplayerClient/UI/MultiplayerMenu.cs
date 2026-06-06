@@ -480,6 +480,13 @@ namespace BabyStepsMultiplayerClient.UI
             }
             else
             {
+                // Mouse input fires this handler twice per click (same double-fire issue as
+                // OnHostSteamClicked). Guard the connect path so only the first call goes
+                // through; duplicates within 0.5 s are silently dropped.
+                float now = UnityEngine.Time.realtimeSinceStartup;
+                if (now - _lastConnectClickTime < 0.5f) return;
+                _lastConnectClickTime = now;
+
                 ModSettings.Save();
                 Core.networkManager.Connect(
                     ModSettings.connection.Address.Value,
@@ -712,6 +719,8 @@ namespace BabyStepsMultiplayerClient.UI
 
         private static ulong _ownLobbyId;
         private static float _lastHostSteamClickTime = -10f;
+        private static float _lastConnectClickTime   = -10f;
+        private static float _lastLobbyClickTime     = -10f;
 
         /// <summary>
         /// Rebuilds <see cref="_displayLobbies"/> and refreshes all lobby buttons.
@@ -834,6 +843,13 @@ namespace BabyStepsMultiplayerClient.UI
 
         private static void OnLobbyButtonClicked(int slot)
         {
+            // Same double-fire guard as OnConnectClicked — mouse events can fire twice per
+            // click, and a duplicate JoinServer call would create a second LiteNetLib
+            // connection that the server sees as an anonymous ghost peer.
+            float now = UnityEngine.Time.realtimeSinceStartup;
+            if (now - _lastLobbyClickTime < 0.5f) return;
+            _lastLobbyClickTime = now;
+
             int index = _lobbyPage * PageSize + slot;
             if (index >= _displayLobbies.Count) return;
             var info = _displayLobbies[index];
