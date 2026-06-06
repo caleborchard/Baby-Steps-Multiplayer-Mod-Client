@@ -72,6 +72,7 @@ It's highly recommended that you use the Thunderstore Mod Manager to install thi
 - [Baby Steps Menu Library](https://github.com/caleborchard/BabyStepsMenuLib)
 - [Baby Steps Networking](https://github.com/caleborchard/BabyStepsNetworking)
 - [Baby Steps](https://www.babystepsgame.com/)
+- [Facepunch Steamworks](https://github.com/facepunch/facepunch.steamworks)
 - [LiteNetLib](https://github.com/RevenantX/LiteNetLib)
 - [Concentus](https://github.com/lostromb/concentus)
 - [MelonLoader](https://melonwiki.xyz/)  
