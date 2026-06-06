@@ -1,7 +1,7 @@
-﻿using UnityEngine;
-using System.Text.RegularExpressions;
-using BabyStepsMultiplayerClient.Player;
+﻿using BabyStepsMultiplayerClient.Player;
 using BabyStepsMultiplayerClient.Localization;
+using System.Text.RegularExpressions;
+using UnityEngine;
 
 namespace BabyStepsMultiplayerClient.UI.Elements
 {
@@ -16,6 +16,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
 
         private string[] availableDevices = new string[0];
         private KeybindCaptureTarget keybindCaptureTarget = KeybindCaptureTarget.None;
+
 
         // Peak meter variables
         private float currentPeak = 0f;
@@ -64,7 +65,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
                 }
             }
 
-            bool isConnected = Core.networkManager.client != null;
+            bool isConnected = Core.networkManager.IsConnected;
             string buttonText = isConnected ? lang.Disconnect : lang.Connect;
 
             if (GUILayout.Button(buttonText, StyleManager.Styles.Button))
@@ -84,6 +85,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
                     );
                 }
             }
+
 
             GUILayout.Space(5);
 
@@ -327,7 +329,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             var lang = LanguageManager.GetCurrentLanguage();
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Tab Menu Key:", StyleManager.Styles.Label);
+            GUILayout.Label(lang.PlayerListKeyLabel, StyleManager.Styles.Label);
             string tabMenuKeyButtonText = GetKeybindButtonText(ModSettings.player.TabMenuKey.Value, KeybindCaptureTarget.TabMenu, lang.PressAnyKey);
             if (GUILayout.Button(tabMenuKeyButtonText, StyleManager.Styles.Button, GUILayout.Width(120)))
             {
@@ -338,7 +340,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             GUILayout.Space(5);
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Chat Menu Key:", StyleManager.Styles.Label);
+            GUILayout.Label(lang.ChatMenuKeyLabel, StyleManager.Styles.Label);
             string chatMenuKeyButtonText = GetKeybindButtonText(ModSettings.player.ChatMenuKey.Value, KeybindCaptureTarget.ChatMenu, lang.PressAnyKey);
             if (GUILayout.Button(chatMenuKeyButtonText, StyleManager.Styles.Button, GUILayout.Width(120)))
             {
@@ -348,7 +350,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
 
             GUILayout.Space(5);
 
-            GUI.enabled = !(Core.networkManager.client == null);
+            GUI.enabled = !(!Core.networkManager.IsConnected);
             if (GUILayout.Button((ModSettings.player.Collisions.Value ? lang.DisableCollisions : lang.EnableCollisions), StyleManager.Styles.Button))
             {
                 ModSettings.player.Collisions.Value = !ModSettings.player.Collisions.Value;
@@ -365,7 +367,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             GUILayout.Space(5);
             GUI.enabled = true;
 
-            GUI.enabled = !(Core.networkManager.client == null);
+            GUI.enabled = !(!Core.networkManager.IsConnected);
             if (GUILayout.Button((ModSettings.player.CutscenePlayerVisibility.Value ? lang.DisablePlayerCutsceneVisibility : lang.EnablePlayerCutsceneVisibility), StyleManager.Styles.Button))
             {
                 ModSettings.player.CutscenePlayerVisibility.Value = !ModSettings.player.CutscenePlayerVisibility.Value;
@@ -373,7 +375,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             GUILayout.Space(5);
             GUI.enabled = true;
 
-            GUI.enabled = !(Core.networkManager.client == null);
+            GUI.enabled = !(!Core.networkManager.IsConnected);
             if (GUILayout.Button((ModSettings.player.ShowNametags.Value ? lang.DisableNametags : lang.EnableNametags), StyleManager.Styles.Button))
             {
                 ModSettings.player.ShowNametags.Value = !ModSettings.player.ShowNametags.Value;
@@ -385,15 +387,13 @@ namespace BabyStepsMultiplayerClient.UI.Elements
         private void HandlePlayerCustomization()
         {
             var lang = LanguageManager.GetCurrentLanguage();
-            GUI.enabled = !(Core.networkManager.client == null);
-            if (GUILayout.Button(lang.UpdateNameAndAppearance, StyleManager.Styles.Button) && Core.networkManager.client != null)
+            GUI.enabled = !(!Core.networkManager.IsConnected);
+            if (GUILayout.Button(lang.UpdateNameAndAppearance, StyleManager.Styles.Button) && Core.networkManager.IsConnected)
             {
                 SaveConfig();
-                Core.networkManager.mainThreadActions.Enqueue(() => {
-                    Core.networkManager.SendPlayerInformation();
-                    if (LocalPlayer.Instance != null)
-                        LocalPlayer.Instance.ApplySuitColor();
-                });
+                Core.networkManager.SendPlayerInformation();
+                if (LocalPlayer.Instance != null)
+                    LocalPlayer.Instance.ApplySuitColor();
                 Core.uiManager.notificationsUI.AddMessage(lang.AppearanceUpdated);
             }
 
@@ -433,7 +433,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
             GUILayout.Space(5);
             ModSettings.player.SuitColor.Value = currentColor;
 
-            GUI.enabled = !(Core.networkManager.client == null);
+            GUI.enabled = !(!Core.networkManager.IsConnected);
             if (GUILayout.Button((ModSettings.player.ShowNametags.Value ? lang.DisableNametags : lang.EnableNametags), StyleManager.Styles.Button))
             {
                 ModSettings.player.ShowNametags.Value = !ModSettings.player.ShowNametags.Value;

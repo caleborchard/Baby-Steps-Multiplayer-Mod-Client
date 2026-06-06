@@ -1,101 +1,109 @@
+using System;
 using System.Collections.Generic;
+using Il2Cpp;
 
 namespace BabyStepsMultiplayerClient.Localization
 {
+    public enum GameLanguage
+    {
+        English,
+        Spanish,
+        French,
+        German,
+        Japanese,
+        Korean,
+        ChineseSimplified,
+        ChineseTraditional,
+    }
+
     public static class LanguageManager
     {
-        private static Dictionary<string, ILanguage> _registeredLanguages;
-        private static ILanguage _currentLanguage;
-
-        public static string CurrentLanguage { get; private set; } = "English";
-
-        static LanguageManager()
+        // Maps the display/I2Loc name to the Il2Cpp.Language enum value used by the game
+        private static readonly Dictionary<string, Language> _nameToEnum = new()
         {
-            InitializeLanguages();
-        }
+            { "English",             Language.English },
+            { "Spanish",             Language.Spanish },
+            { "French",              Language.French },
+            { "German",              Language.German },
+            { "Japanese",            Language.Japanese },
+            { "Korean",              Language.Korean },
+            { "Chinese Simplified",  Language.ChineseSimple },
+            { "Chinese Traditional", Language.ChineseTraditional },
+            { "Russian",             Language.Russian },
+            { "Portuguese",          Language.Portuguese },
+        };
 
-        private static void InitializeLanguages()
+        private static readonly Dictionary<Language, string> _enumToName = new()
         {
-            _registeredLanguages = new Dictionary<string, ILanguage>
+            { Language.English,            "English" },
+            { Language.Spanish,            "Spanish" },
+            { Language.French,             "French" },
+            { Language.German,             "German" },
+            { Language.Japanese,           "Japanese" },
+            { Language.Korean,             "Korean" },
+            { Language.ChineseSimple,      "Chinese Simplified" },
+            { Language.ChineseTraditional, "Chinese Traditional" },
+            { Language.Russian,            "Russian" },
+            { Language.Portuguese,         "Portuguese" },
+        };
+
+        private static readonly Dictionary<string, ILanguage> _languages = new()
+        {
+            { "English",             new EnglishLanguage() },
+            { "Spanish",             new SpanishLanguage() },
+            { "French",              new FrenchLanguage() },
+            { "German",              new GermanLanguage() },
+            { "Japanese",            new JapaneseLanguage() },
+            { "Korean",              new KoreanLanguage() },
+            { "Chinese Simplified",  new ChineseSimplifiedLanguage() },
+            { "Chinese Traditional", new ChineseTraditionalLanguage() },
+            { "Russian",             new RussianLanguage() },
+            { "Portuguese",          new PortugueseLanguage() },
+        };
+
+        // Reads the game's current language from Menu.cfg.language.
+        // Falls back to "English" before the game menu has loaded.
+        public static string CurrentLanguage
+        {
+            get
             {
-                { "English", new EnglishLanguage() },
-                { "Spanish", new SpanishLanguage() },
-                { "German", new GermanLanguage() },
-                { "French", new FrenchLanguage() },
-                { "Japanese", new JapaneseLanguage() },
-                { "Korean", new KoreanLanguage() },
-                { "ChineseSimplified", new ChineseSimplifiedLanguage() },
-                { "ChineseTraditional", new ChineseTraditionalLanguage() }
-            };
-
-            LoadLanguageFromConfig();
-        }
-
-        private static void LoadLanguageFromConfig()
-        {
-            try
-            {
-                string savedLanguage = ModSettings.player.Language.Value;
-                if (!string.IsNullOrEmpty(savedLanguage) && _registeredLanguages.ContainsKey(savedLanguage))
+                try
                 {
-                    SetLanguage(savedLanguage);
+                    var lang = Menu.cfg?.language;
+                    if (lang.HasValue && _enumToName.TryGetValue(lang.Value, out var name))
+                        return name;
                 }
-                else
-                {
-                    SetLanguage("English");
-                }
-            }
-            catch
-            {
-                SetLanguage("English");
-            }
-        }
-
-        public static void SetLanguage(string languageName)
-        {
-            if (_registeredLanguages.ContainsKey(languageName))
-            {
-                _currentLanguage = _registeredLanguages[languageName];
-                CurrentLanguage = languageName;
-                SaveLanguageToConfig(languageName);
-            }
-            else
-            {
-                Core.logger?.Warning($"Language '{languageName}' not found. Using English.");
-                _currentLanguage = _registeredLanguages["English"];
-                CurrentLanguage = "English";
-                SaveLanguageToConfig("English");
-            }
-        }
-
-        private static void SaveLanguageToConfig(string languageName)
-        {
-            try
-            {
-                ModSettings.player.Language.Value = languageName;
-                ModSettings.Save();
-            }
-            catch
-            {
+                catch { }
+                return "English";
             }
         }
 
         public static ILanguage GetCurrentLanguage()
         {
-            return _currentLanguage ?? new EnglishLanguage();
+            string name = CurrentLanguage;
+            return _languages.TryGetValue(name, out var lang) ? lang : _languages["English"];
+        }
+
+        // Delegates to Menu.me.SetLang() which handles I2Loc + game config internally.
+        public static void SetLanguage(string languageName)
+        {
+            try
+            {
+                if (!_nameToEnum.TryGetValue(languageName, out var enumVal)) return;
+                Menu.me?.SetLang(enumVal);
+            }
+            catch (Exception e)
+            {
+                Core.logger?.Warning($"[LanguageManager] SetLanguage failed: {e}");
+            }
         }
 
         public static string[] GetAvailableLanguages()
-        {
-            return new List<string>(_registeredLanguages.Keys).ToArray();
-        }
-
-        public static void RegisterLanguage(string name, ILanguage language)
-        {
-            if (!_registeredLanguages.ContainsKey(name))
+            => new[]
             {
-                _registeredLanguages[name] = language;
-            }
-        }
+                "English", "Spanish", "French", "German",
+                "Japanese", "Korean", "Chinese Simplified", "Chinese Traditional",
+                "Russian", "Portuguese"
+            };
     }
 }

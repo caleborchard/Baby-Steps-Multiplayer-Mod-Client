@@ -117,7 +117,7 @@ namespace BabyStepsMultiplayerClient.Player
             if (mic == null || !micEnabled) return;
 
             // Only Record when Connected to Server
-            if ((Core.networkManager == null) || Core.networkManager.server == null)
+            if ((Core.networkManager == null) || !Core.networkManager.IsConnected)
             {
                 if (mic.IsRecording()) mic.StopRecording();
             }
@@ -200,7 +200,10 @@ namespace BabyStepsMultiplayerClient.Player
         {
             UpdateMicrophone();
 
-            if (Core.networkManager.server == null) return;
+            // Don't send initial state until UUID is assigned — bones sent before the
+            // server processes our AUTH clog the Steam P2P reliable window and delay
+            // the AUTH itself reaching the server.
+            if (!Core.networkManager.IsConnected || !Core.networkManager.HasReceivedUUID) return;
             if (playerMovement == null) return;
 
             if (!_sentInitialState)
@@ -302,7 +305,7 @@ namespace BabyStepsMultiplayerClient.Player
         public override void LateUpdate()
         {
             if (!_sentInitialState) return;
-            if (Core.networkManager.server == null) return;
+            if (!Core.networkManager.IsConnected) return;
             if (playerMovement == null) return;
             if (boneChildren == null) return;
 

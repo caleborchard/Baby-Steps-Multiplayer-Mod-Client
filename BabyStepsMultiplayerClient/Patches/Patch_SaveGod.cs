@@ -10,8 +10,6 @@ namespace BabyStepsMultiplayerClient.Patches
         [HarmonyTargetMethod]
         private static MethodBase TargetMethod()
         {
-            // Keep compatibility across game/binding versions where the load
-            // entrypoint name changed.
             return AccessTools.Method(typeof(SaveGod), "TryLoadSave")
                 ?? AccessTools.Method(typeof(SaveGod), "LoadSave")
                 ?? AccessTools.Method(typeof(SaveGod), "TryLoad");
@@ -20,13 +18,18 @@ namespace BabyStepsMultiplayerClient.Patches
         [HarmonyPrefix]
         private static bool TryLoadSave_Prefix(SaveGod __instance)
         {
-            //Core.DebugMsg("SaveGod TryLoadSave HarmonyPatch");
-
-            if (Core.networkManager != null)
-                Core.networkManager.Disconnect();
-
-            // Run Original
             return true;
+        }
+
+        [HarmonyPostfix]
+        private static void TryLoadSave_Postfix()
+        {
+            // After a save loads, clear remote players' stale visual state (hats, held items from the previous save) and request fresh state from the server.
+            if (Core.networkManager?.IsConnected == true)
+            {
+                Core.logger.Msg("[SaveGod] Save loaded while connected — clearing remote state and requesting resync");
+                Core.networkManager.RequestStateResync();
+            }
         }
     }
 }

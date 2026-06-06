@@ -72,20 +72,7 @@ namespace BabyStepsMultiplayerClient.Audio
                     return false;
                 }
 
-                Core.DebugMsg($"Found {numConnected} recording device(s)");
-                for (int i = 0; i < numConnected; i++)
-                {
-                    string name;
-                    Il2CppSystem.Guid guid;
-                    int systemRate;
-                    SPEAKERMODE speakerMode;
-                    int speakerModeChannels;
-                    DRIVER_STATE state;
-
-                    fmodSystem.getRecordDriverInfo(i, out name, 256, out guid, out systemRate, out speakerMode, out speakerModeChannels, out state);
-
-                    Core.DebugMsg($"  Device {i}: {name} ({systemRate}Hz)");
-                }
+                Core.logger.Msg($"Found {numConnected} recording device(s)");
 
                 if (deviceIndex < 0 || deviceIndex >= numConnected)
                 {
@@ -430,6 +417,38 @@ namespace BabyStepsMultiplayerClient.Audio
         public bool IsRecording() => isRecording;
         public bool IsInitialized() => isInitialized;
         public int GetSelectedDeviceIndex() => selectedDeviceIndex;
+
+        public static string[] GetAvailableDevicesStatic()
+        {
+            try
+            {
+                var sys = Il2CppBabySteps.Core.Audio.Services.Player.system;
+                if (!sys.hasHandle()) return new string[0];
+
+                int numDrivers, numConnected;
+                sys.getRecordNumDrivers(out numDrivers, out numConnected);
+
+                var devices = new string[numConnected];
+                for (int i = 0; i < numConnected; i++)
+                {
+                    string name;
+                    Il2CppSystem.Guid guid;
+                    int systemRate;
+                    SPEAKERMODE speakerMode;
+                    int speakerModeChannels;
+                    DRIVER_STATE state;
+                    sys.getRecordDriverInfo(i, out name, 256, out guid, out systemRate,
+                        out speakerMode, out speakerModeChannels, out state);
+                    devices[i] = name;
+                }
+                return devices;
+            }
+            catch (Exception e)
+            {
+                MelonLogger.Error($"Error getting device list: {e}");
+                return new string[0];
+            }
+        }
 
         public string[] GetAvailableDevices()
         {

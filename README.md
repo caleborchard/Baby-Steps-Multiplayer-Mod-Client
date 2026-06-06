@@ -47,7 +47,9 @@ It's highly recommended that you use the Thunderstore Mod Manager to install thi
 ---
 
 ## ✨ Features
+- Easy to use Steam Lobby networking
 - Native UI implementation with controller support
+- Multi language support
 - Proximity Voice Chat
 - Custom player colors
 - Toggleable player collisions
@@ -61,13 +63,14 @@ It's highly recommended that you use the Thunderstore Mod Manager to install thi
 ## 🛠️ Work in Progress / TODO
 - Suit muddying and wetness
 - Face idle animations
-- Multi-language support for new GUI
 - Sync more world objects
 
 ---
 
 ## 🔗 Links
 - [Baby Steps: Multiplayer Mod Server](https://github.com/caleborchard/Baby-Steps-Multiplayer-Mod-Server)
+- [Baby Steps Menu Library](https://github.com/caleborchard/BabyStepsMenuLib)
+- [Baby Steps Networking](https://github.com/caleborchard/BabyStepsNetworking)
 - [Baby Steps](https://www.babystepsgame.com/)
 - [LiteNetLib](https://github.com/RevenantX/LiteNetLib)
 - [Concentus](https://github.com/lostromb/concentus)

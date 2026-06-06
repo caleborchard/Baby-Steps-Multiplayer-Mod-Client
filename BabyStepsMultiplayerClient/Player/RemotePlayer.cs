@@ -848,6 +848,18 @@ namespace BabyStepsMultiplayerClient.Player
                 snapshot.time = Time.timeAsDouble;
             }
 
+            // Guard: if we got a non-zero kickoff but have no prior group to extend (fresh
+            // player or after a reset), start a new snapshot rather than discarding the data.
+            // Without this, the first relayed bone with kickoff≠0 is silently dropped and the
+            // snapshot buffer never builds, leaving the player permanently invisible.
+            if (snapshot == null)
+            {
+                if (currentBoneGroup != null)
+                    snapshotBuffer.Enqueue(currentBoneGroup);
+                snapshot = new BoneSnapshot(boneChildren.Count);
+                snapshot.time = Time.timeAsDouble;
+            }
+
             for (int i = kickoffPoint; i < bonesToUpdate.Length; i++)
             {
                 var bone = bonesToUpdate[i];

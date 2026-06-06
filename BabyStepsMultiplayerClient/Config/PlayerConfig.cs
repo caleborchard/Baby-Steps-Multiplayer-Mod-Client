@@ -13,8 +13,6 @@ namespace BabyStepsMultiplayerClient.Config
         internal MelonPreferences_Entry<bool> ShowNametags;
         internal MelonPreferences_Entry<string> TabMenuKey;
         internal MelonPreferences_Entry<string> ChatMenuKey;
-        internal MelonPreferences_Entry<string> Language;
-
         public override string ID
             => "Player";
 
@@ -33,7 +31,7 @@ namespace BabyStepsMultiplayerClient.Config
             Collisions = CreatePref("PlayerCollisions",
                 "Player Collisions",
                 "Collisions with Other Players",
-                true);
+                false);
 
             CutscenePlayerVisibility = CreatePref("CutscenePlayerVisibility",
                 "Cutscene Player Visibility",
@@ -54,11 +52,6 @@ namespace BabyStepsMultiplayerClient.Config
                 "Chat Menu Key",
                 "Key to open chat input",
                 "T");
-
-            Language = CreatePref("Language",
-                "Language",
-                "UI Language",
-                "English");
         }
     }
 }

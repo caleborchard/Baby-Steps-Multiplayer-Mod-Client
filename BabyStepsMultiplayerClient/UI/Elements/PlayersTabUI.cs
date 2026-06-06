@@ -44,7 +44,7 @@ namespace BabyStepsMultiplayerClient.UI.Elements
                 foreach (var kvp in Core.networkManager.players)
                 {
                     RemotePlayer player = kvp.Value;
-                    if (player == null)
+                    if (player == null || !player.firstAppearanceApplication)
                         continue;
 
                     int height = 0;

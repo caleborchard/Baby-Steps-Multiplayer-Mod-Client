@@ -7,6 +7,7 @@ Join the Discord for updates on the mod - https://discord.gg/3qVU3g4FXz
 GitHub links:
 https://github.com/caleborchard/Baby-Steps-Multiplayer-Mod-Client
 https://github.com/caleborchard/Baby-Steps-Multiplayer-Mod-Server
+https://github.com/caleborchard/BabyStepsMenuLib
 
 --- Requirements as of October 5, 2025: ---
 MelonLoader *Nightly*

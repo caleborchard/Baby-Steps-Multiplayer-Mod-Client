@@ -102,7 +102,7 @@ namespace BabyStepsMultiplayerClient.Networking
             {
                 int offset = i * boneSize + 1;
 
-                // --- Position X ---
+                // Pos X
                 byte b1 = data[offset];
                 byte b2 = data[offset + 1];
                 byte b3 = data[offset + 2];
@@ -117,20 +117,24 @@ namespace BabyStepsMultiplayerClient.Networking
 
                 float posX = xDecoded;
 
-                // Fix posX around LocalPlayer for looping solution
-                float localX = LocalPlayer.Instance.rootBone.position.x;
+                // Fix posX around LocalPlayer for looping solution.
+                // Guard: LocalPlayer may be null during reconnect cycles; fall back to 0
+                // so we still get a valid (possibly slightly off) position rather than throwing.
+                float localX = (LocalPlayer.Instance != null && LocalPlayer.Instance.rootBone != null)
+                    ? LocalPlayer.Instance.rootBone.position.x
+                    : 0f;
                 float centeredOffset = localX - (loopWidth * 0.5f);
                 float relativeX = posX - centeredOffset;
                 relativeX = ((relativeX % loopWidth) + loopWidth) % loopWidth;
                 posX = relativeX + centeredOffset;
 
-                // --- Position Y ---
+                // Pos Y
                 float posY = BitConverter.ToSingle(data, offset + 3);
 
-                // --- Position Z ---
+                // Pos Z
                 float posZ = BitConverter.ToSingle(data, offset + 7);
 
-                // --- Rotation ---
+                // Rotation
                 short rotXshort = BitConverter.ToInt16(data, offset + 11);
                 short rotYshort = BitConverter.ToInt16(data, offset + 13);
                 short rotZshort = BitConverter.ToInt16(data, offset + 15);

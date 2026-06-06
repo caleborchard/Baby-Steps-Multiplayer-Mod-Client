@@ -45,7 +45,7 @@ namespace BabyStepsMultiplayerClient.UI
         {
             RefreshConfiguredKeys();
 
-            if (Core.networkManager.client == null)
+            if (!Core.networkManager.IsConnected)
             {
                 playersTabUI.IsOpen = false;
                 showChatTab = false;

@@ -11,6 +11,7 @@ using UnityEngine;
 
 namespace BabyStepsMultiplayerClient.Networking
 {
+    // This is very bad! No time to redo, pls fix -Caleb
     public static class WorldObjectSyncManager
     {
         private const float REFRESH_INTERVAL = 2f;
