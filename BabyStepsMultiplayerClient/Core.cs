@@ -21,7 +21,7 @@ namespace BabyStepsMultiplayerClient
 {
     public class Core : MelonMod
     {
-        public const string SERVER_VERSION = "106";
+        public const string SERVER_VERSION = "108";
         public static string CLIENT_VERSION;
 
         public const string cloneText = "(Clone)";
