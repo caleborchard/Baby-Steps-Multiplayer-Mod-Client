@@ -12,7 +12,7 @@ using UnityEngine;
 
 [assembly: MelonInfo(typeof(BabyStepsMultiplayerClient.Core),
     "BabyStepsMultiplayerClient",
-    "1.3.0",
+    "1.3.1",
     "Caleb Orchard",
     "https://github.com/caleborchard/Baby-Steps-Multiplayer-Mod-Client")]
 [assembly: MelonGame("DefaultCompany", "BabySteps")]
