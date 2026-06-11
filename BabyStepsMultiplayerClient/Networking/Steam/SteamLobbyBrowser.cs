@@ -15,7 +15,7 @@ namespace BabyStepsMultiplayerClient.Networking.Steam
             // Without worldwide distance filter Steam only returns lobbies in the same region.
             NativeSteamAPI.SetLobbyDistanceWorldwide();
             _pendingCall = NativeSteamAPI.RequestLobbyList();
-            Core.logger.Msg($"[Steam Browser] RequestLobbyList fired, handle={_pendingCall}");
+            //Core.logger.Msg($"[Steam Browser] RequestLobbyList fired, handle={_pendingCall}");
         }
 
         public void Poll()
@@ -26,7 +26,7 @@ namespace BabyStepsMultiplayerClient.Networking.Steam
             ulong handle = _pendingCall;
             _pendingCall = 0;
 
-            Core.logger.Msg($"[Steam Browser] LobbyList call completed. handle={handle} failed={failed}");
+            //Core.logger.Msg($"[Steam Browser] LobbyList call completed. handle={handle} failed={failed}");
 
             if (failed)
             {
@@ -43,20 +43,20 @@ namespace BabyStepsMultiplayerClient.Networking.Steam
                 return;
             }
 
-            Core.logger.Msg($"[Steam Browser] m_nLobbiesMatching={list.m_nLobbiesMatching}");
+            //Core.logger.Msg($"[Steam Browser] m_nLobbiesMatching={list.m_nLobbiesMatching}");
 
             var results = new List<ServerInfo>((int)list.m_nLobbiesMatching);
             for (int i = 0; i < (int)list.m_nLobbiesMatching; i++)
             {
                 ulong lobbyId = NativeSteamAPI.GetLobbyByIndex(i);
-                Core.logger.Msg($"[Steam Browser] lobby[{i}] id={lobbyId}");
+                //Core.logger.Msg($"[Steam Browser] lobby[{i}] id={lobbyId}");
                 if (lobbyId == 0) continue;
 
                 string bbs     = NativeSteamAPI.GetLobbyData(lobbyId, "bbs_game");
                 string name    = NativeSteamAPI.GetLobbyData(lobbyId, "bbs_name");
                 string hostId  = NativeSteamAPI.GetLobbyData(lobbyId, "bbs_host");
                 bool   locked  = NativeSteamAPI.GetLobbyData(lobbyId, "bbs_locked") == "1";
-                Core.logger.Msg($"[Steam Browser]   bbs_game='{bbs}' bbs_name='{name}' bbs_host='{hostId}' locked={locked}");
+                //Core.logger.Msg($"[Steam Browser]   bbs_game='{bbs}' bbs_name='{name}' bbs_host='{hostId}' locked={locked}");
                 if (string.IsNullOrEmpty(name)) name = $"Game {lobbyId}";
 
                 if (string.IsNullOrEmpty(hostId) || hostId == "0")
