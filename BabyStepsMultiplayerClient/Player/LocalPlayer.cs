@@ -208,12 +208,16 @@ namespace BabyStepsMultiplayerClient.Player
 
             if (!_sentInitialState)
             {
+                // Custom Baby Blocks editor props are networked by Baby Blocks itself; the
+                // native name-based accessory path can't rebuild them, so treat a custom
+                // hat/grabable as "no accessory" here and let Baby Blocks represent it.
                 Hat hat = playerMovement.currentHat;
-                if (hat != null) Core.networkManager.SendDonHat(hat);
-                lastHat = hat;
+                Hat effHat = IsCustomEditorProp(hat) ? null : hat;
+                if (effHat != null) Core.networkManager.SendDonHat(effHat);
+                lastHat = effHat;
 
-                Grabable rightItem = playerMovement.handItems[0];
-                Grabable leftItem = playerMovement.handItems[1];
+                Grabable rightItem = IsCustomEditorProp(playerMovement.handItems[0]) ? null : playerMovement.handItems[0];
+                Grabable leftItem = IsCustomEditorProp(playerMovement.handItems[1]) ? null : playerMovement.handItems[1];
                 lastLeftHandItem = leftItem; lastRightHandItem = rightItem;
 
                 if (rightItem != null)
@@ -236,8 +240,14 @@ namespace BabyStepsMultiplayerClient.Player
                     Core.networkManager.SendJiminyRibbonState(lastJiminyState);
                 }
 
-                var leftItem = playerMovement.handItems[1];
-                var rightItem = playerMovement.handItems[0];
+                // Custom Baby Blocks props are handled by Baby Blocks' own networking; the
+                // native path treats them as "no accessory" (null) so it doesn't try to
+                // rebuild them by name, and so swapping a base accessory for a custom one
+                // still correctly doffs/drops the base one on peers.
+                var rawLeft = playerMovement.handItems[1];
+                var rawRight = playerMovement.handItems[0];
+                var leftItem = IsCustomEditorProp(rawLeft) ? null : rawLeft;
+                var rightItem = IsCustomEditorProp(rawRight) ? null : rawRight;
                 if (lastLeftHandItem != leftItem)
                 {
                     lastLeftHandItem = leftItem;
@@ -267,7 +277,8 @@ namespace BabyStepsMultiplayerClient.Player
                     }
                 }
 
-                var hat = playerMovement.currentHat;
+                var rawHat = playerMovement.currentHat;
+                var hat = IsCustomEditorProp(rawHat) ? null : rawHat;
                 if (lastHat != hat)
                 {
                     lastHat = hat;
@@ -285,6 +296,17 @@ namespace BabyStepsMultiplayerClient.Player
             }
 
             UpdateRainbowSuit();
+        }
+
+        // True if the hat/grabable is a custom Baby Blocks editor prop (it carries a
+        // LevelEditorObject component). Such props are networked by Baby Blocks itself, so
+        // the native name-based accessory sync must ignore them. Checked by component name
+        // so this mod keeps no compile-time dependency on Baby Blocks.
+        internal static bool IsCustomEditorProp(Component c)
+        {
+            if (c == null) return false;
+            try { return c.GetComponent("LevelEditorObject") != null; }
+            catch { return false; }
         }
 
         private void UpdateRainbowSuit()

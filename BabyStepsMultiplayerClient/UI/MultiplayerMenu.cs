@@ -258,6 +258,11 @@ namespace BabyStepsMultiplayerClient.UI
             }
             else if (!Core.networkManager.IsConnected && _connectedServerInfo != null)
             {
+                if (_joinedLobbyId != 0)
+                {
+                    NativeSteamAPI.LeaveLobby(_joinedLobbyId);
+                    _joinedLobbyId = 0;
+                }
                 _connectedServerInfo          = null;
                 _lastDisplayedPlayerCount     = -1;
                 RebuildLobbyUI();
@@ -718,6 +723,7 @@ namespace BabyStepsMultiplayerClient.UI
         }
 
         private static ulong _ownLobbyId;
+        private static ulong _joinedLobbyId = 0; // lobby we joined as a client (leave on disconnect)
         private static float _lastHostSteamClickTime = -10f;
         private static float _lastConnectClickTime   = -10f;
         private static float _lastLobbyClickTime     = -10f;
@@ -831,11 +837,21 @@ namespace BabyStepsMultiplayerClient.UI
             string joiningMsg = string.Format(LanguageManager.GetCurrentLanguage().JoiningServer, cleanName);
             if (info.Type == ServerType.LiteNetLib)
             {
+                _joinedLobbyId = 0;
                 Core.networkManager.Connect(info.Address, info.Port, password);
                 Core.uiManager.notificationsUI.AddMessage(joiningMsg);
             }
             else
             {
+                // Join the lobby so we appear in the host's member list. The host scans
+                // lobby members every frame and calls AcceptP2PSession for each one,
+                // establishing the P2P session without relying on Steam callbacks.
+                _joinedLobbyId = 0;
+                if (ulong.TryParse(info.SessionId, out ulong lobbyId) && lobbyId != 0)
+                {
+                    _joinedLobbyId = lobbyId;
+                    NativeSteamAPI.JoinLobby(lobbyId);
+                }
                 Core.networkManager.ConnectSteam(info.Address, password);
                 Core.uiManager.notificationsUI.AddMessage(joiningMsg);
             }

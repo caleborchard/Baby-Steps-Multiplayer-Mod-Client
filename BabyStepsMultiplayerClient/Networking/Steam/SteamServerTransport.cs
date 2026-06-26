@@ -138,7 +138,14 @@ namespace BabyStepsMultiplayerClient.Networking.Steam
                 if (_authed.Contains(id))
                     NativeSteamAPI.SendP2PPacket(steamId, goodbye, 2 /* reliable */, Channel);
 
-            if (_lobbyId != 0) NativeSteamAPI.LeaveLobby(_lobbyId);
+            if (_lobbyId != 0)
+            {
+                // Clear the filter key before leaving so the lobby vanishes from the
+                // BBS browser immediately, even if clients are still in it and Steam
+                // would otherwise transfer ownership and keep it alive.
+                NativeSteamAPI.SetLobbyData(_lobbyId, "bbs_game", "0");
+                NativeSteamAPI.LeaveLobby(_lobbyId);
+            }
             _lobbyId           = 0;
             _pendingLobbyCall  = 0;
             _inviteKey         = string.Empty;
@@ -208,6 +215,21 @@ namespace BabyStepsMultiplayerClient.Networking.Steam
             if (_facepunchReady)
             {
                 try { Steamworks.SteamClient.RunCallbacks(); } catch { }
+            }
+
+            // Accept P2P sessions for all current lobby members. This is a
+            // callback-independent fallback: clients call JoinLobby() before connecting,
+            // so they appear here even when P2PSessionRequest_t callbacks don't fire
+            // (e.g. Facepunch partial init, Steam manual-dispatch mode).
+            if (_lobbyId != 0)
+            {
+                int memberCount = NativeSteamAPI.GetLobbyMemberCount(_lobbyId);
+                for (int i = 0; i < memberCount; i++)
+                {
+                    ulong memberId = NativeSteamAPI.GetLobbyMemberByIndex(_lobbyId, i);
+                    if (memberId != 0 && memberId != _localSteamId)
+                        NativeSteamAPI.AcceptP2PSession(memberId);
+                }
             }
 
             DrainChannel(Channel);
