@@ -305,8 +305,17 @@ namespace BabyStepsMultiplayerClient.Player
         internal static bool IsCustomEditorProp(Component c)
         {
             if (c == null) return false;
-            try { return c.GetComponent("LevelEditorObject") != null; }
-            catch { return false; }
+            try
+            {
+                // Match the IL2CPP-injected type by name — more reliable than GetComponent(string)
+                foreach (var comp in c.GetComponents<Component>())
+                {
+                    if (comp == null) continue;
+                    if (comp.GetIl2CppType().Name == "LevelEditorObject") return true;
+                }
+            }
+            catch { }
+            return false;
         }
 
         private void UpdateRainbowSuit()

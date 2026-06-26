@@ -675,13 +675,18 @@ namespace BabyStepsMultiplayerClient.Player
             if (!savablePrefabs.TryGetValue(hatName, out GameObject prefab))
             {
                 GameObject loaderLocations = GameObject.Find("BigManagerPrefab/GlobalObjectParent/Savables");
-                Transform hatLoader = loaderLocations.transform.FindChildByKeyword(hatName);
-                GlobalObjectLoader gOL = hatLoader.GetComponent<GlobalObjectLoader>();
+                Transform hatLoader = loaderLocations != null ? loaderLocations.transform.FindChildByKeyword(hatName) : null;
+                GlobalObjectLoader gOL = hatLoader != null ? hatLoader.GetComponent<GlobalObjectLoader>() : null;
+                // Unknown accessory name (e.g. a custom Baby Blocks editor prop, which is
+                // networked separately by Baby Blocks) — nothing to load from the game's
+                // Savables here, so bail gracefully instead of NREing.
+                if (gOL == null || gOL.loadee == null) return;
                 AssetReference assetRef = gOL.loadee;
 
                 prefab = assetRef.LoadAssetAsync<GameObject>().WaitForCompletion();
                 savablePrefabs[hatName] = prefab;
             }
+            if (prefab == null) return;
 
             GameObject hatGO = UnityEngine.Object.Instantiate(prefab, headBone);
             Hat hHat = hatGO.transform.GetComponentInChildren<Hat>();
@@ -742,15 +747,20 @@ namespace BabyStepsMultiplayerClient.Player
             {
                 GameObject loaderLocations = GameObject.Find("BigManagerPrefab/GlobalObjectParent/Savables");
 
-                Transform savableLoader = loaderLocations.transform.FindChildByKeyword(grabableName);
+                Transform savableLoader = loaderLocations != null ? loaderLocations.transform.FindChildByKeyword(grabableName) : null;
 
-                GlobalObjectLoader gOL = savableLoader.GetComponent<GlobalObjectLoader>();
+                GlobalObjectLoader gOL = savableLoader != null ? savableLoader.GetComponent<GlobalObjectLoader>() : null;
+
+                // Unknown grabable name (e.g. a custom Baby Blocks editor prop, networked
+                // separately by Baby Blocks) — bail gracefully instead of NREing.
+                if (gOL == null || gOL.loadee == null) return;
 
                 AssetReference assetRef = gOL.loadee;
 
                 prefab = assetRef.LoadAssetAsync<GameObject>().WaitForCompletion();
                 savablePrefabs[grabableName] = prefab;
             }
+            if (prefab == null) return;
 
             GameObject itemGO = UnityEngine.Object.Instantiate(prefab, hand);
             Grabable grabable = itemGO.transform.GetComponentInChildren<Grabable>();
